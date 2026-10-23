@@ -1,0 +1,14 @@
+<task action="review-and-plan">
+    1. Understand everything that this project needs to become from the <file path="./project.devlang"> project.devlang </file> file.
+    2. Identify the features that are required and the quickest way to get to MVP - the simplest first version of what meets the mvp-required project requirements
+    3. Review entire repo and what is available to understand the setup and desired shape of the repository.
+    4. Based on the features required and quickest path to MVP, identify the changes that need to be made to get this project to that point and able to run 
+    5. Set up detailed plans for these phases
+    6. Ensure all documentation is fully updated and ready pre-development
+    <acceptance>
+        - The implementation plan is broken into multiple (not many) phases
+        - Each phase has its own plan file noting its dependencies and detailed plan
+        - plans are stored in the <file path="./plans/">plans folder</file> and ordered
+        - documentation is correct based on what is in project.devlang file.
+    </acceptance>
+</task>

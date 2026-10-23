@@ -1,0 +1,130 @@
+<project>
+    Universal package core CLI. One place to create, install, and manage packages/apps across languages. Routes to the native package managers - never replaces them.
+
+    
+    - Project: universal-package-core
+    - Binary: `upc`
+    <goal>
+        - Create easily installable apps and packages (installable by this tool)
+        - Manage packages in other projects with this tool
+    </goal>
+    <architecture>
+        - CLI only
+        - Routes + sets up. Native package managers own manifests, lockfiles, versions, sync, upgrades, and where to look for things.
+        - If something required is missing (a package manager, runtime): ask the user if they want it installed, then proceed.
+        - Isolation rule: language code lives in ONE package per language. Outside the `python` package, nothing mentions Python. Same for project types: outside the `app` package, nothing app-specific. Same for package managers.
+        - Core defines interfaces/base types (`PackageFile`, `Module`, etc.). Each language/PM/project type implements them in its own package only. Core never imports a concrete implementation.
+        - Adding a language = adding one package. Zero edits elsewhere (besides registration).
+    </architecture>
+    <stack>
+        - Go for the CLI. Templates are in their own languages.
+        - Go has no abstract classes: use interfaces + composition + embedded base structs.
+        <detail name="cli-commands">
+            - `upc init` - detect existing project and configure, or guided walkthrough for a new one
+            - `upc new {type}` - create app/package/script (pick language + PM)
+            - `upc add|remove|list|install` - package ops, routed to the right PM
+            - `upc update|outdated|audit` - upgrades and checks, routed
+            - `upc run {script}` - unified script running (fills gaps like pip)
+            - `upc build|test|lint` - unified, routed or filled in
+            - `upc up|down` - spin project up/down (like `npm run dev`, `docker compose up`). Wraps existing scripts; creates them if none exist.
+            - `upc env list|use|show` - environments (local/dev/test/prod)
+            - `upc config get|set|validate` - config, with compatibility checks
+            - `upc workspace` - monorepo targeting
+            - `upc doctor` - detect missing tools, drift between upc and PM, offer fixes
+            - `upc publish` - build + hand off to the PM's publish
+            - `upc completion|version`
+            - Global flags: `--dry-run`, `--json`, `--yes`, `--verbose`, `--project {path}`, `--global`
+            - Non-interactive mode for CI.
+        </detail>
+    </stack>
+    <development>
+        - Documentation always updated
+          - Architecture decisions go in an ADR in `docs/adrs`
+          - ARCHITECTURE.md and CHANGELOG.md updated with every change/progress
+        - SOLID and OOP followed strictly (as far as Go allows)
+        - Modularity is the top priority - interfaces/abstraction everywhere so new implementations drop in
+        - Configurability prioritized - many ways to manage a project, none should cause issues
+        - No duplicate/overlapping code - shared behavior goes in shared base/embedded types
+        - Logging: structured and liberal. Log decisions, routed commands, failures, and fallbacks.
+    </development>
+    <testing>
+        - Everything is tested - every command, module, language, PM, and project type
+        - Tests updated with every change
+    </testing>
+    <storage>
+        - Filesystem only
+        - Two scopes: per-project and global
+        - Project wins over global
+        - Global: `~/.universal-package-core/`
+        - Project: `.universal-package-core/` (hidden, in project root)
+        - Create the directories when needed
+    </storage>
+    <requirements name="portability">
+        - Drop into an existing project with no disruption or rework
+        - Works on any OS
+        - No unnecessary disk space
+        - Works with package managers, not instead of them
+        - Enhances project management, never replaces it
+        - Distribution: Homebrew only for now
+    </requirements>
+    <requirements name="environments">
+        - Recognize and manage local/dev/test/prod etc.
+        - Environment model is ours to decide: e.g. `.env.local`-style files, or env files mapped in the hidden project config. Decide during build, record in an ADR.
+        - Projects get a proper virtual environment (via the PM's own mechanism)
+        - Env vars and secrets: not our concern. No handling.
+        - Spin up/down: `upc up|down` wraps things like `npm run dev` and `docker compose up`
+    </requirements>
+    <requirements name="compatible-stacks">
+        - Python: `uv` preferred, also `poetry` and `pip`
+        - Node (TypeScript): `npm`, `yarn`, others as relevant
+        - Fill capability gaps (e.g. `run`/`build` for plain pip)
+        - Future languages plug in the same way
+        <detail name="parity">
+            - Analyze what each PM can and can't do natively.
+            - Define a capability set in core. Every PM implements each capability: natively routed, or filled in by us.
+            - Adding a new capability = add to the core set. Each PM/language then adds its own implementation easily (missing ones fail loudly, not silently).
+        </detail>
+    </requirements>
+    <requirements name="package-management">
+        - Use the native PM for everything: manifests, lockfiles, versions, sync, upgrades
+        - Read the PM's live state; don't cache a competing copy
+        - Add/remove/list/install etc. route to the right PM
+        - Multiple PMs at once, globally or per project
+        - Monorepos: figure it out during build. Multiple apps in one folder must be easy.
+        - Missing tool: ask to install, then continue
+    </requirements>
+    <requirements name="configuration">
+        - Set up an existing project via the CLI, auto-detecting config
+        - Or guided walkthrough for a new project
+        - Everything configurable
+        - PM switching: allowed within the same language (e.g. uv to pip). Cross-language (e.g. uv to npm) is refused - not guaranteed, not touched.
+        - CLI updates config and rejects incompatible settings
+    </requirements>
+    <requirements name="projects">
+        - Project types: app, package, script (top-level). Others (CLI, library) map into these.
+        - Any language/PM can define its own types if they map to the three
+        - Init leaves the project ready to go
+        - Templates: location/format decided as we build
+    </requirements>
+    <requirements name="modularity">
+        - Everything configurable or per-stack gets its own module
+        - e.g. "package" is its own project type with its own package: config, capabilities, templates
+        - Anything with many-types-interacting-with-many-types follows the same rule
+    </requirements>
+    <requirements name="observability">
+        - Structured logging everywhere
+        - Log every routed command, decision, and error
+        - Failed ops report clearly and don't leave a half-done state where avoidable
+    </requirements>
+    <decisions>
+        - Stack order: Python (`uv`) first, then Node (`npm`), then the other PMs
+        - Project type order: `script`, then `package`, then `app`
+    </decisions>
+    <acceptance>
+        - Spin up any project type with any stack
+        - Install and manage packages how I need
+        - Spin a project up/down locally in different environments
+        - Environment never out of line between PM and upc
+    </acceptance>
+
+</project>
