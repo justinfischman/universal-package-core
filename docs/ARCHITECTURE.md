@@ -1,6 +1,6 @@
 # Architecture
 
-Status: **pre-development**. This document describes the target design from `project.devlang`. Sections marked *(planned)* are not built yet; see `plans/` for the phase that builds each one. Update this file with every change.
+Status: **Phase 1 built** (core, components, config, CLI skeleton). This document describes the design from `project.devlang`. Sections marked *(planned)* are not built yet; see `plans/` for the phase that builds each one. Update this file with every change.
 
 ## 1. Purpose and boundaries
 
@@ -34,7 +34,7 @@ Rules (enforced by an architecture test, see ADR-0002):
 
 Go has no abstract classes. Shared behavior lives in **embedded base structs** in `core` (e.g. `core.BasePackageManager`); variation lives behind **interfaces**.
 
-## 3. Core model *(planned, Phase 1)*
+## 3. Core model *(built, Phase 1)*
 
 | Type | Role |
 |---|---|
@@ -49,9 +49,11 @@ Go has no abstract classes. Shared behavior lives in **embedded base structs** i
 
 **Capability parity.** Every PM must declare every capability in `core.AllCapabilities`. A contract test iterates all registered PMs and fails if any capability is undeclared. Adding a capability to the core set therefore breaks the build until each PM declares it, and `Unsupported` fails loudly at runtime with the PM and capability named (never a silent no-op). See ADR-0003.
 
+**Signatures (as built).** `PackageManager` exposes `Language()`, `Tool()`, `Capabilities()`, `Detect(fs.FS)` and `Execute(ctx, Capability, Request)`. Concrete managers embed `core.BasePackageManager` (built with `NewBasePackageManager(id, language, tool, markers...)`) and call `Declare(capability, support, handler)` for every capability; `Declare` rejects unknown capabilities, an unsupported entry without a reason, and a native or filled entry without a handler. `Execute` on an unsupported or undeclared capability returns `*UnsupportedError` (matches `ErrUnsupported`, exit code 3). `ProjectType.Scaffold` takes a `ScaffoldRequest` that embeds `Request` and adds `Name`, `Language` and `PackageManager`. `Registry[T]` rejects empty ids, kind mismatches and duplicates. The contract suites in `internal/core/contract` (`RunAll`) are what later phases call with `register.Default()`.
+
 **Requests.** Handlers receive a single `core.Request` struct (project dir, packages, group, script, passthrough args, dry-run) and return a `core.Result`. This keeps the registry uniform; see ADR-0003 for the trade-off.
 
-## 4. Shared components *(planned, Phase 1)*
+## 4. Shared components *(built, Phase 1)*
 
 | Package | Responsibility |
 |---|---|
@@ -62,7 +64,7 @@ Go has no abstract classes. Shared behavior lives in **embedded base structs** i
 | `components/render` | `text/template` rendering from `embed.FS`; used by project types. |
 | `components/output` | Human vs `--json` result printing. Data on stdout, logs on stderr. |
 
-## 5. Storage and config *(planned, Phase 1)*
+## 5. Storage and config *(built, Phase 1)*
 
 - Global: `~/.universal-package-core/`. Project: `.universal-package-core/` in the project root. Directories are created lazily.
 - Project overrides global, field by field.
@@ -83,7 +85,7 @@ See `project.devlang` `cli-commands`. Phase mapping:
 
 | Phase | Commands |
 |---|---|
-| 1 | `version`, `completion`, global flags, `config get/set/validate` skeleton |
+| 1 (**built**) | `version`, `completion`, global flags, `config get/set/validate` |
 | 2 (**MVP**) | `new script`, `init`, `add`, `remove`, `list`, `install`, `run`, `update`, `outdated`, `doctor` (uv) |
 | 3 | `build`, `test`, `lint`, `audit`, `new package`, PM switch, pip/poetry |
 | 4 | Node (`npm`, `yarn`) for all of the above |
@@ -95,7 +97,7 @@ See `project.devlang` `cli-commands`. Phase mapping:
 - Contract tests in `core` run against every registered PM/language/project type (capability parity, id uniqueness, isolation).
 - CLI tests execute cobra with `SetArgs`/`SetOut` against a fake `Runner`.
 - End-to-end scripts (`test/`, `testscript`) drive the real binary against temp project dirs. Real-PM tests are opt-in via `UPC_E2E=1`.
-- Architecture test: parses imports to enforce section 2.
+- Architecture test (`internal/arch`): `go list -json` import data checked against section 2, plus a whole-word scan that language and package manager ids appear only in their own tree, `register`, and docs. Project type ids are not word-scanned (see `docs/CHANGELOG.md`). The rules are pure functions with their own tests on synthetic violations, so they cannot pass vacuously while no concrete module exists. `internal/arch` is the one non-`cmd` package allowed to import `register`.
 
 ## 9. ADR index
 

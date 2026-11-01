@@ -5,7 +5,7 @@
 
 ## Repo fixes (first)
 
-1. `cmd/upc/main.go`: change `package upc` to `package main`; `main()` calls `register.Default()` then `cli.Execute(ctx, reg, os.Args[1:], os.Stdout, os.Stderr)` and `os.Exit(code)`. Use `signal.NotifyContext` (SIGINT/SIGTERM) for the context.
+1. `cmd/upc/main.go`: change `package upc` to `package main`; `main()` calls `register.Default()` (returns `(core.Registries, error)`) then `cli.Execute(ctx, cli.DefaultDeps(reg, build), os.Args[1:])` and `os.Exit(code)`. Use `signal.NotifyContext` (SIGINT/SIGTERM) for the context.
 2. `.gitignore`: replace `/target` with `/bin`, `/dist`, `*.test`, `coverage.out`.
 3. `go.mod`: keep module path; add `github.com/spf13/cobra` and `github.com/pelletier/go-toml/v2`; `go mod tidy`. Dev-only: `github.com/rogpeppe/go-internal` (testscript).
 4. Add `scripts/check.sh` (fmt, vet, lint, test, arch test) and a `Makefile` with `build`, `test`, `lint`, `check`. `golangci-lint` 2.15.0 is installed locally (v2 config format: `version: "2"`); add `.golangci.yml` (govet, staticcheck, errcheck, revive, depguard for isolation backup, gocritic, ineffassign).
@@ -20,7 +20,7 @@ Build in this order; each step compiles and has tests before the next.
 - `capability.go`: `Capability`, `AllCapabilities`, `Support` (`Native|Filled|Unsupported`), `CapabilitySet`.
 - `request.go`: `Request`, `Result` (fields per ADR-0003: `Dir`, `Packages []string`, `Group`, `Script`, `Args []string`, `DryRun`, `Yes`; `Result{Summary string; Data any; Commands []string}`).
 - `errors.go`: sentinel and typed errors with `errors.Is/As`: `ErrUnsupported`, `ErrInvalidRequest`, `ErrIncompatible`, `ToolMissingError{Tool, InstallHint}`, plus `ExitCode(err) int` mapping (ARCHITECTURE section 6).
-- `packagemanager.go`: `PackageManager` interface + `BasePackageManager` embedded struct implementing the capability table (`Native/Filled/Unsupported/Dispatch`).
+- `packagemanager.go`: `PackageManager` interface + `BasePackageManager` embedded struct implementing the capability table (`Declare`/`Capabilities`/`Detect`/`Execute`; built with `NewBasePackageManager(id, language, tool, markers...)`).
 - `language.go`, `projecttype.go`, `packagefile.go`: interfaces from ARCHITECTURE section 3.
 - `registry.go`: generic `Registry[T Module]` with `Register` (rejects duplicate ids), `Get`, `List` (sorted), plus `Registries{Languages, PackageManagers, ProjectTypes}`.
 - **Tests:** registry (dup, missing, ordering); base PM (dispatch, unsupported error text); `ExitCode` table; capability set completeness helper.
@@ -31,7 +31,7 @@ Each is an interface + default implementation + fake, in its own subpackage.
 - `logx`: `New(verbose, json bool, w io.Writer) *slog.Logger`; `--verbose` = debug level; default = info; logger passed down, not global.
 - `prompt`: `Prompter{Confirm(msg, def) (bool, error); Choose(msg, opts) (string, error)}`. `Terminal` impl; `NonInteractive` impl (auto-yes when `--yes`, otherwise returns an error naming the flag). Choose implementation: TTY detection with `golang.org/x/term`.
 - `fsx`: `FS` interface (read, write atomic, mkdirall, stat, walk) + OS impl; tests use temp dirs.
-- `render`: `Render(fs.FS, dest, data)` with `text/template`; refuses to overwrite existing files unless allowed; stages in temp dir and moves.
+- `render`: `Render(fsx.FS, src fs.FS, dest, data, Options)` with `text/template`; refuses to overwrite existing files unless allowed; renders in memory, checks conflicts, writes atomically per file and removes created files on failure.
 - `output`: `Printer{Print(Result)}` with text and JSON modes (data stdout, logs stderr).
 - **Tests:** each component incl. dry-run, not-found mapping, atomic write failure leaves no partial file, JSON output golden.
 
@@ -52,11 +52,11 @@ Each is an interface + default implementation + fake, in its own subpackage.
 - **Tests:** flags parse into deps; exit codes; `--json`; `config set` rejects cross-language; persistent hooks run for subcommands (regression for the cobra hook gotcha).
 
 ### 5. `internal/register`
-- `Default() core.Registries`: empty in this phase except a test-only fake set used by contract tests (fakes live in `internal/core/coretest`, not in register).
+- `Default() (core.Registries, error)`: empty in this phase except a test-only fake set used by contract tests (fakes live in `internal/core/coretest`, not in register).
 
 ### 6. Contract and architecture tests
-- `core/contract`: `RunPackageManagerSuite(t, pm)` (capability parity, id stable, tool info present), `RunLanguageSuite`, `RunProjectTypeSuite`. Phase 2+ calls these for every module via `register.Default()`.
-- `core/arch_test.go`: implements ADR-0002 checks with `go list -deps -json ./...`: core imports no concrete package; no cross-language imports; forbidden-word scan (case-insensitive language/PM names) outside own tree, `register`, `docs`, tests of that module. The word list is read from registered module ids, so it grows automatically.
+- `core/contract`: `RunAll(t, regs)`, `RunPackageManagerSuite(t, pm)` (capability parity, id stable, tool info present), `RunLanguageSuite`, `RunProjectTypeSuite`. Phase 2+ calls these for every module via `register.Default()`.
+- `internal/arch` (not `core`, because it imports `register`): implements ADR-0002 checks with `go list -json ./...`: core imports no concrete package; no cross-language imports; forbidden-word scan (case-insensitive language and PM ids; project type ids are covered by the import rules) outside own tree, `register`, `docs`, tests of that module. The word list is read from registered module ids, so it grows automatically.
 
 ## Pilot
 

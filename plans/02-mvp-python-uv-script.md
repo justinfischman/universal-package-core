@@ -12,9 +12,9 @@
 ## Deliverables
 
 ### `internal/stacks/python` (language module; no other package mentions Python)
-- `python.go`: `Language` impl. `Detect(dir)`: markers `pyproject.toml`, `requirements.txt`, `setup.py`, `*.py` with PEP 723 block. `PackageManagers()`: `["uv"]` now; default `uv`.
+- `python.go`: `Language` impl. `Detect(fsys fs.FS)`: markers `pyproject.toml`, `requirements.txt`, `setup.py`, `*.py` with PEP 723 block. `PackageManagers()`: `["uv"]` now; default `uv`.
 - `uv/uv.go`: `PackageManager` embedding `core.BasePackageManager`. `Tool()`: binary `uv`, probe `uv --version`, install hint `brew install uv` (platform-selected).
-  - `Detect`: `uv.lock` present, or `[tool.uv]` in `pyproject.toml`, or user config.
+  - `Detect`: override the base `Detect(fsys fs.FS)` (marker files only); `uv.lock` present, or `[tool.uv]` in `pyproject.toml`, or user config.
   - Capability table (**Native** routes; the exact flags verified in the pilot against `uv help <cmd>`):
 
 | Capability | Support | uv command |

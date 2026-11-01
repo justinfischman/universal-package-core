@@ -1,0 +1,40 @@
+version: "2"
+
+linters:
+  default: none
+  enable:
+    - govet
+    - staticcheck
+    - errcheck
+    - revive
+    - gocritic
+    - ineffassign
+    - depguard
+  settings:
+    depguard:
+      rules:
+        # Backstop for the architecture test (ADR-0002): only the composition
+        # root may import concrete modules.
+        core-isolation:
+          files:
+            - "**/internal/core/**"
+            - "!**/*_test.go"
+          deny:
+            - pkg: github.com/justinfischman/universal-package-core/internal/stacks
+              desc: core must not import concrete languages
+            - pkg: github.com/justinfischman/universal-package-core/internal/projects
+              desc: core must not import concrete project types
+            - pkg: github.com/justinfischman/universal-package-core/internal/register
+              desc: core must not import the composition root
+    revive:
+      rules:
+        - name: exported
+        - name: package-comments
+        - name: error-return
+        - name: error-strings
+        - name: unused-parameter
+          disabled: true
+
+formatters:
+  enable:
+    - gofmt

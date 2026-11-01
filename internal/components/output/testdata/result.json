@@ -1,0 +1,9 @@
+{
+  "summary": "added requests",
+  "data": {
+    "package": "requests"
+  },
+  "commands": [
+    "uv add requests"
+  ]
+}

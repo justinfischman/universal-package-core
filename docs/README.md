@@ -2,7 +2,7 @@
 
 One place to create, install and manage packages and apps across languages. `upc` routes to the native package managers (uv, poetry, pip, npm, yarn, ...). It never replaces them.
 
-**Status: pre-development.** No commands exist yet. This page describes the intended behavior; see `plans/` for the build order.
+**Status: Phase 1 (foundation) complete.** Working today: `version`, `completion`, `config get|set|validate`, and the global flags. No language, package manager or project type is registered yet, so nothing routes to a package manager until Phase 2 (the MVP). The rest of this page describes intended behavior; see `plans/` for the build order.
 
 ## Goals
 - Create easily installable apps and packages (installable by `upc`).
@@ -22,6 +22,13 @@ First supported stack: Python with `uv`. Then Node with `npm`, then other PMs. F
 
 ## Storage
 Global `~/.universal-package-core/`, per-project `.universal-package-core/` (project wins). Filesystem only.
+
+## Development
+Requires Go 1.27+ and `golangci-lint` v2.
+- `make build` builds `bin/upc` (version info via ldflags).
+- `make check` runs gofmt, `go vet`, `golangci-lint` and all tests, including the architecture test and the testscript E2E in `test/`.
+- Golden files: `go test ./internal/components/output -update` rewrites them; review the diff before committing.
+- `UPC_HOME` overrides the global config directory, which keeps tests and experiments away from `~/.universal-package-core/`.
 
 ## Install
 Homebrew only, for now *(planned, Phase 5)*.

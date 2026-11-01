@@ -8,7 +8,7 @@ Plans are **read-only during execution** (track progress elsewhere). Finish a ph
 
 | # | File | Delivers | Depends on |
 |---|---|---|---|
-| 1 | `01-foundation.md` | Buildable CLI skeleton, core interfaces, registry, components, config/storage, logging, test and arch harness | none |
+| 1 (done) | `01-foundation.md` | Buildable CLI skeleton, core interfaces, registry, components, config/storage, logging, test and arch harness | none |
 | 2 | `02-mvp-python-uv-script.md` | **MVP**: Python + `uv` + `script` type; `new/init/add/remove/list/install/run/update/outdated/doctor` | 1 |
 | 3 | `03-python-stacks-and-package-type.md` | `pip` and `poetry`, gap-filling, PM switching, `package` type, `build/test/lint/audit` | 2 |
 | 4 | `04-node-stack.md` | Node with `npm` then `yarn`, same capability set, cross-language switch refused | 3 |

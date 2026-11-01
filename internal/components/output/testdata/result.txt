@@ -1,0 +1,2 @@
+added requests
+$ uv add requests

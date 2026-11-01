@@ -1,0 +1,14 @@
+# version prints in text and JSON, and exits 0
+exec upc version
+stdout '^upc dev$'
+! stderr .
+
+exec upc version --json
+stdout '"version": "dev"'
+
+# usage errors exit 2 with one message on stderr
+! exec upc nonsense
+stderr '^upc: invalid request: unknown command'
+
+! exec upc version --nope
+stderr 'unknown flag'

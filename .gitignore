@@ -1,1 +1,6 @@
+/bin
+/dist
+*.test
+coverage.out
 /target
+.DS_Store
