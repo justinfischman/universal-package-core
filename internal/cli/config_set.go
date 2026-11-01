@@ -38,6 +38,10 @@ func newConfigSetCmd(regs core.Registries) *cobra.Command {
 			if err != nil {
 				return err
 			}
+			note, err := checkManagerSwitch(s, merged, candidate, key)
+			if err != nil {
+				return err
+			}
 			if err := config.Validate(candidate, regs); err != nil {
 				return err
 			}
@@ -58,7 +62,11 @@ func newConfigSetCmd(regs core.Registries) *cobra.Command {
 				return err
 			}
 			s.Logger.Info("config set", "key", key, "value", value, "scope", scope)
-			return s.Printer.Print(core.Result{Summary: fmt.Sprintf("set %s = %s (%s)", key, value, scope)})
+			summary := fmt.Sprintf("set %s = %s (%s)", key, value, scope)
+			if note != "" {
+				summary += "\n" + note
+			}
+			return s.Printer.Print(core.Result{Summary: summary})
 		},
 	}
 }

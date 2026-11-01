@@ -1,0 +1,78 @@
+{
+  "summary": "project: <project>\nstack: alpha / alpha-one (detected)\ntool alpha-one: found alpha-one 9.9\ncapabilities:\n  init      native\n  install   native\n  add       native\n  remove    native\n  list      native\n  update    native\n  outdated  native\n  audit     native\n  run       native\n  build     native\n  test      native\n  lint      native\n  up        native\n  down      native\n  publish   native\nfindings: none",
+  "data": {
+    "project": "<project>",
+    "language": "alpha",
+    "package_manager": "alpha-one",
+    "source": "detected",
+    "tool": {
+      "binary": "alpha-one",
+      "found": true,
+      "checked": true,
+      "version": "alpha-one 9.9"
+    },
+    "capabilities": [
+      {
+        "capability": "init",
+        "level": "native"
+      },
+      {
+        "capability": "install",
+        "level": "native"
+      },
+      {
+        "capability": "add",
+        "level": "native"
+      },
+      {
+        "capability": "remove",
+        "level": "native"
+      },
+      {
+        "capability": "list",
+        "level": "native"
+      },
+      {
+        "capability": "update",
+        "level": "native"
+      },
+      {
+        "capability": "outdated",
+        "level": "native"
+      },
+      {
+        "capability": "audit",
+        "level": "native"
+      },
+      {
+        "capability": "run",
+        "level": "native"
+      },
+      {
+        "capability": "build",
+        "level": "native"
+      },
+      {
+        "capability": "test",
+        "level": "native"
+      },
+      {
+        "capability": "lint",
+        "level": "native"
+      },
+      {
+        "capability": "up",
+        "level": "native"
+      },
+      {
+        "capability": "down",
+        "level": "native"
+      },
+      {
+        "capability": "publish",
+        "level": "native"
+      }
+    ],
+    "findings": []
+  }
+}

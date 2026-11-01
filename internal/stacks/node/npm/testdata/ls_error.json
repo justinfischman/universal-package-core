@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "EJSONPARSE",
+    "summary": "Failed to parse root package.json",
+    "detail": "Failed to parse JSON data.\nNote: package.json must be actual JSON, not just JavaScript."
+  }
+}

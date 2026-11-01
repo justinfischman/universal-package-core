@@ -32,7 +32,7 @@ func golden(t *testing.T, name string, got []byte) {
 var sample = core.Result{
 	Summary:  "added requests",
 	Data:     map[string]any{"package": "requests"},
-	Commands: []string{"uv add requests"},
+	Commands: []string{"alpha add requests"},
 }
 
 func TestJSONGolden(t *testing.T) {

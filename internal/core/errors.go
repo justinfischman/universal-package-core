@@ -46,6 +46,8 @@ func (e *UnsupportedError) Is(target error) bool { return target == ErrUnsupport
 type ToolMissingError struct {
 	Tool        string
 	InstallHint string
+	// InstallCmd installs the tool (argv); empty when it cannot be automated.
+	InstallCmd []string
 }
 
 func (e *ToolMissingError) Error() string {

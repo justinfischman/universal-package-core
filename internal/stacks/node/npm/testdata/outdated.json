@@ -1,0 +1,16 @@
+{
+  "is-even": {
+    "current": "0.1.0",
+    "wanted": "0.1.2",
+    "latest": "1.0.0",
+    "dependent": "demo",
+    "location": "/work/demo/node_modules/is-even"
+  },
+  "is-odd": {
+    "current": "2.0.0",
+    "wanted": "2.0.0",
+    "latest": "3.0.1",
+    "dependent": "demo",
+    "location": "/work/demo/node_modules/is-odd"
+  }
+}

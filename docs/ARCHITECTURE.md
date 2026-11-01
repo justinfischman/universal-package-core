@@ -1,6 +1,6 @@
 # Architecture
 
-Status: **Phase 1 built** (core, components, config, CLI skeleton). This document describes the design from `project.devlang`. Sections marked *(planned)* are not built yet; see `plans/` for the phase that builds each one. Update this file with every change.
+Status: **Phases 1 and 2 built** (core, components, config, CLI, and the MVP stack: Python + uv + `script`). This document describes the design from `project.devlang`. Sections marked *(planned)* are not built yet; see `plans/` for the phase that builds each one. Update this file with every change.
 
 ## 1. Purpose and boundaries
 
@@ -28,7 +28,7 @@ internal/config      layered config (global < project), schema + compatibility c
 Rules (enforced by an architecture test, see ADR-0002):
 
 1. `core` imports only the standard library and `components` interfaces.
-2. Outside `internal/stacks/python`, the string/identifier "python" appears nowhere (except `register` and docs). Same for each language, PM and project type.
+2. Outside `internal/stacks/python`, the string/identifier "python" appears nowhere (except `register` and docs). Same for each language and PM. A PM id (for example `uv`) is also allowed anywhere inside the tree of the language that owns it (`internal/stacks/<lang>/<pm>` exists), so the language module can declare and configure its own manager. Project type ids are ordinary words and are covered by the import rules instead.
 3. Concrete packages never import each other across languages. A project type may not import a language, and a language may not import a project type: they meet only through `core` interfaces and templates selected at runtime.
 4. Adding a language, PM or project type = adding one package + one line in `register`. Zero other edits.
 
@@ -86,10 +86,10 @@ See `project.devlang` `cli-commands`. Phase mapping:
 | Phase | Commands |
 |---|---|
 | 1 (**built**) | `version`, `completion`, global flags, `config get/set/validate` |
-| 2 (**MVP**) | `new script`, `init`, `add`, `remove`, `list`, `install`, `run`, `update`, `outdated`, `doctor` (uv) |
-| 3 | `build`, `test`, `lint`, `audit`, `new package`, PM switch, pip/poetry |
+| 2 (**built, MVP**) | `new script`, `init`, `add`, `remove`, `list`, `install`, `run`, `update`, `outdated`, `doctor` (uv) |
+| 3 (**built**) | `build`, `test`, `lint`, `audit`, `new package`, `config set pm` switch, pip/poetry. `publish` has no CLI command yet (managers declare it; Phase 5) |
 | 4 | Node (`npm`, `yarn`) for all of the above |
-| 5 | `env`, `up`/`down`, `workspace`, `new app`, `publish`, Homebrew release |
+| 5 (**in progress**) | `env list|use|show` (**built**, ADR-0006; `internal/components/envs`, active name passed as `UPC_ENV` through the runner modules receive); `up`/`down`, `workspace` (ADR-0007), `new app`, `publish`, Homebrew release are not built |
 
 ## 8. Testing strategy
 
@@ -97,8 +97,138 @@ See `project.devlang` `cli-commands`. Phase mapping:
 - Contract tests in `core` run against every registered PM/language/project type (capability parity, id uniqueness, isolation).
 - CLI tests execute cobra with `SetArgs`/`SetOut` against a fake `Runner`.
 - End-to-end scripts (`test/`, `testscript`) drive the real binary against temp project dirs. Real-PM tests are opt-in via `UPC_E2E=1`.
-- Architecture test (`internal/arch`): `go list -json` import data checked against section 2, plus a whole-word scan that language and package manager ids appear only in their own tree, `register`, and docs. Project type ids are not word-scanned (see `docs/CHANGELOG.md`). The rules are pure functions with their own tests on synthetic violations, so they cannot pass vacuously while no concrete module exists. `internal/arch` is the one non-`cmd` package allowed to import `register`.
+- Architecture test (`internal/arch`): `go list -json` import data checked against section 2, plus a whole-word scan that language and package manager ids appear only in their own tree, `register`, and docs, plus a marker-file scan (`arch.CheckMarkers`, see section 12 and ADR-0009). Project type ids are not word-scanned (see `docs/CHANGELOG.md`). The rules are pure functions with their own tests on synthetic violations, so they cannot pass vacuously while no concrete module exists. `internal/arch` is the one non-`cmd` package allowed to import `register`.
 
 ## 9. ADR index
 
-See `docs/adrs/`. Decisions still open: environment model (decided in Phase 5, ADR-0006), monorepo/workspace strategy (Phase 5, ADR-0007), template location/format refinements (Phase 2).
+See `docs/adrs/`. ADR-0008 (script `run` lookup order) was added in Phase 2 and ADR-0009 (package-manager switching and detection ranking) in Phase 3 and ADR-0010 (Node and TypeScript template and runtime choices) in Phase 4. ADR-0006 (environment model) and ADR-0007 (monorepos and workspaces; decision only, workspace code is not built) were added in Phase 5.
+
+## 10. Phase 2 stack: Python, uv, `script` *(built)*
+
+Commands: `new`, `init`, `add`, `remove`, `list`, `install`, `update`, `outdated`, `run`, `doctor`. All but `new`, `init` and `doctor` come from one table-driven `capabilityCommand` factory in `internal/cli`; dispatch (`internal/cli/dispatch.go`) logs every routed command, and when a tool is missing it asks to install it (`--yes` installs, non-interactive otherwise fails with exit code 4) and re-runs the original command. `init` never edits manifests; it writes `.universal-package-core/config.toml` and runs `install`. `doctor` reports tool presence and version, the capability matrix, config-versus-manager drift and uv's own findings, and offers fixes.
+
+`script` (`internal/projects/script`) asks the chosen manager to `init` in script mode, adds neutral extras from its templates, and removes partial output on failure. It finds compatible stacks by querying the registry.
+
+uv capability table (`internal/stacks/python/uv`):
+
+| Capability | Support | Routed command |
+|---|---|---|
+| init | Native | `uv init`, `uv init --script <file>.py` |
+| install | Native | `uv sync [--group g]`, `uv sync --script f`; `requirements.txt` projects: `uv venv` then `uv pip install -r requirements.txt` |
+| add / remove | Native | `uv add|remove [--dev|--group g] [--script f] pkgs...` |
+| list | Native | `uv tree --depth 1`; script `uv tree --script f --depth 0`; requirements `uv pip list --format json` |
+| update | Native | `uv lock --upgrade[-package p]` then `uv sync`; requirements `uv pip install --upgrade -r requirements.txt` |
+| outdated | Native | `uv tree --depth 1 --outdated`; requirements `uv pip list --format json --outdated` |
+| run | Native | file, then `[tool.upc.scripts]`, then `[project.scripts]` (ADR-0008) |
+| audit, build, publish | Native | `uv audit`, `uv build`, `uv publish` (`audit` and `build` have CLI commands since Phase 3; `publish` has none yet) |
+| test, lint | Filled (Phase 3) | `uv run -- pytest [args]`, `uv run -- ruff check [args]`, or the `test`/`lint` entry of `[tool.upc.scripts]`; needs a pyproject.toml. Not declared: Unsupported (exit 3) with how to enable |
+| up, down | Unsupported | fails with exit code 3, naming uv and the reason |
+
+uv `Detect` is true for a `uv.lock`, a `[tool.uv]` table or a configured choice. `python.Pyproject` implements `core.PackageFile` (read-only).
+
+## 11. Phase 3 (slice A): fill helpers and pip *(built)*
+
+Fill helpers live in two places, never per package manager:
+
+- `internal/components/scripts` (language-neutral): `Resolve(fsys, name, Reader)` implements the ADR-0008 lookup (file, then command table, then entry point) over a `Table` that a manager's `Reader` supplies, plus `Split` for quoted command lines. `python.ScriptReader` reads `[tool.upc.scripts]` and `[project.scripts]`.
+- `internal/stacks/python/shared` (Python only): `Invocation` (command recording, dry-run result), virtual environment lookup (`.venv/bin` or `.venv/Scripts`), `Tool` plans for pytest and ruff (`Plan` returns a command only when the project declares the tool: a `test`/`lint` script, a dependency, a `[tool.*]` table or a config file; otherwise `ErrNotConfigured`, which managers report as Unsupported with the enabling step), `RequireModule` (turns a missing Python module into a `ToolMissingError` so dispatch offers to install it), pip-JSON parsing and script-name validation. uv now uses the same helpers.
+
+pip (`internal/stacks/python/pip`, `pip.New(fsx.FS)`): `requirements.txt` is the manifest and `.venv` the environment; `python -m pip` runs from the venv.
+
+| Capability | Support | Routed command |
+|---|---|---|
+| init | Filled | `python3 -m venv .venv` and an empty `requirements.txt` (kept if present); script type writes `<name>.py` with a PEP 723 block |
+| install | Native | `pip install -r requirements.txt` (`requirements-<group>.txt` for a group), creating `.venv` first if missing |
+| add | Filled | `pip install pkgs...`, `pip freeze`, then one atomic write that pins each package (`name[extras]==ver; marker`) in `requirements.txt` (`--dev` is `requirements-dev.txt`, `--group g` is `requirements-g.txt`) |
+| remove | Filled | `pip uninstall --yes pkgs...`, then the lines are dropped from the file |
+| update | Filled | `pip install --upgrade pkgs...` (or `-r requirements.txt`), then `==` pins are moved to the installed versions; ranges and options are untouched |
+| list / outdated | Native | `pip list --format json [--outdated]` (all installed packages in `.venv`) |
+| run | Filled | shared lookup; files run under the venv python, commands and entry points from the venv `bin` |
+| build, audit, publish | Filled | `python -m build`, `python -m pip_audit`, `python -m twine upload dist/*`; the module is checked first and its install is offered |
+| test, lint | Filled | shared pytest / ruff plans run from the venv; undeclared: Unsupported with the enabling step |
+| up, down | Unsupported | not available yet |
+
+Requirements edits happen only after every command succeeded and only when the content changes, so a failure mid-add leaves the file byte-identical; adding a package already listed replaces its line in place (idempotent). Comments, options and ordering are preserved.
+
+Auto-detect priority (Python): configured manager, then the strongest marker: `core.DetectRanker` ranks a match (uv: `uv.lock` 300, `[tool.uv]` 200, inline-metadata script 150; pip: `requirements.txt` 100). The CLI keeps the highest rank, logs the decision, and on a tie asks (interactive) or fails listing the candidates (non-interactive or `--yes`). The Python language now lists `uv` and `pip`; `uv` stays the default.
+
+## 12. Phase 3 (slices B-D): poetry, `package`, switching, markers *(built)*
+
+**Project types.** `script` (`internal/projects/script`) and `package` (`internal/projects/packagetype`) are built; `app` is not. `package` is language-agnostic: the chosen manager creates `Dir/Name` natively (`uv init --package`, `poetry new --src`; pip fills a setuptools `src` layout), then `package` adds a neutral `LICENSE` placeholder and the language's `package` templates (`.gitignore`, `tests/`). `Supports` asks the registry whether the manager belongs to the language and can `init`.
+
+poetry (`internal/stacks/python/poetry`, `poetry.New()`): `pyproject.toml` `[tool.poetry]` is the manifest; poetry owns `poetry.lock` and the environment.
+
+| Capability | Support | Routed command |
+|---|---|---|
+| init | Native | `poetry new --src <name>` (package type) or `poetry init --no-interaction`; other project types (script) are refused with an invalid-request error |
+| install | Native | `poetry install [--with g]` |
+| add / remove | Native | `poetry add|remove [--group g] pkgs...` |
+| list / outdated | Native | `poetry show --top-level [--outdated]` |
+| update | Native | `poetry update [pkgs...]` |
+| run | Native | file: `poetry run python <file>`; `[tool.upc.scripts]` command: `poetry run <words>`; `[project.scripts]` entry: `poetry run <name>` |
+| build, publish | Native | `poetry build`, `poetry publish` |
+| test, lint, audit | Filled | `poetry run` of pytest, ruff, pip-audit (or the `test`/`lint`/`audit` script); undeclared: Unsupported with the enabling step |
+| up, down | Unsupported | not available yet |
+
+Capability summary (from each manager's `declare`):
+
+| Capability | uv | pip | poetry |
+|---|---|---|---|
+| init | Native | Filled | Native |
+| install, list, outdated | Native | Native | Native (install/list/outdated) |
+| add, remove, update, run | Native | Filled | Native |
+| build, publish | Native | Filled | Native |
+| audit | Native | Filled | Filled |
+| test, lint | Filled | Filled | Filled |
+| up, down | Unsupported | Unsupported | Unsupported |
+
+**Detection ranking.** `core.DetectRanker` is optional on a manager. Ranks: uv `uv.lock` 300, `[tool.uv]` 200, inline-metadata script 150; poetry `poetry.lock` 300, `[tool.poetry]` 200; pip `requirements.txt` 100. Auto-detect keeps the highest; equal top ranks are a tie (ask when interactive, otherwise fail listing the candidates). `doctor` reports drift when matches tie or the files point at a manager other than the configured one(s).
+
+**Switching.** `upc config set pm <id>` (alias of `package_manager`; `package_managers = [...]` is the ordered list key) is accepted only for a manager of the project's current language; another language fails with `ErrIncompatible`, exit code 2 (the Phase 3 plan text says 1; implemented and tested behavior is 2, see ADR-0009). A switch never converts manifests or lockfiles; it prints a note and points to `upc doctor`.
+
+**Marker-file rule.** A manager may pass marker file names to `NewBasePackageManager` (`uv.lock`, `poetry.lock`, `requirements.txt`). `core.Registries.MarkerFiles()` maps each name to the owning language, and `arch.CheckMarkers` fails if any scanned `.go`, `.tmpl` or `.toml` file outside `internal/stacks/<language>/` names one (docs, `register`, `internal/arch`, testdata are exempt, as for the id scan). This keeps file-name conventions inside the language tree.
+
+**Known gaps.**
+- `publish` is declared by every manager but has no CLI command; `list --pm` (listing another manager's view) does not exist.
+- A new pip `package` has no `.venv` until `upc install` runs.
+- A new poetry `package` needs `upc install` before `upc test` (pytest is not installed until then).
+
+## 13. Phase 4: Node language, npm and yarn *(built)*
+
+Adding the second language touched only `internal/stacks/node`, `internal/register`, docs and test fixtures; `core`, `cli`, `components`, `config` and the `script` and `package` project types are unchanged. (One Python test fixture named a Node marker file and was renamed to a neutral name so the marker scan stays strict.) Decisions: ADR-0010.
+
+**Languages and managers**
+
+| Language | Managers (default first) | Detection | Project types |
+|---|---|---|---|
+| python | uv, pip, poetry | `pyproject.toml`, `requirements.txt`, `setup.py`, PEP 723 script | script, package |
+| node | npm, yarn | `package.json`, `tsconfig.json`, `package-lock.json`, `yarn.lock` | script, package (TypeScript templates) |
+
+`internal/stacks/node` holds the `Language` (templates under `templates/{script,package}`), the read-only `package.json` reader (`PackageFile`: name, version, scripts, engines, `packageManager`; `ScriptReader` for the ADR-0008 lookup) and `shared` (command invocation, name validation, list rendering). `internal/stacks/node/npm` and `internal/stacks/node/yarn` are the managers (`npm.New(fsx.FS)`, `yarn.New(fsx.FS)`). The tables below describe npm; yarn declares the same capabilities with these differences (ADR-0010 addendum):
+
+| yarn | Level | Command (yarn classic 1.x; berry noted) |
+|---|---|---|
+| init | Native | seeds `package.json` (yarn has no `pkg set`), then `yarn init --yes`; package then `yarn add --dev typescript @types/node` |
+| add / remove | Native | `yarn add [-D\|-O\|-P] pkgs...`, `yarn remove pkgs...` |
+| list / outdated | Native | `yarn list --depth=0 --json` (narrowed to declared names), `yarn outdated --json` (exit 1 is a result); Unsupported on berry |
+| update, audit, publish | Native | `yarn upgrade`, `yarn audit`, `yarn publish`; berry: `yarn up`, `yarn npm audit`, `yarn npm publish` (chosen by `yarn --version`) |
+| run, test, build, lint | Native / Filled | `yarn run <script>`, `yarn test`, `yarn run build` else `yarn tsc`, `yarn run lint` |
+
+Detection: `yarn.lock` ranks 300, a `packageManager` of `yarn@...` 200; `yarn.lock` and `package-lock.json` together tie and the CLI asks.
+
+| Capability | Support | Routed command |
+|---|---|---|
+| init | Native | `npm init --yes` then `npm pkg set` (script: `<name>.ts`, private manifest, `start` script; package: library fields, then `npm install --save-dev typescript @types/node`) |
+| install | Native | `npm install` |
+| add / remove | Native | `npm install|uninstall [-D|-O|--save-peer] pkgs...` (groups: dev, optional, peer) |
+| list | Native | `npm ls --depth=0 --json` (exit 1 with JSON is a result; an `error` object is a failure) |
+| update | Native | `npm update [pkgs...]` |
+| outdated | Native | `npm outdated --json` (exits 1 when packages are outdated; parsed, not failed) |
+| run | Native | file: `node [--experimental-strip-types] <file>`; `package.json` script: `npm run <name> [-- args]` |
+| audit, publish | Native | `npm audit`, `npm publish` |
+| test | Native | `npm test [-- args]` |
+| build | Filled | `npm run build`, else `npm exec --no -- tsc` when `tsconfig.json` exists, else Unsupported with guidance |
+| lint | Filled | `npm run lint`, else Unsupported with guidance |
+| up, down | Unsupported | not available yet |
+
+Every npm command except `init` requires a `package.json` in the project directory (npm would otherwise create one). Detection: `package-lock.json` ranks 300 and `package.json` 100; the manager's markers are `package-lock.json` and `package.json` and may be named only under `internal/stacks/node/`. `doctor` reports a missing lock file and a `packageManager` field that names another manager. A cross-language switch (`config set pm npm` in a Python project, or a Python manager in a Node project) is refused with exit code 2 and covered by `test/testdata/pm_cross_language.txtar`.

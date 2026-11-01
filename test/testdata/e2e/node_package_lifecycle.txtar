@@ -1,0 +1,39 @@
+# new package (TypeScript) -> add -> build -> test with the real npm
+exec upc new package demo-lib --language node --pm npm --yes
+exists demo-lib/package.json
+exists demo-lib/package-lock.json
+exists demo-lib/tsconfig.json
+exists demo-lib/src/index.ts
+exists demo-lib/test/index.test.ts
+exists demo-lib/LICENSE
+exists demo-lib/.universal-package-core/config.toml
+grep 'package_manager = ''npm''' demo-lib/.universal-package-core/config.toml
+cd demo-lib
+
+exec upc add zod --dry-run
+stdout 'npm install zod'
+! grep zod package.json
+
+exec upc add zod
+grep '"zod"' package.json
+exec upc list
+stdout 'zod'
+stdout 'typescript'
+exec upc list --json
+stdout '"name": "zod"'
+
+exec upc build
+exists dist/index.js
+exists dist/index.d.ts
+exec upc test
+stdout 'pass 1'
+exec upc outdated --json
+exec upc doctor
+stdout 'npm'
+
+exec upc remove zod
+! grep '"zod"' package.json
+
+# no lint script: unsupported (exit 3) with guidance
+! exec upc lint
+stderr 'no `lint` script'

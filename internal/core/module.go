@@ -14,7 +14,7 @@ const (
 
 // Module is the base identity every registrable thing has.
 type Module interface {
-	// ID is the stable, unique (within its Kind) identifier, e.g. "uv".
+	// ID is the stable, unique (within its Kind) identifier, e.g. "alpha".
 	ID() string
 	Kind() Kind
 }

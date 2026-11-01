@@ -1,0 +1,40 @@
+# switching package managers within a language rewrites only upc's own config
+cd project
+exec upc config set pm poetry
+stdout 'set pm = poetry'
+exec upc config set pm uv
+stdout 'does not convert manifests or lockfiles'
+stdout 'upc doctor'
+exec upc config get pm
+stdout 'pm = uv \(project\)'
+cmp pyproject.toml pyproject.before
+
+# several managers can be declared at once
+exec upc config set package_managers uv,pip
+exec upc config get package_managers
+stdout 'package_managers = uv,pip'
+
+# unknown managers are refused and nothing changes
+! exec upc config set pm nosuchmanager
+stderr 'unknown package manager'
+exec upc config get pm
+stdout 'pm = uv'
+
+# a project that mixes two managers' lockfiles is reported by doctor
+exec upc config set package_managers ''
+cp poetry.lock.fake poetry.lock
+exec upc doctor --dry-run
+stdout 'all match'
+
+-- project/pyproject.toml --
+[project]
+name = "demo"
+version = "0.1.0"
+-- project/pyproject.before --
+[project]
+name = "demo"
+version = "0.1.0"
+-- project/uv.lock --
+version = 1
+-- project/poetry.lock.fake --
+# fake lock

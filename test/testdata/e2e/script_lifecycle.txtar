@@ -1,0 +1,24 @@
+# new script -> add -> list -> run -> remove with the real uv
+exec upc new script hello --yes
+exists hello/hello.py
+exists hello/.universal-package-core/config.toml
+
+cd hello
+exec upc add rich --dry-run
+stdout 'uv add --script hello.py rich'
+! grep rich hello.py
+
+exec upc add rich
+grep 'rich' hello.py
+
+exec upc list
+stdout 'rich'
+
+exec upc run hello.py
+exec upc outdated --json
+
+exec upc remove rich
+! grep rich hello.py
+
+exec upc doctor
+stdout 'uv'

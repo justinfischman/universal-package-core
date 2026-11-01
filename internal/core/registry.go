@@ -64,6 +64,9 @@ type Registries struct {
 	Languages       *Registry[Language]
 	PackageManagers *Registry[PackageManager]
 	ProjectTypes    *Registry[ProjectType]
+	// DefaultLanguage is the language id used when none is chosen and prompts
+	// are disabled. Set only by the composition root.
+	DefaultLanguage string
 }
 
 // NewRegistries creates empty registries.
@@ -89,5 +92,23 @@ func (r Registries) ModuleIDs() []string {
 		}
 	}
 	sort.Strings(out)
+	return out
+}
+
+// MarkerFiles maps every marker file name declared by a registered package
+// manager to the id of the language that owns it. Managers that declare no
+// markers are skipped. The architecture test uses it to keep file-name
+// conventions inside their language's tree.
+func (r Registries) MarkerFiles() map[string]string {
+	out := map[string]string{}
+	for _, pm := range r.PackageManagers.List() {
+		m, ok := pm.(interface{ Markers() []string })
+		if !ok {
+			continue
+		}
+		for _, f := range m.Markers() {
+			out[f] = pm.Language()
+		}
+	}
 	return out
 }

@@ -1,0 +1,44 @@
+# new package -> add pytest -> build -> test with each Python manager
+
+# uv
+exec upc new package demo-uv --pm uv --yes
+exists demo-uv/pyproject.toml
+exists demo-uv/src/demo_uv/__init__.py
+exists demo-uv/tests/test_package.py
+exists demo-uv/LICENSE
+exists demo-uv/.universal-package-core/config.toml
+grep 'project_type = ''package''' demo-uv/.universal-package-core/config.toml
+cd demo-uv
+exec upc add --dev pytest
+exec upc build
+exists dist
+exec upc test
+exec upc doctor
+cd ..
+
+# poetry
+exec upc new package demo-poetry --pm poetry --yes
+exists demo-poetry/pyproject.toml
+exists demo-poetry/src/demo_poetry/__init__.py
+exists demo-poetry/tests/test_package.py
+cd demo-poetry
+exec upc add --dev pytest
+exec upc install
+exec upc build
+exists dist
+exec upc test
+cd ..
+
+# pip
+exec upc new package demo-pip --pm pip --yes
+exists demo-pip/pyproject.toml
+exists demo-pip/src/demo_pip/__init__.py
+exists demo-pip/tests/test_package.py
+exists demo-pip/requirements.txt
+cd demo-pip
+exec upc install
+exists .venv
+exec upc add pytest build
+exec upc build
+exists dist
+exec upc test

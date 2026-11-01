@@ -16,6 +16,12 @@ type FS interface {
 	MkdirAll(path string, perm fs.FileMode) error
 	Stat(path string) (fs.FileInfo, error)
 	Remove(path string) error
+	// RemoveAll removes a path and everything under it; a missing path is not an error.
+	RemoveAll(path string) error
+	// MkdirTemp creates a new temporary directory inside dir.
+	MkdirTemp(dir, pattern string) (string, error)
+	// Rename moves oldPath to newPath.
+	Rename(oldPath, newPath string) error
 	// DirFS exposes a directory as an fs.FS for read-only detection.
 	DirFS(dir string) fs.FS
 }
@@ -34,6 +40,27 @@ func (OS) Stat(path string) (fs.FileInfo, error) { return os.Stat(path) }
 
 // Remove implements FS.
 func (OS) Remove(path string) error { return os.Remove(path) }
+
+// RemoveAll implements FS.
+func (OS) RemoveAll(path string) error { return os.RemoveAll(path) }
+
+// MkdirTemp implements FS.
+// The directory is made readable like any other (0755) because staged output
+// is renamed into place as a normal project directory.
+func (OS) MkdirTemp(dir, pattern string) (string, error) {
+	path, err := os.MkdirTemp(dir, pattern)
+	if err != nil {
+		return "", err
+	}
+	if err := os.Chmod(path, 0o755); err != nil {
+		_ = os.Remove(path)
+		return "", err
+	}
+	return path, nil
+}
+
+// Rename implements FS.
+func (OS) Rename(oldPath, newPath string) error { return os.Rename(oldPath, newPath) }
 
 // DirFS implements FS.
 func (OS) DirFS(dir string) fs.FS { return os.DirFS(dir) }

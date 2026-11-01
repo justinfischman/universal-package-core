@@ -1,0 +1,24 @@
+{
+  "left-pad": [
+    {
+      "current": "1.0.0",
+      "wanted": "1.3.0",
+      "latest": "1.3.0",
+      "dependent": "a",
+      "location": "/work/a/node_modules/left-pad"
+    },
+    {
+      "current": "1.1.0",
+      "wanted": "1.3.0",
+      "latest": "1.3.0",
+      "dependent": "b",
+      "location": "/work/b/node_modules/left-pad"
+    }
+  ],
+  "not-installed": {
+    "wanted": "2.0.0",
+    "latest": "2.0.0",
+    "dependent": "a",
+    "location": "/work/a/node_modules/not-installed"
+  }
+}

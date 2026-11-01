@@ -55,7 +55,7 @@ func DefaultDeps(regs core.Registries, build BuildInfo) Deps {
 		Getwd:      os.Getwd,
 		NewLogger:  logx.New,
 		NewRunner: func(l *slog.Logger, dry bool, out, errw io.Writer) execx.Runner {
-			return execx.OS{Logger: l, DryRun: dry, Stdout: out, Stderr: errw}
+			return execx.OS{Logger: l, DryRun: dry, Stdout: out, Stderr: errw, Stdin: os.Stdin}
 		},
 		NewPrompter: prompt.New,
 	}

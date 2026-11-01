@@ -40,7 +40,7 @@ func newConfigGetCmd() *cobra.Command {
 					shown = "(unset)"
 				}
 				summary += fmt.Sprintf("%s = %s", k, shown)
-				if src, ok := res.Sources[k]; ok {
+				if src, ok := res.Sources[config.CanonicalKey(k)]; ok {
 					summary += fmt.Sprintf(" (%s)", src)
 				}
 				summary += "\n"

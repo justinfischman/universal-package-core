@@ -23,12 +23,12 @@ func TestLevels(t *testing.T) {
 
 func TestJSONHandler(t *testing.T) {
 	var buf bytes.Buffer
-	logx.New(false, true, &buf).Info("route", "pm", "uv")
+	logx.New(false, true, &buf).Info("route", "pm", "alpha")
 	var rec map[string]any
 	if err := json.Unmarshal(buf.Bytes(), &rec); err != nil {
 		t.Fatalf("not json: %v: %s", err, buf.String())
 	}
-	if rec["pm"] != "uv" || rec["msg"] != "route" {
+	if rec["pm"] != "alpha" || rec["msg"] != "route" {
 		t.Errorf("record = %v", rec)
 	}
 }

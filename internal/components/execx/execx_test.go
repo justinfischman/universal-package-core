@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -69,14 +70,14 @@ func TestStreamCopiesOutput(t *testing.T) {
 
 func TestFakeRunner(t *testing.T) {
 	f := &execx.FakeRunner{Responses: map[string]execx.Response{
-		"uv add requests": {Output: execx.Output{Stdout: "ok"}},
-		"uv fail":         {Err: errors.New("boom")},
+		"alpha add requests": {Output: execx.Output{Stdout: "ok"}},
+		"alpha fail":         {Err: errors.New("boom")},
 	}}
-	out, err := f.Run(context.Background(), execx.Cmd{Name: "uv", Args: []string{"add", "requests"}})
+	out, err := f.Run(context.Background(), execx.Cmd{Name: "alpha", Args: []string{"add", "requests"}})
 	if err != nil || out.Stdout != "ok" {
 		t.Errorf("scripted: %v %q", err, out.Stdout)
 	}
-	if _, err := f.Run(context.Background(), execx.Cmd{Name: "uv", Args: []string{"fail"}}); err == nil {
+	if _, err := f.Run(context.Background(), execx.Cmd{Name: "alpha", Args: []string{"fail"}}); err == nil {
 		t.Error("expected scripted error")
 	}
 	if _, err := f.Run(context.Background(), execx.Cmd{Name: "other"}); err != nil {
@@ -84,5 +85,19 @@ func TestFakeRunner(t *testing.T) {
 	}
 	if len(f.Calls) != 3 {
 		t.Errorf("calls = %d", len(f.Calls))
+	}
+}
+
+func TestWithEnvPrependsEntries(t *testing.T) {
+	fake := &execx.FakeRunner{}
+	r := execx.WithEnv(fake, "UPC_ENV=dev")
+	if _, err := r.Run(context.Background(), execx.Cmd{Name: "x", Env: []string{"A=1"}}); err != nil {
+		t.Fatal(err)
+	}
+	if got := fake.Calls[0].Env; !reflect.DeepEqual(got, []string{"UPC_ENV=dev", "A=1"}) {
+		t.Errorf("Env = %v", got)
+	}
+	if execx.WithEnv(fake) != execx.Runner(fake) {
+		t.Error("no entries must return the runner unchanged")
 	}
 }

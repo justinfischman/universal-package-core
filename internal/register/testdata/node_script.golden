@@ -1,0 +1,41 @@
+$ npm init --yes
+$ npm pkg set version=0.1.0 type=module engines.node=>=22.6.0 scripts.start=node --experimental-strip-types hello.ts
+$ npm pkg set private=true --json
+$ npm pkg delete main scripts.test
+
+=== .gitignore
+node_modules/
+
+=== README.md
+# hello
+
+A node script, managed with `upc` (npm).
+
+```
+upc add <package>     add a dependency
+upc list              show dependencies
+upc run <file>        run the script
+```
+
+=== hello.ts
+const name: string = process.argv[2] ?? "world";
+console.log("Hello, " + name + "!");
+
+=== package.json
+{
+  "name": "hello"
+}
+
+=== tsconfig.json
+{
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "nodenext",
+    "strict": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true
+  }
+}

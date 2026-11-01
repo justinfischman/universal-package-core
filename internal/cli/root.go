@@ -47,6 +47,8 @@ func NewRoot(d Deps) *cobra.Command {
 	pf.BoolVar(&flags.Global, "global", false, "use global scope instead of the project")
 
 	root.AddCommand(newVersionCmd(), newConfigCmd(d.Registries))
+	root.AddCommand(newNewCmd(), newInitCmd(), newDoctorCmd(), newEnvCmd())
+	root.AddCommand(newCapabilityCmds()...)
 	return root
 }
 

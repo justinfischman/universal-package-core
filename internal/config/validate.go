@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 
+	"github.com/justinfischman/universal-package-core/internal/components/envs"
 	"github.com/justinfischman/universal-package-core/internal/core"
 )
 
@@ -25,9 +26,43 @@ func Validate(c Config, regs core.Registries) error {
 				core.ErrIncompatible, c.PackageManager, pm.Language(), c.Language)
 		}
 	}
+	for _, id := range c.PackageManagers {
+		pm, ok := regs.PackageManagers.Get(id)
+		if !ok {
+			return fmt.Errorf("%w: unknown package manager %q in package_managers (known: %v)", core.ErrInvalidRequest, id, regs.PackageManagers.IDs())
+		}
+		if c.Language != "" && pm.Language() != c.Language {
+			return fmt.Errorf("%w: package manager %q belongs to language %q, not %q",
+				core.ErrIncompatible, id, pm.Language(), c.Language)
+		}
+	}
 	if c.ProjectType != "" {
 		if _, ok := regs.ProjectTypes.Get(c.ProjectType); !ok {
 			return fmt.Errorf("%w: unknown project type %q (known: %v)", core.ErrInvalidRequest, c.ProjectType, regs.ProjectTypes.IDs())
+		}
+	}
+	return validateEnvironments(c)
+}
+
+// validateEnvironments checks names and file paths without touching the disk:
+// names must be plain words and files must stay inside the project.
+func validateEnvironments(c Config) error {
+	for name, env := range c.Environments {
+		if err := envs.ValidName(name); err != nil {
+			return fmt.Errorf("%w: environments: %v", core.ErrInvalidRequest, err)
+		}
+		if env.File != "" {
+			if err := envs.ValidFile(env.File); err != nil {
+				return fmt.Errorf("%w: environments.%s: %v", core.ErrInvalidRequest, name, err)
+			}
+		}
+	}
+	for key, name := range map[string]string{"default_environment": c.DefaultEnvironment, "active_environment": c.ActiveEnvironment} {
+		if name == "" {
+			continue
+		}
+		if err := envs.ValidName(name); err != nil {
+			return fmt.Errorf("%w: %s: %v", core.ErrInvalidRequest, key, err)
 		}
 	}
 	return nil

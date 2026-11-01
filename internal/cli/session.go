@@ -46,6 +46,12 @@ func newSession(d Deps, f Flags) (*Session, error) {
 		return nil, err
 	}
 	logger := d.NewLogger(f.Verbose, f.JSON, d.Stderr)
+	// With --json, stdout carries only the result document, so the tools' own
+	// output is shown on stderr instead.
+	toolOut := d.Stdout
+	if f.JSON {
+		toolOut = d.Stderr
+	}
 
 	root := f.Project
 	if root == "" && !f.Global {
@@ -63,7 +69,7 @@ func newSession(d Deps, f Flags) (*Session, error) {
 		Logger:   logger,
 		Printer:  output.New(f.JSON, d.Stdout),
 		Prompter: d.NewPrompter(f.Yes, d.Stdin, d.Stderr),
-		Runner:   d.NewRunner(logger, f.DryRun, d.Stdout, d.Stderr),
+		Runner:   d.NewRunner(logger, f.DryRun, toolOut, d.Stderr),
 		Store:    config.Store{FS: d.FS, GlobalDir: globalDir, ProjectRoot: root},
 	}, nil
 }

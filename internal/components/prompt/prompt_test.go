@@ -49,9 +49,9 @@ func TestTerminalConfirm(t *testing.T) {
 }
 
 func TestTerminalChoose(t *testing.T) {
-	opts := []string{"uv", "pip", "poetry"}
+	opts := []string{"alpha", "beta", "gamma"}
 	term := prompt.Terminal{In: strings.NewReader("2\n"), Out: &bytes.Buffer{}}
-	if got, err := term.Choose("pm", opts); err != nil || got != "pip" {
+	if got, err := term.Choose("pm", opts); err != nil || got != "beta" {
 		t.Errorf("got %q, %v", got, err)
 	}
 	for _, in := range []string{"0\n", "4\n", "x\n"} {

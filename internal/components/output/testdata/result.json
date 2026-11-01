@@ -4,6 +4,6 @@
     "package": "requests"
   },
   "commands": [
-    "uv add requests"
+    "alpha add requests"
   ]
 }

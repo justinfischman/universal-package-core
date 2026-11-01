@@ -9,6 +9,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Update with ev
 - Phase plans in `plans/` (01 foundation through 05 environments/workspace/release).
 - Project spec (`project.devlang`), launch task, Go module and `cmd/upc` placeholder committed as the baseline.
 
+### Added (Phase 5, slice 1: environments)
+- ADR-0006 (environment model) and ADR-0007 (monorepos and workspaces; decision only).
+- `upc env list|use|show` (`internal/cli/env.go`) and `internal/components/envs` (discovery of declared and `.env.<name>` environments, name and path validation; never reads env files).
+- Config: `[environments.<name>] file`, `default_environment`, `active_environment` (validated); wrapped commands get `UPC_ENV=<name>` via `execx.WithEnv`; `doctor` checks the active environment exists.
+
+### Changed (Phase 5, slice 1)
+- `config.Config.Environments` is now `map[string]config.Environment` (was `map[string]string`); it had no consumers.
+
 ### Added (Phase 1: foundation)
 - `internal/core`: `Module`, `Capability`/`Support`/`CapabilitySet`, `Request`/`Result`, error types with `ExitCode`, `PackageManager` with embedded `BasePackageManager`, `Language`, `ProjectType`, `PackageFile`, generic `Registry`, `coretest` fakes, and `contract` suites.
 - `internal/components`: `execx` (runner, dry-run, fake), `logx`, `prompt`, `fsx` (atomic writes), `render`, `output`.
@@ -16,6 +24,24 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Update with ev
 - `internal/cli`: root command with global flags, session wiring, `version`, `config get|set|validate`; `completion` is cobra's built-in.
 - `internal/register` composition root (empty until Phase 2), `internal/arch` architecture test (ADR-0002).
 - Makefile, `scripts/check.sh`, `.golangci.yml`, GitHub Actions CI, testscript E2E in `test/`.
+
+### Added (Phase 2: MVP, Python + uv + script)
+- `internal/stacks/python` (language, `pyproject.toml` PackageFile, PEP 723 detection) and `internal/stacks/python/uv` (package manager, capability table, Diagnoser).
+- `internal/projects/script` project type with staged scaffold and rollback on failure.
+- CLI: `new`, `init`, `add`, `remove`, `list`, `install`, `update`, `outdated`, `run` (one table-driven factory), `doctor`; missing-tool install prompt and re-run.
+- `internal/register` registers `python`, `uv`, `script`.
+- ADR-0008: script `run` lookup order.
+
+### Added (Phase 3 slice C: package type, generic commands, manager switching)
+- `internal/projects/packagetype` (`package` project type): the chosen manager creates `Dir/Name` natively (`uv init --package`, `poetry new --src`, pip fills a setuptools src layout); a neutral `LICENSE` placeholder and the language's `package` templates (`.gitignore`, `tests/`) are added; `core.Request.Name` carries the project name.
+- CLI: `build`, `test`, `lint`, `audit` (passthrough arguments) through the capability factory.
+- Config: `pm` alias for `package_manager`; `package_managers = [...]` list key. `config set pm` is limited to the project's language (`ErrIncompatible`, exit 2) and notes that manifests and lockfiles are not converted.
+- `doctor`: drift findings when several managers' files match equally or the files point at a manager other than the configured one(s).
+- Opt-in real-uv E2E testscripts in `test/testdata/e2e` (`UPC_E2E=1`): script lifecycle and `init` byte-identity.
+
+### Changed (Phase 2)
+- Architecture test: a package manager id is allowed anywhere in the tree of the language that owns it.
+- Test fixtures and test names use neutral identifiers so the word scan stays strict outside the stack trees.
 
 ### Fixed
 - `cmd/upc/main.go` now declares `package main` and wires registry, CLI and signal handling.
@@ -26,3 +52,52 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Update with ev
 - `render` renders everything in memory, checks conflicts, then writes atomically per file and removes created files on failure, instead of staging in a temp directory.
 - The forbidden-word scan covers language and package manager ids only. Project type ids (`script`, `package`, `app`) are ordinary words in core's vocabulary; the import rules cover project types.
 - The `version` testscript runs by default (it needs no external tool). Tests that need real package managers will be opt-in via `UPC_E2E=1`.
+
+### Added (Phase 3, slice A: fill helpers and pip)
+- `internal/components/scripts`: language-neutral named-script lookup (ADR-0008 order) and command splitting; uv's `run` now uses it.
+- `internal/stacks/python/shared`: command invocation, venv lookup, pytest/ruff fill plans, module checks with install offer, pip-JSON parsing, name validation; uv reuses it.
+- `internal/stacks/python/pip`: package manager with a full capability table (native install/list/outdated, filled init/add/remove/update/run/build/test/lint/audit/publish); exact, idempotent, atomic `requirements.txt` edits that leave the file unchanged on failure.
+- `core.DetectRanker`: managers rank overlapping markers; auto-detect keeps the strongest, logs the decision, asks or errors listing choices on a tie.
+- `internal/register` registers `pip`; the Python language lists `uv` and `pip`.
+
+### Changed (Phase 3, slice A)
+- uv `test` and `lint` are Filled (pytest / ruff or the `test`/`lint` script) instead of Unsupported.
+- A directory with only `requirements.txt` now resolves to pip instead of the language default.
+- `python.Project` exposes `ToolTables` and `Dependencies`; `RequirementName`/`NormalizeName` added.
+- Prompt test data uses neutral option names so the word scan stays strict.
+
+### Added (Phase 3, slice D: poetry, marker rule, ADR-0009)
+- `internal/stacks/python/poetry`: package manager (native init/install/add/remove/list/outdated/update/run/build/publish; filled test/lint/audit through `poetry run`), `[tool.poetry]` / `poetry.lock` detection with ranks 200 / 300. `internal/register` registers `poetry`; the Python language lists `uv`, `pip` and `poetry`.
+- Architecture test: marker-file scan. Managers declare marker files (`uv.lock`, `poetry.lock`, `requirements.txt`); `core.Registries.MarkerFiles()` and `arch.CheckMarkers` allow them to be named only under the owning language's tree.
+- ADR-0009: package-manager switching and detection ranking.
+- `docs/ARCHITECTURE.md` section 12: capability table for uv, pip and poetry, project types, ranking, marker rule.
+
+### Known gaps (Phase 3)
+- `publish` is declared by every manager but has no CLI command; `list --pm` does not exist.
+- A new pip `package` has no `.venv` until `upc install`; a new poetry `package` needs `upc install` before `upc test`.
+- `plans/03-python-stacks-and-package-type.md` says a cross-language `config set pm` exits 1; the implementation exits 2 (`ErrIncompatible` is a usage error, ADR-0009). The plan is read-only and was not changed.
+
+### Added (Phase 4, slice A: Node language and npm)
+- `internal/stacks/node` (language `node`; detects `package.json`, `tsconfig.json`, `package-lock.json`, `yarn.lock`; TypeScript templates for `script` and `package`; read-only `package.json` `PackageFile`, `ScriptReader`) and `internal/stacks/node/shared`.
+- `internal/stacks/node/npm`: package manager declaring every capability (native init/install/add/remove/list/update/outdated/run/audit/publish/test; filled build and lint; up/down unsupported), JSON parsing for `npm ls` and `npm outdated` (exit 1 with output is a result), `DetectRanker` (`package-lock.json` 300, `package.json` 100), `Diagnoser`. `internal/register` registers `node` and `npm`.
+- ADR-0010: Node/TypeScript template and runtime choices (type stripping for scripts, `tsc` for packages, `node:test`, path for pnpm and bun).
+- Tests: contract suite, argv per capability, recorded `npm ls`/`npm outdated` fixtures (empty, multi-location, error), detection ranking, scaffold goldens (`internal/register/testdata`), cross-language refusal testscript (`test/testdata/pm_cross_language.txtar`), opt-in real-npm E2E (`node_package_lifecycle`, `node_script_lifecycle`).
+- Design defects in core, cli, components, config or the project types: none found. The `script` and `package` types scaffold Node unchanged.
+
+### Changed (Phase 4, slice A)
+- `test/testdata/pm_switch.txtar`: the "unknown manager" case uses a name that is not registered, since `npm` now is.
+- A Python test fixture that named a Node marker file (`package.json`) uses a neutral file name, as the marker scan now covers it.
+
+### Known gaps (Phase 4, slice A)
+- `node/shared` duplicates the invocation and package-list helpers of the other language's shared package; promoting them to `internal/components` needs a coordinated change in both trees.
+- A new Node package runs `npm install` during `upc new`, so it needs network access.
+
+### Added (Phase 4, slice B: yarn)
+- `internal/stacks/node/yarn`: yarn classic (1.22) manager with the npm capability set; `yarn --version` picks berry argv for update/audit/publish only (one FakeRunner case, no berry fixtures); list/outdated are Unsupported on berry. `DetectRanker`: `yarn.lock` 300, `packageManager` `yarn@...` 200. Registered in `internal/register`; `node` lists `yarn`.
+- Runtime constants and script helpers (`FileArgs`, `StartCommand`, `ScriptSource`, engines) moved from `node/npm` to `node/shared`.
+- ADR-0010 addendum (no new ADR). Tests: contract suite, argv, recorded `yarn list`/`yarn outdated` NDJSON fixtures (`ls_deps.ndjson` has one hand-added scoped entry), detection tie-break (`internal/register/node_test.go`), opt-in `yarn_package_lifecycle` E2E (skips when yarn is absent). Missing-tool prompt checked by hand with yarn off PATH (exit 4, install hint).
+
+### Known gaps (Phase 4, slice B)
+- yarn berry is argv-only for update/audit/publish; init, list, outdated and the E2E target classic.
+- `yarn init` has no `pkg set`, so upc seeds the starting `package.json` itself (name, version, type, engines, scripts) and yarn keeps it; a new yarn script also gets yarn's `main` and `license` fields.
+- Design defects outside the allowed paths: none found; no edits were made outside `internal/stacks/node`, `internal/register`, docs and `test/testdata`.

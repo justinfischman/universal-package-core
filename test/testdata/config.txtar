@@ -1,4 +1,4 @@
-# config works without any registered module (Phase 1 ships none)
+# config get/validate work on an empty home
 exec upc config validate
 stdout 'config is valid'
 
@@ -6,6 +6,6 @@ exec upc config get --global
 stdout 'language = \(unset\)'
 
 # unknown modules are refused, nothing is written
-! exec upc config set --global language python
+! exec upc config set --global language cobol
 stderr 'unknown language'
 ! exists upc-home/config.toml

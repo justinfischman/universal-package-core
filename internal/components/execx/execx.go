@@ -62,6 +62,7 @@ type OS struct {
 	DryRun bool
 	Stdout io.Writer // used when Cmd.Stream is set
 	Stderr io.Writer
+	Stdin  io.Reader // connected to streamed commands so interactive programs work
 }
 
 // Run implements Runner. In dry-run mode it logs and returns without running.
@@ -83,6 +84,9 @@ func (r OS) Run(ctx context.Context, cmd Cmd) (Output, error) {
 	var stdout, stderr bytes.Buffer
 	c.Stdout, c.Stderr = &stdout, &stderr
 	if cmd.Stream {
+		if r.Stdin != nil {
+			c.Stdin = r.Stdin
+		}
 		if r.Stdout != nil {
 			c.Stdout = io.MultiWriter(&stdout, r.Stdout)
 		}

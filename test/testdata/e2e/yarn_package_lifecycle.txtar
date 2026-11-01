@@ -1,0 +1,41 @@
+# new package (TypeScript) -> add -> build -> test with the real yarn (classic, 1.x)
+[!exec:yarn] skip 'yarn is not installed; install it (for example `brew install yarn`) to run this script'
+exec upc new package demo-lib --language node --pm yarn --yes
+exists demo-lib/package.json
+exists demo-lib/yarn.lock
+! exists demo-lib/package-lock.json
+exists demo-lib/tsconfig.json
+exists demo-lib/src/index.ts
+exists demo-lib/test/index.test.ts
+exists demo-lib/.universal-package-core/config.toml
+grep 'package_manager = ''yarn''' demo-lib/.universal-package-core/config.toml
+cd demo-lib
+
+exec upc add zod --dry-run
+stdout 'yarn add zod'
+! grep zod package.json
+
+exec upc add zod
+grep '"zod"' package.json
+exec upc list
+stdout 'zod'
+stdout 'typescript'
+! stdout 'is-number'
+exec upc list --json
+stdout '"name": "zod"'
+
+exec upc build
+exists dist/index.js
+exists dist/index.d.ts
+exec upc test
+stdout 'pass 1'
+exec upc outdated --json
+exec upc doctor
+stdout 'yarn'
+
+exec upc remove zod
+! grep '"zod"' package.json
+
+# no lint script: unsupported (exit 3) with guidance
+! exec upc lint
+stderr 'no `lint` script'

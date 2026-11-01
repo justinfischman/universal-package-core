@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 
 	"github.com/justinfischman/universal-package-core/internal/components/fsx"
@@ -47,10 +48,10 @@ func TestMissingFilesYieldEmptyConfig(t *testing.T) {
 
 func TestProjectOverridesGlobalFieldByField(t *testing.T) {
 	s := newStore(t)
-	if err := s.Save(config.Global, config.Config{Language: "alpha", PackageManager: "alpha-one", Environments: map[string]string{"dev": ".env.dev", "prod": ".env.prod"}}); err != nil {
+	if err := s.Save(config.Global, config.Config{Language: "alpha", PackageManager: "alpha-one", Environments: map[string]config.Environment{"dev": {File: ".env.dev"}, "prod": {File: ".env.prod"}}, DefaultEnvironment: "dev"}); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.Save(config.Project, config.Config{PackageManager: "alpha-two", Environments: map[string]string{"dev": ".env.local"}}); err != nil {
+	if err := s.Save(config.Project, config.Config{PackageManager: "alpha-two", Environments: map[string]config.Environment{"dev": {File: ".env.local"}}, ActiveEnvironment: "prod"}); err != nil {
 		t.Fatal(err)
 	}
 	res, err := s.Load()
@@ -63,7 +64,7 @@ func TestProjectOverridesGlobalFieldByField(t *testing.T) {
 	if res.PackageManager != "alpha-two" || res.Sources[config.KeyPackageManager] != config.Project {
 		t.Errorf("pm: %q from %q", res.PackageManager, res.Sources[config.KeyPackageManager])
 	}
-	if res.Environments["dev"] != ".env.local" || res.Environments["prod"] != ".env.prod" {
+	if res.Environments["dev"].File != ".env.local" || res.Environments["prod"].File != ".env.prod" || res.DefaultEnvironment != "dev" || res.EffectiveEnvironment() != "prod" {
 		t.Errorf("environments = %v", res.Environments)
 	}
 }
@@ -99,12 +100,24 @@ func TestSaveCreatesDirLazily(t *testing.T) {
 }
 
 func TestGetSet(t *testing.T) {
-	c, err := config.Config{}.Set(config.KeyPackageManager, "uv")
+	c, err := config.Config{}.Set(config.KeyPackageManager, "alpha")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if v, _ := c.Get(config.KeyPackageManager); v != "uv" {
+	if v, _ := c.Get(config.KeyPackageManager); v != "alpha" {
 		t.Errorf("got %q", v)
+	}
+	if c, err = c.Set("pm", "beta"); err != nil {
+		t.Fatal(err)
+	}
+	if v, _ := c.Get(config.KeyPackageManager); v != "beta" {
+		t.Errorf("pm alias: got %q", v)
+	}
+	if c, err = c.Set(config.KeyPackageManagers, " a, b,a ,,"); err != nil {
+		t.Fatal(err)
+	}
+	if v, _ := c.Get(config.KeyPackageManagers); v != "a,b" || !reflect.DeepEqual(c.PackageManagers, []string{"a", "b"}) {
+		t.Errorf("package_managers: got %q / %v", v, c.PackageManagers)
 	}
 	if _, err := c.Set("bogus", "x"); !errors.Is(err, core.ErrInvalidRequest) {
 		t.Errorf("set bogus: %v", err)
@@ -130,6 +143,9 @@ func TestValidateMatrix(t *testing.T) {
 		{"unknown language", config.Config{Language: "nope"}, core.ErrInvalidRequest},
 		{"unknown pm", config.Config{PackageManager: "nope"}, core.ErrInvalidRequest},
 		{"unknown type", config.Config{ProjectType: "nope"}, core.ErrInvalidRequest},
+		{"pm list", config.Config{Language: "alpha", PackageManagers: []string{"alpha-one", "alpha-two"}}, nil},
+		{"pm list unknown", config.Config{PackageManagers: []string{"alpha-one", "nope"}}, core.ErrInvalidRequest},
+		{"pm list cross-language", config.Config{Language: "alpha", PackageManagers: []string{"alpha-one", "beta-one"}}, core.ErrIncompatible},
 		{"cross-language pm", config.Config{Language: "alpha", PackageManager: "beta-one"}, core.ErrIncompatible},
 	}
 	for _, c := range cases {
@@ -175,5 +191,37 @@ func TestFindRoot(t *testing.T) {
 	none := mk("lonely")
 	if got := config.FindRoot(fsx.OS{}, none, global, regs); got != "" {
 		t.Errorf("global config mistaken for project: %q", got)
+	}
+}
+
+func TestEnvironmentConfigRoundTripAndValidate(t *testing.T) {
+	s := newStore(t)
+	in := config.Config{
+		Environments:       map[string]config.Environment{"dev": {File: ".env.dev"}, "prod": {}},
+		DefaultEnvironment: "dev",
+		ActiveEnvironment:  "prod",
+	}
+	if err := s.Save(config.Project, in); err != nil {
+		t.Fatal(err)
+	}
+	got, err := s.LoadScope(config.Project)
+	if err != nil || !reflect.DeepEqual(got, in) {
+		t.Fatalf("round trip = %+v, %v", got, err)
+	}
+	regs, _ := coretest.Registries()
+	if err := config.Validate(got, regs); err != nil {
+		t.Errorf("valid config rejected: %v", err)
+	}
+	bad := []config.Config{
+		{Environments: map[string]config.Environment{"a b": {}}},
+		{Environments: map[string]config.Environment{"dev": {File: "../secrets"}}},
+		{Environments: map[string]config.Environment{"dev": {File: "/etc/env"}}},
+		{DefaultEnvironment: "x/y"},
+		{ActiveEnvironment: "x y"},
+	}
+	for _, c := range bad {
+		if err := config.Validate(c, regs); !errors.Is(err, core.ErrInvalidRequest) {
+			t.Errorf("Validate(%+v) = %v, want ErrInvalidRequest", c, err)
+		}
 	}
 }

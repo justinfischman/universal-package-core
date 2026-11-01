@@ -14,14 +14,17 @@ import (
 // record their calls.
 type PackageManager struct {
 	core.BasePackageManager
-	Calls []core.Capability
+	Calls    []core.Capability
+	Requests []core.Request
+	// Hook, when set, runs before each handler and may fail the call.
+	Hook func(core.Capability, core.Request) error
 }
 
 // NewPackageManager builds a fake manager for a language.
 func NewPackageManager(id, language string, unsupported ...core.Capability) (*PackageManager, error) {
 	pm := &PackageManager{
 		BasePackageManager: core.NewBasePackageManager(id, language,
-			core.Tool{Binary: id, VersionArgs: []string{"--version"}, InstallHint: "install " + id}, id+".marker"),
+			core.Tool{Binary: id, VersionArgs: []string{"--version"}, InstallHint: "install " + id, InstallCmd: []string{"install", id}}, id+".marker"),
 	}
 	skip := map[core.Capability]bool{}
 	for _, c := range unsupported {
@@ -33,9 +36,15 @@ func NewPackageManager(id, language string, unsupported ...core.Capability) (*Pa
 			err = pm.Declare(c, core.Unsupported("fake: not supported"), nil)
 		} else {
 			c := c
-			err = pm.Declare(c, core.Native(), func(context.Context, core.Request) (core.Result, error) {
+			err = pm.Declare(c, core.Native(), func(_ context.Context, req core.Request) (core.Result, error) {
 				pm.Calls = append(pm.Calls, c)
-				return core.Result{Summary: id + " " + string(c)}, nil
+				pm.Requests = append(pm.Requests, req)
+				if pm.Hook != nil {
+					if err := pm.Hook(c, req); err != nil {
+						return core.Result{}, err
+					}
+				}
+				return core.Result{Summary: id + " " + string(c), Commands: []string{id + " " + string(c)}}, nil
 			})
 		}
 		if err != nil {
@@ -93,6 +102,7 @@ func (p ProjectType) Scaffold(_ context.Context, req core.ScaffoldRequest) (core
 // managers and one fake project type.
 func Registries() (core.Registries, error) {
 	regs := core.NewRegistries()
+	regs.DefaultLanguage = "alpha"
 	lang := Language{LangID: "alpha", PMs: []string{"alpha-one", "alpha-two"}, Marker: "alpha.marker"}
 	other := Language{LangID: "beta", PMs: []string{"beta-one"}, Marker: "beta.marker"}
 	for _, l := range []core.Language{lang, other} {

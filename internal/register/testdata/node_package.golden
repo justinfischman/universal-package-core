@@ -1,0 +1,42 @@
+$ npm init --yes
+$ npm pkg set version=0.1.0 type=module main=dist/index.js types=dist/index.d.ts files[]=dist scripts.build=tsc scripts.test=node --test engines.node=>=22.18.0
+$ npm install --save-dev typescript @types/node
+
+=== .gitignore
+node_modules/
+dist/
+
+=== LICENSE (not compared)
+
+=== src/index.ts
+/** Returns a greeting for the given name. */
+export function greet(name: string): string {
+  return `Hello, ${name}!`;
+}
+
+=== test/index.test.ts
+import assert from "node:assert/strict";
+import { test } from "node:test";
+
+import { greet } from "../src/index.ts";
+
+test("greet", () => {
+  assert.equal(greet("demo-lib"), "Hello, demo-lib!");
+});
+
+=== tsconfig.json
+{
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "nodenext",
+    "strict": true,
+    "declaration": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "rewriteRelativeImportExtensions": true,
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true
+  },
+  "include": ["src"]
+}

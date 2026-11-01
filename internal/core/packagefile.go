@@ -8,8 +8,8 @@ type Manifest struct {
 	Scripts map[string]string
 }
 
-// PackageFile reads a manager's manifest (pyproject.toml, package.json). upc
-// reads it to detect and report; the package manager owns writing it.
+// PackageFile reads a manager's manifest. upc reads it to detect and report;
+// the package manager owns writing it.
 type PackageFile interface {
 	// Filename is the manifest file name.
 	Filename() string

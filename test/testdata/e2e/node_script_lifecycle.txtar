@@ -1,0 +1,20 @@
+# new script -> run -> add -> list -> remove with the real npm
+exec upc new script hello --language node --pm npm --yes
+exists hello/hello.ts
+exists hello/package.json
+exists hello/.universal-package-core/config.toml
+cd hello
+
+exec upc run hello.ts World
+stdout 'Hello, World!'
+exec upc run start
+stdout 'Hello, world!'
+
+exec upc add is-odd
+grep '"is-odd"' package.json
+exec upc list
+stdout 'is-odd'
+exec upc remove is-odd
+! grep '"is-odd"' package.json
+exec upc doctor
+stdout 'npm'

@@ -1,0 +1,21 @@
+# init leaves an existing uv project's manifest and lockfile byte-identical
+exec uv init --bare --name fixture project
+cd project
+exec uv lock
+cp pyproject.toml pyproject.before
+cp uv.lock uv.before
+
+exec upc init --yes
+exists .universal-package-core/config.toml
+cmp pyproject.toml pyproject.before
+cmp uv.lock uv.before
+
+# a bare requirements.txt project is detected and configured too
+cd ..
+mkdir bare
+cd bare
+exec sh -c 'echo requests > requirements.txt'
+exec upc init --yes
+exists .universal-package-core/config.toml
+grep 'language = ''python''' .universal-package-core/config.toml
+grep '^requests$' requirements.txt

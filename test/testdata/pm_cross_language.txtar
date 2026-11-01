@@ -1,0 +1,34 @@
+# a package manager of another language is refused and the config stays unchanged
+cd pyproject-project
+exec upc config set pm uv
+cp .universal-package-core/config.toml config.before
+! exec upc config set pm npm
+stderr 'npm'
+stderr 'node'
+stderr 'python'
+exec upc config get pm
+stdout 'pm = uv'
+cmp .universal-package-core/config.toml config.before
+
+# the refusal also applies to the manager list
+! exec upc config set package_managers uv,npm
+exec upc config get package_managers
+! stdout 'npm'
+cmp .universal-package-core/config.toml config.before
+
+# the same holds the other way round
+cd ../node-project
+exec upc config set pm npm
+stdout 'set pm = npm'
+! exec upc config set pm uv
+stderr 'uv'
+stderr 'python'
+exec upc config get pm
+stdout 'pm = npm'
+
+-- pyproject-project/pyproject.toml --
+[project]
+name = "demo"
+version = "0.1.0"
+-- node-project/package.json --
+{"name": "demo", "version": "1.0.0"}

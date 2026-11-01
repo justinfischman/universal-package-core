@@ -102,8 +102,11 @@ var skipDirs = map[string]bool{".git": true, "bin": true, "dist": true, "target"
 
 // allowedFor reports whether path (slash-separated, relative to the root) may
 // mention the module id: its own tree, the composition root, and the
-// documentation and spec files.
-func allowedFor(path, id string) bool {
+// documentation and spec files. A package manager id is also allowed anywhere
+// in the tree of the language that owns it: internal/stacks/<lang>/<id> exists
+// under root, so the language module may declare and configure its own manager
+// (ADR-0002).
+func allowedFor(root, path, id string) bool {
 	if under(path, "internal/register") || under(path, "internal/arch") {
 		return true
 	}
@@ -119,18 +122,43 @@ func allowedFor(path, id string) bool {
 			return true
 		}
 	}
-	return false
+	return ownedByLanguageTree(root, path, id)
 }
 
-// CheckWords walks root and reports every file that names a module id outside
-// its allowed trees. Matching is case-insensitive and whole-word.
-func CheckWords(root string, ids []string) ([]string, error) {
-	res := make(map[string]*regexp.Regexp, len(ids))
-	for _, id := range ids {
-		res[id] = regexp.MustCompile(`(?i)\b` + regexp.QuoteMeta(id) + `\b`)
+// ownedByLanguageTree reports whether path lies in internal/stacks/<lang>/ and
+// that language has a subpackage named id (its package manager).
+func ownedByLanguageTree(root, path, id string) bool {
+	parts := strings.Split(path, "/")
+	if len(parts) < 4 || parts[0] != "internal" || parts[1] != "stacks" {
+		return false
 	}
+	info, err := os.Stat(filepath.Join(root, "internal", "stacks", parts[2], id))
+	return err == nil && info.IsDir()
+}
+
+// CheckMarkers reports every file outside internal/stacks/<language>/ that names
+// a marker file (for example a lock file) declared by that language's managers.
+// markers maps file name to owning language id. Composition, docs and specs are
+// exempt as for module ids.
+func CheckMarkers(root string, markers map[string]string) ([]string, error) {
 	var out []string
-	err := filepath.WalkDir(root, func(p string, d os.DirEntry, err error) error {
+	err := walkSource(root, func(relPath string, data []byte) {
+		for name, lang := range markers {
+			if under(relPath, "internal/stacks/"+lang) || allowedFor(root, relPath, name) {
+				continue
+			}
+			if regexp.MustCompile(`(?i)(^|[^\w.-])` + regexp.QuoteMeta(name) + `\b`).Match(data) {
+				out = append(out, fmt.Sprintf("%s names marker file %q outside internal/stacks/%s", relPath, name, lang))
+			}
+		}
+	})
+	return out, err
+}
+
+// walkSource calls fn with the root-relative path and content of each scanned
+// source file.
+func walkSource(root string, fn func(relPath string, data []byte)) error {
+	return filepath.WalkDir(root, func(p string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -147,20 +175,29 @@ func CheckWords(root string, ids []string) ([]string, error) {
 		if err != nil {
 			return err
 		}
-		relPath = filepath.ToSlash(relPath)
 		data, err := os.ReadFile(p)
 		if err != nil {
 			return err
 		}
+		fn(filepath.ToSlash(relPath), data)
+		return nil
+	})
+}
+
+// CheckWords walks root and reports every file that names a module id outside
+// its allowed trees. Matching is case-insensitive and whole-word.
+func CheckWords(root string, ids []string) ([]string, error) {
+	res := make(map[string]*regexp.Regexp, len(ids))
+	for _, id := range ids {
+		res[id] = regexp.MustCompile(`(?i)\b` + regexp.QuoteMeta(id) + `\b`)
+	}
+	var out []string
+	err := walkSource(root, func(relPath string, data []byte) {
 		for _, id := range ids {
-			if allowedFor(relPath, id) {
-				continue
-			}
-			if res[id].Match(data) {
+			if !allowedFor(root, relPath, id) && res[id].Match(data) {
 				out = append(out, fmt.Sprintf("%s mentions %q outside its own tree", relPath, id))
 			}
 		}
-		return nil
 	})
 	return out, err
 }

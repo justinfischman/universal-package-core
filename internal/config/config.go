@@ -10,6 +10,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/pelletier/go-toml/v2"
 
@@ -37,30 +38,66 @@ const (
 
 // Config is the set of upc's own choices.
 type Config struct {
-	Language       string            `toml:"language,omitempty"`
-	PackageManager string            `toml:"package_manager,omitempty"`
-	ProjectType    string            `toml:"project_type,omitempty"`
-	Environments   map[string]string `toml:"environments,omitempty"`
-	Workspace      []string          `toml:"workspace,omitempty"`
+	Language       string `toml:"language,omitempty"`
+	PackageManager string `toml:"package_manager,omitempty"`
+	// PackageManagers lists every manager a project uses when it uses several.
+	PackageManagers []string `toml:"package_managers,omitempty"`
+	ProjectType     string   `toml:"project_type,omitempty"`
+	// Environments maps a name to its env file (ADR-0006). upc never reads the file.
+	Environments map[string]Environment `toml:"environments,omitempty"`
+	// DefaultEnvironment is the environment used when none was selected.
+	DefaultEnvironment string `toml:"default_environment,omitempty"`
+	// ActiveEnvironment is the selection made by `upc env use`.
+	ActiveEnvironment string   `toml:"active_environment,omitempty"`
+	Workspace         []string `toml:"workspace,omitempty"`
+}
+
+// Environment is one declared environment. An empty File means the convention
+// file `.env.<name>`.
+type Environment struct {
+	File string `toml:"file,omitempty"`
+}
+
+// EffectiveEnvironment is the selected environment, else the default, else "".
+func (c Config) EffectiveEnvironment() string {
+	if c.ActiveEnvironment != "" {
+		return c.ActiveEnvironment
+	}
+	return c.DefaultEnvironment
 }
 
 // Keys settable and gettable through `upc config`.
 const (
 	KeyLanguage       = "language"
 	KeyPackageManager = "package_manager"
-	KeyProjectType    = "project_type"
+	// KeyPackageManagers holds a comma-separated list of manager ids.
+	KeyPackageManagers = "package_managers"
+	KeyProjectType     = "project_type"
+
+	// aliasPackageManager is the short form of KeyPackageManager.
+	aliasPackageManager = "pm"
 )
 
-// Keys lists the scalar keys in display order.
-var Keys = []string{KeyLanguage, KeyPackageManager, KeyProjectType}
+// Keys lists the settable keys in display order.
+var Keys = []string{KeyLanguage, KeyPackageManager, KeyPackageManagers, KeyProjectType}
+
+// CanonicalKey resolves a key alias (`pm`) to its stored key.
+func CanonicalKey(key string) string {
+	if key == aliasPackageManager {
+		return KeyPackageManager
+	}
+	return key
+}
 
 // Get returns a scalar value by key.
 func (c Config) Get(key string) (string, error) {
-	switch key {
+	switch CanonicalKey(key) {
 	case KeyLanguage:
 		return c.Language, nil
 	case KeyPackageManager:
 		return c.PackageManager, nil
+	case KeyPackageManagers:
+		return strings.Join(c.PackageManagers, ","), nil
 	case KeyProjectType:
 		return c.ProjectType, nil
 	}
@@ -69,17 +106,33 @@ func (c Config) Get(key string) (string, error) {
 
 // Set assigns a scalar value by key and returns the updated copy.
 func (c Config) Set(key, value string) (Config, error) {
-	switch key {
+	switch CanonicalKey(key) {
 	case KeyLanguage:
 		c.Language = value
 	case KeyPackageManager:
 		c.PackageManager = value
+	case KeyPackageManagers:
+		c.PackageManagers = splitList(value)
 	case KeyProjectType:
 		c.ProjectType = value
 	default:
 		return c, unknownKey(key)
 	}
 	return c, nil
+}
+
+// splitList parses a comma-separated list, dropping blanks and repeats.
+func splitList(value string) []string {
+	var out []string
+	seen := map[string]bool{}
+	for _, item := range strings.Split(value, ",") {
+		item = strings.TrimSpace(item)
+		if item != "" && !seen[item] {
+			seen[item] = true
+			out = append(out, item)
+		}
+	}
+	return out
 }
 
 func unknownKey(key string) error {
@@ -175,8 +228,14 @@ func (s Store) Load() (Resolved, error) {
 			res.Sources[k] = Project
 		}
 	}
+	if p.DefaultEnvironment != "" {
+		res.DefaultEnvironment = p.DefaultEnvironment
+	}
+	if p.ActiveEnvironment != "" {
+		res.ActiveEnvironment = p.ActiveEnvironment
+	}
 	if len(p.Environments) > 0 {
-		merged := map[string]string{}
+		merged := map[string]Environment{}
 		for k, v := range g.Environments {
 			merged[k] = v
 		}

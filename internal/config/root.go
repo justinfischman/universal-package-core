@@ -9,7 +9,7 @@ import (
 
 // FindRoot walks up from start looking for a project root. A directory holding
 // DirName wins; otherwise the nearest directory a registered package manager
-// detects. globalDir is skipped so the global config is never mistaken for a
+// or language detects. globalDir is skipped so the global config is never mistaken for a
 // project. It returns "" when nothing is found.
 func FindRoot(fsys fsx.FS, start, globalDir string, regs core.Registries) string {
 	for _, byMarker := range []bool{false, true} {
@@ -36,6 +36,11 @@ func matches(fsys fsx.FS, dir, globalDir string, regs core.Registries, byMarker 
 	dirFS := fsys.DirFS(dir)
 	for _, pm := range regs.PackageManagers.List() {
 		if pm.Detect(dirFS) {
+			return true
+		}
+	}
+	for _, lang := range regs.Languages.List() {
+		if lang.Detect(dirFS) {
 			return true
 		}
 	}

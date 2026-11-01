@@ -1,0 +1,16 @@
+{
+  "version": "1.0.0",
+  "name": "demo",
+  "dependencies": {
+    "is-even": {
+      "version": "0.1.0",
+      "resolved": "https://registry.npmjs.org/is-even/-/is-even-0.1.0.tgz",
+      "overridden": false
+    },
+    "is-odd": {
+      "version": "2.0.0",
+      "resolved": "https://registry.npmjs.org/is-odd/-/is-odd-2.0.0.tgz",
+      "overridden": false
+    }
+  }
+}

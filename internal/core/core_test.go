@@ -131,7 +131,7 @@ func TestExitCode(t *testing.T) {
 		{"incompatible", fmt.Errorf("x: %w", core.ErrIncompatible), core.ExitUsage},
 		{"unsupported", &core.UnsupportedError{PackageManager: "p", Capability: core.CapAdd}, core.ExitUnsupported},
 		{"wrapped unsupported", fmt.Errorf("ctx: %w", &core.UnsupportedError{}), core.ExitUnsupported},
-		{"tool missing", &core.ToolMissingError{Tool: "uv"}, core.ExitToolMissing},
+		{"tool missing", &core.ToolMissingError{Tool: "alpha"}, core.ExitToolMissing},
 	}
 	for _, c := range cases {
 		if got := core.ExitCode(c.err); got != c.want {
@@ -150,5 +150,51 @@ func TestCapabilityHelpers(t *testing.T) {
 			t.Errorf("duplicate capability %s", c)
 		}
 		seen[c] = true
+	}
+}
+
+func TestRequirePackages(t *testing.T) {
+	cases := []struct {
+		name string
+		pkgs []string
+		ok   bool
+	}{
+		{"valid", []string{"requests", "rich>=13", "a[extra]==1"}, true},
+		{"none", nil, false},
+		{"blank", []string{" "}, false},
+		{"flag", []string{"--index-url=x"}, false},
+		{"short flag", []string{"-r"}, false},
+	}
+	for _, c := range cases {
+		err := core.Request{Packages: c.pkgs}.RequirePackages()
+		if (err == nil) != c.ok || (err != nil && !errors.Is(err, core.ErrInvalidRequest)) {
+			t.Errorf("%s: err = %v", c.name, err)
+		}
+	}
+	if err := (core.Request{}).ValidatePackages(); err != nil {
+		t.Errorf("no packages is valid for ValidatePackages: %v", err)
+	}
+}
+
+func TestExecuteFillsInstallInfoOnMissingTool(t *testing.T) {
+	tool := core.Tool{Binary: "tool", InstallHint: "get tool", InstallCmd: []string{"get", "tool"}}
+	pm := core.NewBasePackageManager("p", "l", tool)
+	for _, c := range core.AllCapabilities {
+		var err error
+		if c == core.CapAdd {
+			err = pm.Declare(c, core.Native(), func(context.Context, core.Request) (core.Result, error) {
+				return core.Result{}, &core.ToolMissingError{Tool: "tool"}
+			})
+		} else {
+			err = pm.Declare(c, core.Unsupported("n/a"), nil)
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	_, err := pm.Execute(context.Background(), core.CapAdd, core.Request{})
+	var missing *core.ToolMissingError
+	if !errors.As(err, &missing) || missing.InstallHint != "get tool" || len(missing.InstallCmd) != 2 {
+		t.Errorf("err = %+v", missing)
 	}
 }
