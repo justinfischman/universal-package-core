@@ -356,6 +356,9 @@ Full CI run on all three OSes with E2E.
 ### Risks
 Splitting tests can lose cases silently. Mitigation: compare `go test -list` names before and after.
 
+
+Status: DONE 2026-11-15 (merged to main). Done: pip interpreter fallback, yarn list error, shared invoke/pkgreport/drift components, six test files split (test list unchanged), cmd/upc smoke test, exit-code CHANGELOG note, gofmt, init ignores run/, up.log kept after down, Windows tree kill and pid-reuse guard, ADR-0009 fix, config-based script and up lookup (config is consulted before the manager's sources; ADR-0016 amended). Still deferred: native `publish --dry-run` (the global dry-run runner executes nothing, so publish needs a live runner first), offer to create an up script (no manager capability can add a script without editing the manifest), workspace-member comparison with the manager's native list (decision 3), `--app X` with dependencies, `${...}` escape syntax.
+
 ---
 
 ## Phase 6.8: Final documentation audit and integration validation
