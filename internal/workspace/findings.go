@@ -9,11 +9,13 @@ import (
 // kind so callers can tell them apart (ADR-0014 decision 8).
 type FindingKind string
 
-// The kinds implemented so far. Contract findings come with the checkers.
+// The finding kinds, one per check.
 const (
 	PortCollision           FindingKind = "port-collision"
 	ConsumerWithoutProvider FindingKind = "consumer-without-provider"
 	UnresolvedVariable      FindingKind = "unresolved-variable"
+	ContractLockMissing     FindingKind = "contract-missing"
+	ContractLockChanged     FindingKind = "contract-changed"
 )
 
 // Finding is one cross-app problem.
@@ -23,12 +25,13 @@ type Finding struct {
 }
 
 // Findings runs the cross-app checks in a fixed order: port collisions,
-// consumers without a provider, then unresolved variables.
+// consumers without a provider, unresolved variables, then contract locks.
 func (w *Workspace) Findings() []Finding {
 	var out []Finding
 	out = append(out, w.portCollisions()...)
 	out = append(out, w.consumersWithoutProvider()...)
 	out = append(out, w.unresolvedVariables()...)
+	out = append(out, w.contractFindings()...)
 	return out
 }
 

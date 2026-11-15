@@ -34,11 +34,9 @@ func newWorkspaceCmd() *cobra.Command {
 	return cmd
 }
 
-// workspaceSubcommands is the seam for the workspace verbs. `workspace check`
-// (contract lock comparison and the contract doctor findings, ADR-0014
-// decision 6) is added here once the contract lock store exists.
+// workspaceSubcommands lists the workspace verbs.
 func workspaceSubcommands() []*cobra.Command {
-	return []*cobra.Command{newWorkspaceListCmd()}
+	return []*cobra.Command{newWorkspaceListCmd(), newWorkspaceCheckCmd()}
 }
 
 func newWorkspaceListCmd() *cobra.Command {
