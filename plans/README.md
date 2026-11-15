@@ -9,10 +9,13 @@ Plans are **read-only during execution** (track progress elsewhere). Finish a ph
 | # | File | Delivers | Depends on |
 |---|---|---|---|
 | 1 (done) | `01-foundation.md` | Buildable CLI skeleton, core interfaces, registry, components, config/storage, logging, test and arch harness | none |
-| 2 | `02-mvp-python-uv-script.md` | **MVP**: Python + `uv` + `script` type; `new/init/add/remove/list/install/run/update/outdated/doctor` | 1 |
-| 3 | `03-python-stacks-and-package-type.md` | `pip` and `poetry`, gap-filling, PM switching, `package` type, `build/test/lint/audit` | 2 |
-| 4 | `04-node-stack.md` | Node with `npm` then `yarn`, same capability set, cross-language switch refused | 3 |
-| 5 | `05-environments-workspace-app-release.md` | `env`, `up/down`, `workspace`, `app` type, `publish`, Homebrew release | 4 |
+| 2 (done) | `02-mvp-python-uv-script.md` | **MVP**: Python + `uv` + `script` type; `new/init/add/remove/list/install/run/update/outdated/doctor` | 1 |
+| 3 (done) | `03-python-stacks-and-package-type.md` | `pip` and `poetry`, gap-filling, PM switching, `package` type, `build/test/lint/audit` | 2 |
+| 4 (done) | `04-node-stack.md` | Node with `npm` then `yarn`, same capability set, cross-language switch refused | 3 |
+| 5 (partial: only `env list\|use\|show` built; the rest moved to 06) | `05-environments-workspace-app-release.md` | `env`, `up/down`, `workspace`, `app` type, `publish`, Homebrew release | 4 |
+| 6 (next) | `06-agnostic-core-environments-multiapp-release.md` | Data-driven commands, constraint mapper, environments and groups, config layering, `up/down`, `publish`, workspace/multi-app, `app` type, release, hardening. Absorbs the unbuilt parts of 05 | 5 (slice 1) |
+
+Plan 03 says a cross-language switch exits 1; the code exits 2. Plans stay read-only, so this is recorded in `docs/CHANGELOG.md` (Known gaps).
 
 ## MVP definition
 
@@ -26,10 +29,10 @@ Why this cut: the spec's `decisions` put Python/`uv` and `script` first. `uv ini
 
 | Acceptance | Delivered by |
 |---|---|
-| Spin up any project type with any stack | script: P2, package: P3, app: P5; stacks: uv P2, pip/poetry P3, npm/yarn P4 |
+| Spin up any project type with any stack | script: P2, package: P3, app: P6; stacks: uv P2, pip/poetry P3, npm/yarn P4 |
 | Install and manage packages how I need | P2 (uv), P3, P4 |
-| Spin a project up/down locally in different environments | P5 |
-| Environment never out of line between PM and upc | P2 `doctor` drift check (basic), P5 `env` + drift for all PMs |
+| Spin a project up/down locally in different environments | P6 (`env` slice built in P5) |
+| Environment never out of line between PM and upc | P2 `doctor` drift check (basic), P6 drift for all PMs and env groups |
 
 ## Cross-phase conventions
 
