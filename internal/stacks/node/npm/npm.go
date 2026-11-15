@@ -88,6 +88,8 @@ func (n *NPM) declare() error {
 	filled := map[core.Capability]core.Handler{
 		core.CapBuild: n.build,
 		core.CapLint:  n.lint,
+		core.CapUp:    n.up,
+		core.CapDown:  n.down,
 	}
 	for _, c := range core.AllCapabilities {
 		var err error
@@ -96,7 +98,7 @@ func (n *NPM) declare() error {
 		} else if h, ok := filled[c]; ok {
 			err = n.Declare(c, core.Filled(), h)
 		} else {
-			err = n.Declare(c, core.Unsupported("up/down are not available for this manager yet"), nil)
+			err = n.Declare(c, core.Unsupported("capability is not available for this manager"), nil)
 		}
 		if err != nil {
 			return err

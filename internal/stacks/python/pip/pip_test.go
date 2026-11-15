@@ -132,7 +132,7 @@ func TestCapabilityTable(t *testing.T) {
 		core.CapRemove: core.LevelFilled, core.CapList: core.LevelNative, core.CapUpdate: core.LevelFilled,
 		core.CapOutdated: core.LevelNative, core.CapRun: core.LevelFilled, core.CapBuild: core.LevelFilled,
 		core.CapTest: core.LevelFilled, core.CapLint: core.LevelFilled, core.CapAudit: core.LevelFilled,
-		core.CapPublish: core.LevelFilled, core.CapUp: core.LevelUnsupported, core.CapDown: core.LevelUnsupported,
+		core.CapPublish: core.LevelFilled, core.CapUp: core.LevelFilled, core.CapDown: core.LevelFilled,
 	}
 	if len(want) != len(core.AllCapabilities) {
 		t.Fatalf("table covers %d of %d capabilities", len(want), len(core.AllCapabilities))
@@ -141,9 +141,6 @@ func TestCapabilityTable(t *testing.T) {
 		if caps[c].Level != level {
 			t.Errorf("%s = %q, want %q", c, caps[c].Level, level)
 		}
-	}
-	if caps[core.CapUp].Reason == "" {
-		t.Error("unsupported capabilities need a reason")
 	}
 }
 

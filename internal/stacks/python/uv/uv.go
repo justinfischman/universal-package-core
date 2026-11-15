@@ -65,10 +65,8 @@ func (u *UV) declare() error {
 	filled := map[core.Capability]core.Handler{
 		core.CapTest: u.test,
 		core.CapLint: u.lint,
-	}
-	unsupported := map[core.Capability]string{
-		core.CapUp:   "up/down are not available for this manager yet",
-		core.CapDown: "up/down are not available for this manager yet",
+		core.CapUp:   u.up,
+		core.CapDown: u.down,
 	}
 	for _, c := range core.AllCapabilities {
 		var err error
@@ -77,7 +75,7 @@ func (u *UV) declare() error {
 		} else if h, ok := filled[c]; ok {
 			err = u.Declare(c, core.Filled(), h)
 		} else {
-			err = u.Declare(c, core.Unsupported(unsupported[c]), nil)
+			err = u.Declare(c, core.Unsupported("not supported by uv"), nil)
 		}
 		if err != nil {
 			return err

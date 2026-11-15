@@ -88,6 +88,8 @@ func (y *Yarn) declare() error {
 	filled := map[core.Capability]core.Handler{
 		core.CapBuild: y.build,
 		core.CapLint:  y.lint,
+		core.CapUp:    y.up,
+		core.CapDown:  y.down,
 	}
 	for _, c := range core.AllCapabilities {
 		var err error
@@ -96,7 +98,7 @@ func (y *Yarn) declare() error {
 		} else if h, ok := filled[c]; ok {
 			err = y.Declare(c, core.Filled(), h)
 		} else {
-			err = y.Declare(c, core.Unsupported("up/down are not available for this manager yet"), nil)
+			err = y.Declare(c, core.Unsupported("capability is not available for this manager"), nil)
 		}
 		if err != nil {
 			return err

@@ -68,7 +68,7 @@ func TestEveryCapabilityIsDeclared(t *testing.T) {
 		core.CapOutdated: core.LevelNative, core.CapRun: core.LevelNative, core.CapBuild: core.LevelNative,
 		core.CapPublish: core.LevelNative,
 		core.CapTest:    core.LevelFilled, core.CapLint: core.LevelFilled, core.CapAudit: core.LevelFilled,
-		core.CapUp: core.LevelUnsupported, core.CapDown: core.LevelUnsupported,
+		core.CapUp: core.LevelFilled, core.CapDown: core.LevelFilled,
 	}
 	if len(want) != len(core.AllCapabilities) {
 		t.Fatalf("test table covers %d of %d capabilities", len(want), len(core.AllCapabilities))
@@ -319,16 +319,6 @@ func TestUndeclaredToolIsUnsupportedWithHowToEnable(t *testing.T) {
 		var ue *core.UnsupportedError
 		if !errors.As(err, &ue) || ue.PackageManager != ID || !strings.Contains(err.Error(), hint) || len(fake.Calls) != 0 {
 			t.Errorf("%s: err = %v, ran %v", c, err, argv(fake))
-		}
-	}
-}
-
-func TestUnsupportedCapabilitiesNamePoetryAndReason(t *testing.T) {
-	for _, c := range []core.Capability{core.CapUp, core.CapDown} {
-		_, err := newPoetry(t).Execute(t.Context(), c, core.Request{})
-		var ue *core.UnsupportedError
-		if !errors.As(err, &ue) || ue.PackageManager != ID || ue.Reason == "" || core.ExitCode(err) != core.ExitUnsupported {
-			t.Errorf("%s: err = %v", c, err)
 		}
 	}
 }

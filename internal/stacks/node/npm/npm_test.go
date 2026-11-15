@@ -84,7 +84,7 @@ func TestEveryCapabilityIsDeclared(t *testing.T) {
 		core.CapOutdated: core.LevelNative, core.CapAudit: core.LevelNative, core.CapRun: core.LevelNative,
 		core.CapTest: core.LevelNative, core.CapPublish: core.LevelNative,
 		core.CapBuild: core.LevelFilled, core.CapLint: core.LevelFilled,
-		core.CapUp: core.LevelUnsupported, core.CapDown: core.LevelUnsupported,
+		core.CapUp: core.LevelFilled, core.CapDown: core.LevelFilled,
 	}
 	if len(want) != len(core.AllCapabilities) {
 		t.Fatalf("test table covers %d of %d capabilities", len(want), len(core.AllCapabilities))

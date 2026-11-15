@@ -24,7 +24,7 @@ func TestEveryCapabilityIsDeclared(t *testing.T) {
 		core.CapOutdated: core.LevelNative, core.CapAudit: core.LevelNative, core.CapRun: core.LevelNative,
 		core.CapBuild: core.LevelNative, core.CapPublish: core.LevelNative,
 		core.CapTest: core.LevelFilled, core.CapLint: core.LevelFilled,
-		core.CapUp: core.LevelUnsupported, core.CapDown: core.LevelUnsupported,
+		core.CapUp: core.LevelFilled, core.CapDown: core.LevelFilled,
 	}
 	if len(want) != len(core.AllCapabilities) {
 		t.Fatalf("test table covers %d of %d capabilities", len(want), len(core.AllCapabilities))
@@ -267,19 +267,6 @@ func TestInitRejectsBadInput(t *testing.T) {
 		fake := &execx.FakeRunner{}
 		if _, err := call(t, core.CapInit, req, fake); !errors.Is(err, core.ErrInvalidRequest) || len(fake.Calls) != 0 {
 			t.Errorf("%s: err = %v, ran %v", name, err, argv(fake))
-		}
-	}
-}
-
-func TestUnsupportedCapabilitiesNameUvAndReason(t *testing.T) {
-	for _, c := range []core.Capability{core.CapUp, core.CapDown} {
-		_, err := newUV(t).Execute(t.Context(), c, core.Request{})
-		var ue *core.UnsupportedError
-		if !errors.As(err, &ue) || ue.PackageManager != "uv" || ue.Reason == "" {
-			t.Errorf("%s: err = %v", c, err)
-		}
-		if core.ExitCode(err) != core.ExitUnsupported {
-			t.Errorf("%s: exit %d", c, core.ExitCode(err))
 		}
 	}
 }

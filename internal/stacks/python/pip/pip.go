@@ -85,6 +85,8 @@ func (p *PIP) declare() error {
 		core.CapLint:    p.lint,
 		core.CapAudit:   p.audit,
 		core.CapPublish: p.publish,
+		core.CapUp:      p.up,
+		core.CapDown:    p.down,
 	}
 	for _, c := range core.AllCapabilities {
 		var err error
@@ -94,7 +96,7 @@ func (p *PIP) declare() error {
 		case filled[c] != nil:
 			err = p.Declare(c, core.Filled(), filled[c])
 		default:
-			err = p.Declare(c, core.Unsupported("up/down are not available for this manager yet"), nil)
+			err = p.Declare(c, core.Unsupported("not supported by pip"), nil)
 		}
 		if err != nil {
 			return err
