@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"runtime"
 
+	"github.com/justinfischman/universal-package-core/internal/components/fsx"
 	"github.com/justinfischman/universal-package-core/internal/core"
 	"github.com/justinfischman/universal-package-core/internal/stacks/python"
 )
@@ -20,6 +21,7 @@ const (
 // UV implements core.PackageManager and core.Diagnoser.
 type UV struct {
 	core.BasePackageManager
+	fsys fsx.FS
 }
 
 var (
@@ -37,10 +39,10 @@ const (
 )
 
 // New builds uv with the install command for the running platform.
-func New() (*UV, error) { return newFor(runtime.GOOS) }
+func New(fsys fsx.FS) (*UV, error) { return newFor(fsys, runtime.GOOS) }
 
-func newFor(goos string) (*UV, error) {
-	u := &UV{BasePackageManager: core.NewBasePackageManager(ID, python.ID, tool(goos), "uv.lock")}
+func newFor(fsys fsx.FS, goos string) (*UV, error) {
+	u := &UV{BasePackageManager: core.NewBasePackageManager(ID, python.ID, tool(goos), "uv.lock"), fsys: fsys}
 	return u, u.declare()
 }
 

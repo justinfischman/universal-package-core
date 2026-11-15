@@ -256,6 +256,7 @@ func TestInitDryRunChangesNothing(t *testing.T) {
 	for _, req := range []core.Request{
 		{ProjectType: "script", Script: "hello"},
 		{ProjectType: "package", Name: "demo"},
+		{ProjectType: "app", Name: "demo"},
 	} {
 		dir := t.TempDir()
 		req.Dir, req.DryRun = dir, true
@@ -292,7 +293,9 @@ func TestInvalidInputRunsNothing(t *testing.T) {
 		"script exists":        {core.CapInit, core.Request{Dir: existing, ProjectType: "script", Script: "hello"}},
 		"package upper case":   {core.CapInit, core.Request{Dir: t.TempDir(), ProjectType: "package", Name: "Demo"}},
 		"package exists":       {core.CapInit, core.Request{Dir: existing, ProjectType: "package", Name: "demo"}},
-		"unknown project type": {core.CapInit, core.Request{Dir: t.TempDir(), ProjectType: "app", Name: "demo"}},
+		"app upper case":       {core.CapInit, core.Request{Dir: t.TempDir(), ProjectType: "app", Name: "Demo"}},
+		"app exists":           {core.CapInit, core.Request{Dir: existing, ProjectType: "app", Name: "demo"}},
+		"unknown project type": {core.CapInit, core.Request{Dir: t.TempDir(), ProjectType: "service", Name: "demo"}},
 	}
 	for name, c := range cases {
 		t.Run(name, func(t *testing.T) {

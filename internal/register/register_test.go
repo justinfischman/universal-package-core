@@ -33,7 +33,7 @@ func TestRegisteredModules(t *testing.T) {
 	if got := regs.PackageManagers.IDs(); !reflect.DeepEqual(got, []string{"npm", "pip", "poetry", "uv", "yarn"}) {
 		t.Errorf("package managers = %v", got)
 	}
-	if got := regs.ProjectTypes.IDs(); !reflect.DeepEqual(got, []string{"package", "script"}) {
+	if got := regs.ProjectTypes.IDs(); !reflect.DeepEqual(got, []string{"app", "package", "script"}) {
 		t.Errorf("project types = %v", got)
 	}
 	if regs.DefaultLanguage != "python" {
@@ -57,9 +57,30 @@ func TestScriptTypeSupportsTheRegisteredStack(t *testing.T) {
 	}
 }
 
+func TestAppTypeSupportsEveryScaffoldingPair(t *testing.T) {
+	regs := defaults(t)
+	pt, ok := regs.ProjectTypes.Get("app")
+	if !ok {
+		t.Fatal("app must be registered")
+	}
+	for _, pair := range [][2]string{
+		{"python", "uv"}, {"python", "pip"}, {"python", "poetry"}, {"python", ""},
+		{"node", "npm"}, {"node", "yarn"}, {"node", ""},
+	} {
+		if !pt.Supports(pair[0], pair[1]) {
+			t.Errorf("app must support %s/%s", pair[0], pair[1])
+		}
+	}
+	for _, pair := range [][2]string{{"python", "npm"}, {"node", "uv"}, {"node", "pip"}, {"go", ""}, {"node", "pnpm"}} {
+		if pt.Supports(pair[0], pair[1]) {
+			t.Errorf("app must not be offered for %s/%s", pair[0], pair[1])
+		}
+	}
+}
+
 func TestProjectTypesSupportTheNodeStack(t *testing.T) {
 	regs := defaults(t)
-	for _, id := range []string{"script", "package"} {
+	for _, id := range []string{"script", "package", "app"} {
 		pt, _ := regs.ProjectTypes.Get(id)
 		if !pt.Supports("node", "npm") || !pt.Supports("node", "yarn") || !pt.Supports("node", "") {
 			t.Errorf("%s must support node/npm and node/yarn", id)

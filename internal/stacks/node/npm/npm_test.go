@@ -249,6 +249,7 @@ func TestInitDryRunChangesNothing(t *testing.T) {
 	for _, req := range []core.Request{
 		{ProjectType: "script", Script: "hello"},
 		{ProjectType: "package", Name: "demo"},
+		{ProjectType: "app", Name: "demo"},
 	} {
 		dir := t.TempDir()
 		req.Dir, req.DryRun = dir, true
@@ -277,7 +278,9 @@ func TestInitRejectsBadInput(t *testing.T) {
 		"package upper case":   {Dir: t.TempDir(), ProjectType: "package", Name: "Demo"},
 		"package flag-like":    {Dir: t.TempDir(), ProjectType: "package", Name: "-x"},
 		"package exists":       {Dir: existing, ProjectType: "package", Name: "demo"},
-		"unknown project type": {Dir: t.TempDir(), ProjectType: "app", Name: "demo"},
+		"app upper case":       {Dir: t.TempDir(), ProjectType: "app", Name: "Demo"},
+		"app exists":           {Dir: existing, ProjectType: "app", Name: "demo"},
+		"unknown project type": {Dir: t.TempDir(), ProjectType: "service", Name: "demo"},
 	}
 	for name, req := range cases {
 		t.Run(name, func(t *testing.T) {

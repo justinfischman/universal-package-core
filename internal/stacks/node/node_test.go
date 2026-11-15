@@ -3,6 +3,7 @@ package node
 import (
 	"io/fs"
 	"reflect"
+	"strings"
 	"testing"
 	"testing/fstest"
 
@@ -69,6 +70,7 @@ func TestTemplatesPerProjectType(t *testing.T) {
 	want := map[string][]string{
 		"script":  {".gitignore", "tsconfig.json"},
 		"package": {".gitignore", "src/index.ts", "test/index.test.ts.tmpl", "tsconfig.json"},
+		"app":     {".gitignore", "APP.md.tmpl", "Dockerfile", "compose.yaml", "src/main.ts", "tsconfig.json"},
 	}
 	for projectType, files := range want {
 		sub, ok := New().Templates(projectType)
@@ -86,7 +88,39 @@ func TestTemplatesPerProjectType(t *testing.T) {
 			t.Errorf("%s templates = %v (%v), want %v", projectType, got, err, files)
 		}
 	}
-	if _, ok := New().Templates("app"); ok {
-		t.Error("app has no templates")
+}
+
+func TestAppTemplatesGolden(t *testing.T) {
+	files, ok := New().Templates("app")
+	if !ok {
+		t.Fatal("node must provide app templates")
+	}
+	read := func(name string) string {
+		data, err := fs.ReadFile(files, name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return string(data)
+	}
+	if got, want := read(".gitignore"), "node_modules/\ndist/\n.universal-package-core/run/\n"; got != want {
+		t.Errorf(".gitignore = %q, want %q", got, want)
+	}
+	wants := map[string][]string{
+		"src/main.ts":   {`from "node:http"`, `process.argv[2] ?? "8000"`, `"127.0.0.1"`, "APP_HOST"},
+		"tsconfig.json": {`"strict": true`, `"module": "nodenext"`, `"outDir": "dist"`, `"rootDir": "src"`, `"erasableSyntaxOnly": true`},
+		"Dockerfile":    {"npm run build", "ENV APP_HOST=0.0.0.0", "EXPOSE 8000", `CMD ["node", "dist/main.js"`},
+		"compose.yaml":  {"services:", "build: .", `"127.0.0.1:8000:8000"`},
+		"APP.md.tmpl":   {"# {{.Name}}", "upc run dev", "upc build"},
+	}
+	for name, needs := range wants {
+		body := read(name)
+		for _, need := range needs {
+			if !strings.Contains(body, need) {
+				t.Errorf("%s lacks %s", name, need)
+			}
+		}
+	}
+	if strings.Contains(read("tsconfig.json"), `"declaration": true`) {
+		t.Error("an app emits no declaration files")
 	}
 }

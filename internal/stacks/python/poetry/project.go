@@ -3,6 +3,7 @@ package poetry
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 
 	"github.com/justinfischman/universal-package-core/internal/components/scripts"
 	"github.com/justinfischman/universal-package-core/internal/core"
@@ -10,7 +11,8 @@ import (
 	"github.com/justinfischman/universal-package-core/internal/stacks/python/shared"
 )
 
-// initProject routes to `poetry new --src <name>` for the package type and to
+// initProject routes to `poetry new --src <name>` for the package type and the
+// app type (the app then gets its dev and start scripts) and to
 // `poetry init --no-interaction` otherwise. Poetry has no standalone scripts,
 // and other project types are not scaffolded yet.
 func (p *Poetry) initProject(ctx context.Context, req core.Request) (core.Result, error) {
@@ -20,6 +22,20 @@ func (p *Poetry) initProject(ctx context.Context, req core.Request) (core.Result
 			return core.Result{}, err
 		}
 		return p.stream(ctx, req, shared.Concat([]string{"new", "--src", req.Name}, req.Args), "create package "+req.Name)
+	case "app":
+		if err := shared.ValidateProjectName(req.Name); err != nil {
+			return core.Result{}, err
+		}
+		res, err := p.stream(ctx, req, shared.Concat([]string{"new", "--src", req.Name}, req.Args), "create app "+req.Name)
+		if err != nil {
+			return core.Result{}, err
+		}
+		if !req.DryRun {
+			if err := shared.AppendAppScripts(p.fsys, filepath.Join(req.Dir, req.Name)); err != nil {
+				return core.Result{}, err
+			}
+		}
+		return res, nil
 	case "":
 		return p.stream(ctx, req, shared.Concat([]string{"init", "--no-interaction"}, req.Args), "initialize project")
 	}

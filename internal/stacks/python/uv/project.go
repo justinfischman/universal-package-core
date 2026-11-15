@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"path/filepath"
 
 	"github.com/justinfischman/universal-package-core/internal/core"
 	"github.com/justinfischman/universal-package-core/internal/stacks/python"
@@ -11,7 +12,8 @@ import (
 )
 
 // initProject routes to `uv init --script <file>` for the script project type,
-// `uv init --package <name>` for the package type and plain `uv init` when no
+// `uv init --package <name>` for the package type, `uv init --app <name>` for
+// the app type (then adds its dev and start scripts) and plain `uv init` when no
 // project type is given.
 func (u *UV) initProject(ctx context.Context, req core.Request) (core.Result, error) {
 	var args []string
@@ -28,6 +30,11 @@ func (u *UV) initProject(ctx context.Context, req core.Request) (core.Result, er
 			return core.Result{}, err
 		}
 		args, created = []string{"init", "--package", "--vcs", "none", "--no-workspace", req.Name}, "package "+req.Name
+	case "app":
+		if err := shared.ValidateProjectName(req.Name); err != nil {
+			return core.Result{}, err
+		}
+		args, created = []string{"init", "--app", "--vcs", "none", "--no-workspace", req.Name}, "app "+req.Name
 	case "":
 		args = []string{"init"}
 	default:
@@ -39,6 +46,11 @@ func (u *UV) initProject(ctx context.Context, req core.Request) (core.Result, er
 	}
 	if _, err := inv.Run(true, shared.Concat(args, req.Args)...); err != nil {
 		return core.Result{}, err
+	}
+	if req.ProjectType == "app" && !req.DryRun {
+		if err := shared.AppendAppScripts(u.fsys, filepath.Join(req.Dir, req.Name)); err != nil {
+			return core.Result{}, err
+		}
 	}
 	return inv.Result("initialized "+orDefault(created, "project"), "initialize "+orDefault(created, "project"), nil), nil
 }

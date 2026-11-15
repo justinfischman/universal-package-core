@@ -1,0 +1,8 @@
+# {{.Name}}
+
+Created by `upc new app`.
+
+- `upc install` installs the dependencies (TypeScript and the Node types).
+- `upc run dev` runs `src/main.ts` directly with Node's type stripping; `upc up` starts it in the background (port 8000, or pass one) and `upc down` stops it.
+- `upc build` compiles to `dist/`; `upc run start` runs the compiled app.
+- `docker compose up --build` runs it in a container (`Dockerfile`, `compose.yaml`) on 127.0.0.1:8000.

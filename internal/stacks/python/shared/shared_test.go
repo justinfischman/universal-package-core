@@ -3,12 +3,15 @@ package shared
 import (
 	"context"
 	"errors"
+	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
 	"testing/fstest"
 
 	"github.com/justinfischman/universal-package-core/internal/components/execx"
+	"github.com/justinfischman/universal-package-core/internal/components/fsx"
 	"github.com/justinfischman/universal-package-core/internal/core"
 )
 
@@ -158,5 +161,24 @@ func TestProjectNames(t *testing.T) {
 	}
 	if got := ModuleName("My-Lib"); got != "my_lib" {
 		t.Errorf("ModuleName = %q", got)
+	}
+}
+
+func TestAppendAppScriptsWritesTheUpcTableThroughTheGivenFS(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "pyproject.toml")
+	if err := os.WriteFile(path, []byte("[project]\nname = \"demo\""), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := AppendAppScripts(fsx.OS{}, dir); err != nil {
+		t.Fatal(err)
+	}
+	raw, _ := os.ReadFile(path)
+	want := "[project]\nname = \"demo\"\n\n[tool.upc.scripts]\ndev = \"python server.py\"\nstart = \"python server.py\"\n"
+	if string(raw) != want {
+		t.Errorf("pyproject = %q, want %q", raw, want)
+	}
+	if err := AppendAppScripts(fsx.OS{}, dir); err == nil {
+		t.Error("a second call must refuse an existing [tool.upc] table")
 	}
 }

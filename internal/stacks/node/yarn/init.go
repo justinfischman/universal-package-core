@@ -29,7 +29,8 @@ type manifest struct {
 
 // initProject creates a project with `yarn init`. The script type is a
 // directory with a package.json and one runnable file; the package type is a
-// TypeScript library with its development dependencies installed. With no
+// TypeScript library and the app type a runnable TypeScript application, both
+// with their development dependencies installed. With no
 // project type it is plain `yarn init --yes`.
 func (y *Yarn) initProject(ctx context.Context, req core.Request) (core.Result, error) {
 	switch req.ProjectType {
@@ -37,6 +38,8 @@ func (y *Yarn) initProject(ctx context.Context, req core.Request) (core.Result, 
 		return y.initScript(ctx, req)
 	case "package":
 		return y.initPackage(ctx, req)
+	case "app":
+		return y.initApp(ctx, req)
 	case "":
 		return y.initPlain(ctx, req)
 	}

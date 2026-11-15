@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"runtime"
 
+	"github.com/justinfischman/universal-package-core/internal/components/fsx"
 	"github.com/justinfischman/universal-package-core/internal/core"
 	"github.com/justinfischman/universal-package-core/internal/stacks/python"
 )
@@ -32,6 +33,7 @@ const (
 // Poetry implements core.PackageManager, core.Diagnoser and core.DetectRanker.
 type Poetry struct {
 	core.BasePackageManager
+	fsys fsx.FS
 }
 
 var (
@@ -41,10 +43,10 @@ var (
 )
 
 // New builds poetry with the install command for the running platform.
-func New() (*Poetry, error) { return newFor(runtime.GOOS) }
+func New(fsys fsx.FS) (*Poetry, error) { return newFor(fsys, runtime.GOOS) }
 
-func newFor(goos string) (*Poetry, error) {
-	p := &Poetry{BasePackageManager: core.NewBasePackageManager(ID, python.ID, tool(goos), lockFile)}
+func newFor(fsys fsx.FS, goos string) (*Poetry, error) {
+	p := &Poetry{BasePackageManager: core.NewBasePackageManager(ID, python.ID, tool(goos), lockFile), fsys: fsys}
 	return p, p.declare()
 }
 

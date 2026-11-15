@@ -13,7 +13,8 @@ import (
 
 // initProject creates a project with `npm init`. The script type is a
 // directory with a package.json and one runnable file; the package type is a
-// TypeScript library with its development dependencies installed. With no
+// TypeScript library and the app type a runnable TypeScript application, both
+// with their development dependencies installed. With no
 // project type it is plain `npm init`.
 func (n *NPM) initProject(ctx context.Context, req core.Request) (core.Result, error) {
 	switch req.ProjectType {
@@ -21,6 +22,8 @@ func (n *NPM) initProject(ctx context.Context, req core.Request) (core.Result, e
 		return n.initScript(ctx, req)
 	case "package":
 		return n.initPackage(ctx, req)
+	case "app":
+		return n.initApp(ctx, req)
 	case "":
 		return n.initPlain(ctx, req)
 	}

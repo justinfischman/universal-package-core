@@ -7,6 +7,7 @@ import (
 	"github.com/justinfischman/universal-package-core/internal/components/execx"
 	"github.com/justinfischman/universal-package-core/internal/components/fsx"
 	"github.com/justinfischman/universal-package-core/internal/core"
+	"github.com/justinfischman/universal-package-core/internal/projects/app"
 	"github.com/justinfischman/universal-package-core/internal/projects/packagetype"
 	"github.com/justinfischman/universal-package-core/internal/projects/script"
 	"github.com/justinfischman/universal-package-core/internal/stacks/compose"
@@ -23,7 +24,7 @@ import (
 // Default builds the registries for the real binary.
 func Default() (core.Registries, error) {
 	regs := core.NewRegistries()
-	manager, err := uv.New()
+	manager, err := uv.New(fsx.OS{})
 	if err != nil {
 		return regs, err
 	}
@@ -31,7 +32,7 @@ func Default() (core.Registries, error) {
 	if err != nil {
 		return regs, err
 	}
-	poetryManager, err := poetry.New()
+	poetryManager, err := poetry.New(fsx.OS{})
 	if err != nil {
 		return regs, err
 	}
@@ -62,6 +63,9 @@ func Default() (core.Registries, error) {
 		return regs, err
 	}
 	if err := regs.PackageManagers.Register(yarnManager); err != nil {
+		return regs, err
+	}
+	if err := regs.ProjectTypes.Register(app.New(regs, fsx.OS{})); err != nil {
 		return regs, err
 	}
 	if err := regs.ProjectTypes.Register(script.New(regs, fsx.OS{})); err != nil {

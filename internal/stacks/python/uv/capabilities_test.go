@@ -8,6 +8,7 @@ import (
 	"testing/fstest"
 
 	"github.com/justinfischman/universal-package-core/internal/components/execx"
+	"github.com/justinfischman/universal-package-core/internal/components/fsx"
 	"github.com/justinfischman/universal-package-core/internal/core"
 	"github.com/justinfischman/universal-package-core/internal/core/contract"
 )
@@ -47,6 +48,7 @@ func TestArgvPerCapability(t *testing.T) {
 		{"init script", core.CapInit, nil, core.Request{ProjectType: "script", Script: "hello"}, []string{"uv init --script hello.py"}},
 		{"init script keeps extension", core.CapInit, nil, core.Request{ProjectType: "script", Script: "tool.py"}, []string{"uv init --script tool.py"}},
 		{"init package", core.CapInit, nil, core.Request{ProjectType: "package", Name: "demo"}, []string{"uv init --package --vcs none --no-workspace demo"}},
+		{"init app", core.CapInit, map[string]string{"demo/pyproject.toml": "[project]\nname = \"demo\"\n"}, core.Request{ProjectType: "app", Name: "demo"}, []string{"uv init --app --vcs none --no-workspace demo"}},
 		{"init plain", core.CapInit, nil, core.Request{}, []string{"uv init"}},
 		{"install project", core.CapInstall, projectFiles, core.Request{}, []string{"uv sync"}},
 		{"install group", core.CapInstall, projectFiles, core.Request{Group: "docs"}, []string{"uv sync --group docs"}},
@@ -261,6 +263,8 @@ func TestInitRejectsBadInput(t *testing.T) {
 		"path in name":    {ProjectType: "script", Script: "a/b"},
 		"unknown project": {ProjectType: "spaceship", Script: "x"},
 		"package no name": {ProjectType: "package"},
+		"app no name":     {ProjectType: "app"},
+		"app path":        {ProjectType: "app", Name: "a/b"},
 		"package flag":    {ProjectType: "package", Name: "--x"},
 		"package path":    {ProjectType: "package", Name: "a/b"},
 	} {
@@ -277,7 +281,7 @@ func TestMissingToolCarriesInstallInfo(t *testing.T) {
 		"linux":   "sh -c curl -LsSf https://astral.sh/uv/install.sh | sh",
 		"windows": "powershell",
 	} {
-		u, err := newFor(goos)
+		u, err := newFor(fsx.OS{}, goos)
 		if err != nil {
 			t.Fatal(err)
 		}

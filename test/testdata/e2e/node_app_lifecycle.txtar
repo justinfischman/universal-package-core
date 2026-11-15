@@ -1,0 +1,27 @@
+# new app (TypeScript) -> install -> build -> up -> down with the real npm
+exec upc new app demo-app --language node --pm npm --yes
+exists demo-app/package.json
+exists demo-app/package-lock.json
+exists demo-app/tsconfig.json
+exists demo-app/src/main.ts
+exists demo-app/APP.md
+exists demo-app/Dockerfile
+exists demo-app/compose.yaml
+exists demo-app/.universal-package-core/config.toml
+grep 'project_type = ''app''' demo-app/.universal-package-core/config.toml
+grep '"private": true' demo-app/package.json
+! grep '"main"' demo-app/package.json
+cd demo-app
+
+exec upc install
+exec upc build
+exists dist/main.js
+
+exec upc up 8112
+stdout 'started "dev"'
+exists .universal-package-core/run/up.pid
+exec sleep 2
+exec upc down
+stdout 'stopped'
+! exists .universal-package-core/run/up.pid
+exec upc doctor

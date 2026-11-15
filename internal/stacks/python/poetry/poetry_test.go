@@ -10,6 +10,7 @@ import (
 	"testing/fstest"
 
 	"github.com/justinfischman/universal-package-core/internal/components/execx"
+	"github.com/justinfischman/universal-package-core/internal/components/fsx"
 	"github.com/justinfischman/universal-package-core/internal/core"
 	"github.com/justinfischman/universal-package-core/internal/core/contract"
 )
@@ -36,7 +37,7 @@ func fixture(t *testing.T, files map[string]string) string {
 
 func newPoetry(t *testing.T) *Poetry {
 	t.Helper()
-	p, err := newFor("linux")
+	p, err := newFor(fsx.OS{}, "linux")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -325,7 +326,7 @@ func TestUndeclaredToolIsUnsupportedWithHowToEnable(t *testing.T) {
 
 func TestMissingToolCarriesInstallInfo(t *testing.T) {
 	for goos, wantCmd := range map[string]string{"darwin": "brew install poetry", "linux": "", "windows": ""} {
-		p, err := newFor(goos)
+		p, err := newFor(fsx.OS{}, goos)
 		if err != nil {
 			t.Fatal(err)
 		}

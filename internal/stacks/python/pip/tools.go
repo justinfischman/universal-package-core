@@ -24,6 +24,8 @@ func (p *PIP) initProject(ctx context.Context, req core.Request) (core.Result, e
 		return p.initScript(ctx, req)
 	case "package":
 		return p.initPackage(ctx, req)
+	case "app":
+		return p.initApp(ctx, req)
 	case "":
 	default:
 		return core.Result{}, fmt.Errorf("%w: pip cannot scaffold a %q project yet", core.ErrInvalidRequest, req.ProjectType)

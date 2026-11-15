@@ -1,0 +1,22 @@
+# new app (Python) -> install -> up -> down with the real uv
+exec upc new app demo-app --language python --pm uv --yes
+exists demo-app/pyproject.toml
+exists demo-app/server.py
+exists demo-app/APP.md
+exists demo-app/Dockerfile
+exists demo-app/compose.yaml
+exists demo-app/.gitignore
+exists demo-app/.universal-package-core/config.toml
+grep 'project_type = ''app''' demo-app/.universal-package-core/config.toml
+grep 'tool.upc.scripts' demo-app/pyproject.toml
+cd demo-app
+
+exec upc install
+exec upc up 8111
+stdout 'started "dev"'
+exists .universal-package-core/run/up.pid
+exec sleep 2
+exec upc down
+stdout 'stopped'
+! exists .universal-package-core/run/up.pid
+exec upc doctor

@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/justinfischman/universal-package-core/internal/components/execx"
+	"github.com/justinfischman/universal-package-core/internal/components/fsx"
 	"github.com/justinfischman/universal-package-core/internal/core"
 )
 
@@ -37,7 +38,7 @@ var (
 
 func newUV(t *testing.T) *UV {
 	t.Helper()
-	u, err := newFor("linux")
+	u, err := newFor(fsx.OS{}, "linux")
 	if err != nil {
 		t.Fatal(err)
 	}
