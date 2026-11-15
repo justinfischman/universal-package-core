@@ -2,15 +2,45 @@ package config
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/justinfischman/universal-package-core/internal/components/envs"
 	"github.com/justinfischman/universal-package-core/internal/core"
 )
 
+var secretKeys = []string{"secret", "password", "token", "key", "api"}
+
+func isSecretKey(key string) bool {
+	k := strings.ToLower(key)
+	for _, s := range secretKeys {
+		if strings.Contains(k, s) {
+			return true
+		}
+	}
+	return false
+}
+
 // Validate checks a config against the registries: every named module must
 // exist, and the package manager must belong to the language. Switching to a
 // manager of another language is therefore refused with core.ErrIncompatible.
 func Validate(c Config, regs core.Registries) error {
+	// Reject secret keys in committed config
+	for k := range map[string]interface{}{
+		c.Language: nil, c.PackageManager: nil, c.ProjectType: nil,
+		c.DefaultEnvironment: nil, c.ActiveEnvironment: nil,
+	} {
+		if isSecretKey(k) {
+			return fmt.Errorf("%w: config contains secret-looking key %q; move it to local.toml", core.ErrInvalidRequest, k)
+		}
+	}
+	for name, env := range c.Environments {
+		if isSecretKey(name) {
+			return fmt.Errorf("%w: environment name %q looks like a secret; move it to local.toml", core.ErrInvalidRequest, name)
+		}
+		if isSecretKey(env.File) {
+			return fmt.Errorf("%w: environment file %q looks like a secret; move it to local.toml", core.ErrInvalidRequest, env.File)
+		}
+	}
 	if c.Language != "" {
 		if _, ok := regs.Languages.Get(c.Language); !ok {
 			return fmt.Errorf("%w: unknown language %q (known: %v)", core.ErrInvalidRequest, c.Language, regs.Languages.IDs())

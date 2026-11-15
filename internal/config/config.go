@@ -48,14 +48,21 @@ type Config struct {
 	// DefaultEnvironment is the environment used when none was selected.
 	DefaultEnvironment string `toml:"default_environment,omitempty"`
 	// ActiveEnvironment is the selection made by `upc env use`.
-	ActiveEnvironment string   `toml:"active_environment,omitempty"`
-	Workspace         []string `toml:"workspace,omitempty"`
+	ActiveEnvironment string `toml:"active_environment,omitempty"`
+	// Workspace defines member projects.
+	Workspace Workspace `toml:"workspace,omitempty"`
 }
 
 // Environment is one declared environment. An empty File means the convention
 // file `.env.<name>`.
 type Environment struct {
-	File string `toml:"file,omitempty"`
+	File   string   `toml:"file,omitempty"`
+	Groups []string `toml:"groups,omitempty"`
+}
+
+// Workspace defines project members.
+type Workspace struct {
+	Members []string `toml:"members,omitempty"`
 }
 
 // EffectiveEnvironment is the selected environment, else the default, else "".
@@ -163,9 +170,10 @@ func DefaultGlobalDir() (string, error) { return GlobalDir(os.Getenv, os.UserHom
 // Store reads and writes config files. ProjectRoot may be empty when no project
 // is in play, in which case only the global scope is available.
 type Store struct {
-	FS          fsx.FS
-	GlobalDir   string
-	ProjectRoot string
+	FS           fsx.FS
+	GlobalDir    string
+	ProjectRoot  string
+	Registries   core.Registries
 }
 
 func (s Store) file(scope Scope) (string, error) {
@@ -244,7 +252,7 @@ func (s Store) Load() (Resolved, error) {
 		}
 		res.Environments = merged
 	}
-	if len(p.Workspace) > 0 {
+	if len(p.Workspace.Members) > 0 {
 		res.Workspace = p.Workspace
 	}
 	return res, nil

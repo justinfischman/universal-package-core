@@ -14,6 +14,7 @@ type capFlags struct {
 	group               string
 	script              string
 	version, constraint string
+	member string
 }
 
 // Which flags a capability command accepts.
@@ -21,6 +22,7 @@ const (
 	flagGroup   = 1 << iota // --group and --dev
 	flagScript              // --script
 	flagVersion             // --version and --constraint (add)
+	flagMember              // --member
 )
 
 // capSpec describes one command that routes a capability. The factory below
@@ -46,12 +48,12 @@ func forward(args []string) core.Request { return core.Request{Args: args} }
 
 // capabilityTable is the whole routed command surface.
 var capabilityTable = []capSpec{
-	{use: "add <package>...", short: "Add packages to the project", cap: core.CapAdd, args: cobra.MinimumNArgs(1), flags: flagGroup | flagScript | flagVersion, build: packages},
-	{use: "remove <package>...", short: "Remove packages from the project", cap: core.CapRemove, args: cobra.MinimumNArgs(1), flags: flagGroup | flagScript, build: packages},
-	{use: "list", short: "List the project's dependencies", cap: core.CapList, args: cobra.NoArgs, flags: flagScript, build: noArgs},
-	{use: "install", short: "Install the project's dependencies", cap: core.CapInstall, args: cobra.NoArgs, flags: flagGroup | flagScript, build: noArgs},
-	{use: "update [package]...", short: "Upgrade dependencies (all, or the named ones)", cap: core.CapUpdate, args: cobra.ArbitraryArgs, flags: flagScript, build: packages},
-	{use: "outdated", short: "Show dependencies with newer versions", cap: core.CapOutdated, args: cobra.NoArgs, flags: flagScript, build: noArgs},
+	{use: "add <package>...", short: "Add packages to the project", cap: core.CapAdd, args: cobra.MinimumNArgs(1), flags: flagGroup | flagScript | flagVersion | flagMember, build: packages},
+	{use: "remove <package>...", short: "Remove packages from the project", cap: core.CapRemove, args: cobra.MinimumNArgs(1), flags: flagGroup | flagScript | flagMember, build: packages},
+	{use: "list", short: "List the project's dependencies", cap: core.CapList, args: cobra.NoArgs, flags: flagScript | flagMember, build: noArgs},
+	{use: "install", short: "Install the project's dependencies", cap: core.CapInstall, args: cobra.NoArgs, flags: flagGroup | flagScript | flagMember, build: noArgs},
+	{use: "update [package]...", short: "Upgrade dependencies (all, or the named ones)", cap: core.CapUpdate, args: cobra.ArbitraryArgs, flags: flagScript | flagMember, build: packages},
+	{use: "outdated", short: "Show dependencies with newer versions", cap: core.CapOutdated, args: cobra.NoArgs, flags: flagScript | flagMember, build: noArgs},
 	{use: "build [args...]", short: "Build the project's distributable artifacts", cap: core.CapBuild, args: cobra.ArbitraryArgs, passthrough: true, build: forward},
 	{use: "test [args...]", short: "Run the project's tests", cap: core.CapTest, args: cobra.ArbitraryArgs, passthrough: true, build: forward},
 	{use: "lint [args...]", short: "Lint the project", cap: core.CapLint, args: cobra.ArbitraryArgs, passthrough: true, build: forward},
@@ -96,6 +98,7 @@ func newCapabilityCmd(spec capSpec) *cobra.Command {
 				return err
 			}
 			req.Dir, req.DryRun, req.Yes = st.Dir, s.DryRun, s.Yes
+			req.Member = f.member
 			if req.Version, err = pickVersion(f.version, f.constraint); err != nil {
 				return err
 			}
@@ -123,6 +126,9 @@ func newCapabilityCmd(spec capSpec) *cobra.Command {
 	if spec.flags&flagVersion != 0 {
 		cmd.Flags().StringVar(&f.version, "version", "", `version constraint for the package, e.g. ">=2.3.4"`)
 		cmd.Flags().StringVar(&f.constraint, "constraint", "", "same as --version")
+	}
+	if spec.flags&flagMember != 0 {
+		cmd.Flags().StringVarP(&f.member, "member", "w", "", "workspace member to act on")
 	}
 	return cmd
 }

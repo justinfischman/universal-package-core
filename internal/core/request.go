@@ -22,9 +22,11 @@ type Request struct {
 	// Version is a neutral version constraint (">=2.3.4") for add; see
 	// ParseConstraint. Only managers implementing Versioned accept it.
 	Version string
-	Args    []string // passthrough arguments
-	DryRun  bool
-	Yes     bool
+	// Member is the workspace member to act on (if any).
+	Member string
+	Args   []string // passthrough arguments
+	DryRun bool
+	Yes    bool
 }
 
 // Result is the single output shape for every capability.
