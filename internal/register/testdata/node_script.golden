@@ -5,6 +5,8 @@ $ npm pkg delete main scripts.test
 
 === .gitignore
 node_modules/
+**/.universal-package-core/local.toml
+**/.universal-package-core/run/
 
 === README.md
 # hello

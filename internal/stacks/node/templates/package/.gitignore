@@ -1,2 +1,4 @@
 node_modules/
 dist/
+**/.universal-package-core/local.toml
+**/.universal-package-core/run/

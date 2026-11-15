@@ -1,1 +1,3 @@
 node_modules/
+**/.universal-package-core/local.toml
+**/.universal-package-core/run/

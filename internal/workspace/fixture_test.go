@@ -16,7 +16,15 @@ import (
 // consumes it.
 func loadFixture(t *testing.T) *Workspace {
 	t.Helper()
-	root, err := filepath.Abs(filepath.Join("testdata", "two-apps"))
+	w, _ := loadFixtureNamed(t, "two-apps")
+	return w
+}
+
+// loadFixtureNamed loads testdata/<name> and also returns its parsed config so
+// a test can alter it and load a variant.
+func loadFixtureNamed(t *testing.T, name string) (*Workspace, config.Config) {
+	t.Helper()
+	root, err := filepath.Abs(filepath.Join("testdata", name))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -32,7 +40,7 @@ func loadFixture(t *testing.T) *Workspace {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return w
+	return w, c
 }
 
 func TestFixtureOrderEnvFindingsAndRunState(t *testing.T) {

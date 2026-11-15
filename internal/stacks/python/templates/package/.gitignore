@@ -5,3 +5,5 @@ dist/
 *.egg-info/
 .pytest_cache/
 .ruff_cache/
+**/.universal-package-core/local.toml
+**/.universal-package-core/run/

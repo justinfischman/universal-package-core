@@ -191,3 +191,15 @@ func TestDownWithNothingRunningIsNotAnError(t *testing.T) {
 		t.Errorf("down = %q, %v", res.Summary, err)
 	}
 }
+
+func TestUpForwardsRequestEnvToTheChildCommand(t *testing.T) {
+	dir := fixture(t, scriptsProject("dev = \"flask run\"\n"))
+	fake := &execx.FakeRunner{}
+	env := []string{"API_URL=http://localhost:8000/v1", "MODE=dev"}
+	if _, err := up(t, fake, core.Request{Dir: dir, Env: env}); err != nil {
+		t.Fatal(err)
+	}
+	if got := fake.Procs[0].Cmd.Env; strings.Join(got, "|") != strings.Join(env, "|") {
+		t.Errorf("child env = %v, want %v", got, env)
+	}
+}

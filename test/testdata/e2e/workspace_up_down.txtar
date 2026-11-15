@@ -1,0 +1,63 @@
+# `up --all` / `down --all` on a uv api + npm web workspace with the real tools.
+# api provides, web consumes it, so api starts first and stops last.
+[!exec:uv] skip 'uv is not on PATH'
+[!exec:npm] skip 'npm is not on PATH'
+
+exec upc workspace list
+stdout 'start order'
+stdout '1\. api'
+stdout '2\. web'
+
+exec upc up --all
+stdout 'started api, web'
+exists apps/api/.universal-package-core/run/api/up.pid
+exists apps/web/.universal-package-core/run/web/up.pid
+exec sleep 6
+grep 'api serving' apps/api/.universal-package-core/run/api/up.log
+grep 'API_URL=http://localhost:8000/v1' apps/web/.universal-package-core/run/web/up.log
+
+exec upc down --all
+stdout 'stopped web, api'
+! exists apps/api/.universal-package-core/run/api/up.pid
+! exists apps/web/.universal-package-core/run/web/up.pid
+
+-- .universal-package-core/config.toml --
+[workspace]
+members = ["apps/api", "apps/web"]
+
+[apps.api]
+path = "apps/api"
+port = 8000
+url = "http://localhost:${apps.api.port}"
+provides = ["http"]
+
+[apps.web]
+path = "apps/web"
+port = 3000
+consumes = ["api"]
+
+[apps.web.env]
+API_URL = "${apps.api.url}/v1"
+-- apps/api/pyproject.toml --
+[project]
+name = "api"
+version = "0.1.0"
+requires-python = ">=3.9"
+
+[project.scripts]
+dev = "api:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+-- apps/api/api/__init__.py --
+import time
+
+def main():
+    print("api serving", flush=True)
+    time.sleep(300)
+-- apps/web/package.json --
+{"name":"web","version":"1.0.0","scripts":{"dev":"node server.js"}}
+-- apps/web/server.js --
+console.log("web serving, API_URL=" + process.env.API_URL);
+setInterval(() => {}, 1000);
