@@ -110,7 +110,7 @@ upc workspace check --update      # accept the current contracts and write the l
 - Interpolation: `${apps.<name>.<field>}` with field `name`, `path`, `port` or `url`, in `url` and `env` values. An unresolved variable is an error, never an empty string. `${` has no escape syntax, so a literal `${` cannot be written in these values.
 - `--app <name>` starts or stops only that app.
 - Contracts: `.universal-package-core/contracts/<app>.lock` is committed. `workspace check` never writes it; only `--update` does. `doctor` reports `contract-missing` and `contract-changed`, next to `port-collision`, `consumer-without-provider` and `unresolved-variable`.
-- YAML contracts use a subset: anchors, aliases, tags and multi-document files are rejected (see ADR-0014).
+- YAML contracts are parsed by `go.yaml.in/yaml/v3`: anchors, aliases and merge keys are resolved; numbers take their canonical form; multi-document files, empty files, duplicate keys and non-string keys are errors (see ADR-0014).
 
 ## Planned commands
 `init`, `new {script|package|app}`, `add|remove|list|install`, `update|outdated|audit`, `run`, `build|test|lint`, `up|down`, `env`, `config`, `workspace`, `doctor`, `publish`, `completion`, `version`.

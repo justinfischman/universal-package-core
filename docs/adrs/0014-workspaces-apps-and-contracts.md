@@ -24,5 +24,5 @@ Starting point (6.3): `up`/`down` are capabilities for all five managers, with r
 - No manager package depends on the `workspace` package.
 - Port collisions are checked statically from config; a runtime probe is advisory only.
 - Rollout: a two-uv-app pilot (`api` provides, `web` consumes) locks the method before a Node member is added and before the checkers, `EnvResolver` and orchestrator are built in parallel.
-- YAML contracts are read by `internal/contracts/document`, which supports a YAML subset (block mappings and sequences, single-line flow collections, plain and quoted scalars, literal and folded block scalars). It rejects anchors, aliases, tags, multi-line plain scalars and multi-document files, because a lock must never be built from a wrong parse.
+- YAML contracts are read by `internal/contracts/document`, which parses them with `go.yaml.in/yaml/v3`, so a lock is built from the full parse. Anchors, aliases and merge keys are resolved; numbers take their canonical form (for example `1.50` becomes `1.5`); timestamps become RFC 3339 strings and binary values become strings; mapping keys must be strings. Multi-document files, empty files and duplicate keys are errors.
 - Decision 3 (config `members` against the manager's native member list) is not yet enforced by `workspace check`: the managers expose no cheap native member listing. Follow-up.

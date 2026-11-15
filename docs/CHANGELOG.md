@@ -19,7 +19,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Update with ev
 
 ### Added (Phase 6.4: workspace, apps and contracts)
 - `[workspace]` and `[apps.<name>]` config (`path`, `port`, `url`, `provides`, `consumes`, `contract`, `env`) with `${apps.<name>.<field>}` interpolation; `upc workspace list`; `upc up|down --all|--app <name>` in dependency order with rollback; run state keyed per app.
-- Contract checkers for OpenAPI and JSON Schema (`internal/contracts/`), with a JSON and YAML-subset reader that rejects anchors, aliases, tags and multi-document files.
+- Contract checkers for OpenAPI and JSON Schema (`internal/contracts/`), with a JSON and YAML reader built on `go.yaml.in/yaml/v3` (anchors, aliases and merge keys are resolved; numbers take their canonical form; multi-document files, duplicate keys and non-string keys are rejected).
 - `upc workspace check [--update]`: compares each app's contract with its committed lock `.universal-package-core/contracts/<app>.lock`; fails on a missing lock or a changed contract; writes locks only with `--update`.
 - `doctor` cross-app findings: `port-collision`, `consumer-without-provider`, `unresolved-variable`, `contract-missing`, `contract-changed`.
 - ADR-0014 is Accepted. Known gap: config `members` are not compared with the manager's native member list.
