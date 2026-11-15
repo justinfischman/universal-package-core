@@ -47,6 +47,42 @@ stdout 'stopped'
 stderr 'does not exist'
 grep 'active_environment = .staging.' .universal-package-core/config.toml
 exec upc doctor
+
+# env add and env remove edit the project config; values are never printed
+exec upc env add qa --file config/qa.env --groups test,docs
+stdout 'declared environment qa'
+grep 'groups = ' .universal-package-core/config.toml
+! exec upc env add qa
+stderr 'already declared'
+! exec upc env add 'bad name'
+exec upc env list
+stdout 'qa +config/qa.env.*groups=test,docs'
+stdout '\(file missing\)'
+! stdout 'hunter2'
+cp ../dev.env config/qa.env
+exec upc env show
+stdout 'staging \(config/staging.env\)'
+
+# --env applies to one command and does not change the saved selection
+exec upc install --env staging
+exec upc up --env dev 8123
+stdout 'started "dev"'
+exec sleep 2
+exec upc down
+stdout 'stopped'
+grep 'active_environment = .staging.' .universal-package-core/config.toml
+! exec upc install --env nope
+stderr 'does not exist'
+! exec upc up --env nope 8124
+stderr 'does not exist'
+! exists .universal-package-core/run/up.pid
+
+exec upc env remove qa
+stdout 'removed environment qa'
+! grep 'environments.qa' .universal-package-core/config.toml
+exists config/qa.env
+! exec upc env remove qa
+stderr 'not declared'
 -- dev.env --
 TOKEN=hunter2
 -- staging.env --

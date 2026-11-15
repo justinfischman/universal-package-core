@@ -57,8 +57,11 @@ type CommandSpec struct {
 // Vars are the values a template is expanded with.
 type Vars struct {
 	Packages   []string
-	Constraint string   // rendered by Constraint.Render; "" when none was requested
-	GroupName  string   // upc's group name; resolved through CommandSpec.Group
+	Constraint string // rendered by Constraint.Render; "" when none was requested
+	GroupName  string // upc's group name; resolved through CommandSpec.Group
+	// GroupNames lists several groups (an environment's groups); each is
+	// resolved in order at {group}. It takes precedence over GroupName.
+	GroupNames []string
 	Script     []string // argv for script mode, spliced at {script}
 	Dir        string
 }
@@ -74,11 +77,17 @@ func (s CommandSpec) Expand(v Vars) ([]string, error) {
 	for _, el := range s.Argv {
 		switch {
 		case el == PlaceholderGroup:
-			g, err := s.Group.Args(v.GroupName)
-			if err != nil {
-				return nil, err
+			names := v.GroupNames
+			if len(names) == 0 {
+				names = []string{v.GroupName}
 			}
-			out = append(out, g...)
+			for _, name := range names {
+				g, err := s.Group.Args(name)
+				if err != nil {
+					return nil, err
+				}
+				out = append(out, g...)
+			}
 		case el == PlaceholderScript:
 			out = append(out, v.Script...)
 		case strings.Contains(el, PlaceholderPkg):

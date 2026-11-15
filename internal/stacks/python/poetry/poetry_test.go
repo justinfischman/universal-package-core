@@ -91,6 +91,7 @@ func TestArgvPerCapability(t *testing.T) {
 		{"init", core.CapInit, core.Request{}, "poetry init --no-interaction"},
 		{"install", core.CapInstall, core.Request{}, "poetry install"},
 		{"install group", core.CapInstall, core.Request{Group: "docs"}, "poetry install --with docs"},
+		{"install env groups", core.CapInstall, core.Request{Groups: []string{"docs", "test"}}, "poetry install --with docs,test"},
 		{"add", core.CapAdd, core.Request{Packages: []string{"requests", "rich>=13"}}, "poetry add requests rich>=13"},
 		{"add dev", core.CapAdd, core.Request{Packages: []string{"pytest"}, Group: "dev"}, "poetry add --group dev pytest"},
 		{"add passthrough", core.CapAdd, core.Request{Packages: []string{"rich"}, Args: []string{"--lock"}}, "poetry add rich --lock"},

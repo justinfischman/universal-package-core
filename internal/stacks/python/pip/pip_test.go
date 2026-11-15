@@ -159,6 +159,8 @@ func TestArgvPerCapability(t *testing.T) {
 			[]string{py + " -m pip install -r requirements.txt --no-cache-dir"}},
 		{"install dev group", core.CapInstall, with(venv, map[string]string{"requirements-dev.txt": ""}), core.Request{Group: "dev"},
 			[]string{py + " -m pip install -r requirements-dev.txt"}},
+		{"install env groups", core.CapInstall, with(venv, map[string]string{"requirements-dev.txt": "", "requirements-docs.txt": ""}), core.Request{Groups: []string{"dev", "docs"}},
+			[]string{py + " -m pip install -r requirements-dev.txt -r requirements-docs.txt"}},
 		{"add", core.CapAdd, venv, core.Request{Packages: []string{"rich", "attrs>=23"}},
 			[]string{py + " -m pip install rich attrs>=23", py + " -m pip freeze"}},
 		{"add creates venv", core.CapAdd, nil, core.Request{Packages: []string{"rich"}},

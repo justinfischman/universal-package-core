@@ -76,8 +76,11 @@ func (p *Poetry) change(ctx context.Context, req core.Request, verb, past string
 
 // install routes to `poetry install [--with g]`.
 func (p *Poetry) install(ctx context.Context, req core.Request) (core.Result, error) {
-	if err := checkGroup(req.Group); err != nil {
-		return core.Result{}, err
+	groups := req.AllGroups()
+	for _, g := range groups {
+		if err := checkGroup(g); err != nil {
+			return core.Result{}, err
+		}
 	}
 	if err := requireProject(req); err != nil {
 		return core.Result{}, err
@@ -87,8 +90,8 @@ func (p *Poetry) install(ctx context.Context, req core.Request) (core.Result, er
 		return core.Result{}, err
 	}
 	args := []string{"install"}
-	if req.Group != "" {
-		args = append(args, "--with", req.Group)
+	if len(groups) > 0 {
+		args = append(args, "--with", strings.Join(groups, ","))
 	}
 	if _, err := inv.Run(true, shared.Concat(args, req.Args)...); err != nil {
 		return core.Result{}, err

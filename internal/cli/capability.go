@@ -15,6 +15,7 @@ type capFlags struct {
 	script              string
 	version, constraint string
 	member              string
+	env                 string
 	apps                appTarget
 }
 
@@ -25,6 +26,7 @@ const (
 	flagVersion             // --version and --constraint (add)
 	flagMember              // --member
 	flagApps                // --all and --app
+	flagEnv                 // --env
 )
 
 // capSpec describes one command that routes a capability. The factory below
@@ -53,18 +55,18 @@ var capabilityTable = []capSpec{
 	{use: "add <package>...", short: "Add packages to the project", cap: core.CapAdd, args: cobra.MinimumNArgs(1), flags: flagGroup | flagScript | flagVersion | flagMember, build: packages},
 	{use: "remove <package>...", short: "Remove packages from the project", cap: core.CapRemove, args: cobra.MinimumNArgs(1), flags: flagGroup | flagScript | flagMember, build: packages},
 	{use: "list", short: "List the project's dependencies", cap: core.CapList, args: cobra.NoArgs, flags: flagScript | flagMember, build: noArgs},
-	{use: "install", short: "Install the project's dependencies", cap: core.CapInstall, args: cobra.NoArgs, flags: flagGroup | flagScript | flagMember, build: noArgs},
+	{use: "install", short: "Install the project's dependencies", cap: core.CapInstall, args: cobra.NoArgs, flags: flagGroup | flagScript | flagMember | flagEnv, build: noArgs},
 	{use: "update [package]...", short: "Upgrade dependencies (all, or the named ones)", cap: core.CapUpdate, args: cobra.ArbitraryArgs, flags: flagScript | flagMember, build: packages},
 	{use: "outdated", short: "Show dependencies with newer versions", cap: core.CapOutdated, args: cobra.NoArgs, flags: flagScript | flagMember, build: noArgs},
 	{use: "build [args...]", short: "Build the project's distributable artifacts", cap: core.CapBuild, args: cobra.ArbitraryArgs, passthrough: true, flags: flagMember, build: forward},
-	{use: "test [args...]", short: "Run the project's tests", cap: core.CapTest, args: cobra.ArbitraryArgs, passthrough: true, flags: flagMember, build: forward},
+	{use: "test [args...]", short: "Run the project's tests", cap: core.CapTest, args: cobra.ArbitraryArgs, passthrough: true, flags: flagMember | flagEnv, build: forward},
 	{use: "lint [args...]", short: "Lint the project", cap: core.CapLint, args: cobra.ArbitraryArgs, passthrough: true, flags: flagMember, build: forward},
 	{use: "audit [args...]", short: "Check dependencies for known vulnerabilities", cap: core.CapAudit, args: cobra.ArbitraryArgs, passthrough: true, flags: flagMember, build: forward},
-	{use: "up [args...]", short: "Start the project's dev process in the background", cap: core.CapUp, args: cobra.ArbitraryArgs, flags: flagMember | flagApps, passthrough: true, build: forward},
+	{use: "up [args...]", short: "Start the project's dev process in the background", cap: core.CapUp, args: cobra.ArbitraryArgs, flags: flagMember | flagApps | flagEnv, passthrough: true, build: forward},
 	{use: "down", short: "Stop the process started by up", cap: core.CapDown, args: cobra.NoArgs, flags: flagMember | flagApps, build: noArgs},
 	{
 		use: "run <script> [args...]", short: "Run a file or a named project script", cap: core.CapRun,
-		args: cobra.MinimumNArgs(1), passthrough: true, flags: flagMember,
+		args: cobra.MinimumNArgs(1), passthrough: true, flags: flagMember | flagEnv,
 		build: func(args []string) core.Request { return core.Request{Script: args[0], Args: args[1:]} },
 	},
 }
@@ -88,6 +90,16 @@ func newCapabilityCmd(spec capSpec) *cobra.Command {
 			if err != nil {
 				return err
 			}
+			var envGroups []string
+			if f.env != "" {
+				e, err := s.selectEnv(f.env)
+				if err != nil {
+					return err
+				}
+				if spec.cap == core.CapInstall {
+					envGroups = e.Groups
+				}
+			}
 			if f.apps.set() {
 				if err := f.apps.validate(f.member, args); err != nil {
 					return err
@@ -100,6 +112,7 @@ func newCapabilityCmd(spec capSpec) *cobra.Command {
 				return fmt.Errorf("%w: --dev and --group are mutually exclusive", core.ErrInvalidRequest)
 			}
 			req.Group = f.group
+			req.Groups = envGroups
 			if f.dev {
 				req.Group = "dev"
 			}
@@ -139,6 +152,9 @@ func newCapabilityCmd(spec capSpec) *cobra.Command {
 	}
 	if spec.flags&flagMember != 0 {
 		cmd.Flags().StringVarP(&f.member, "member", "w", "", "workspace member to act on")
+	}
+	if spec.flags&flagEnv != 0 {
+		cmd.Flags().StringVar(&f.env, "env", "", "use this environment for this command (does not change the saved selection)")
 	}
 	if spec.flags&flagApps != 0 {
 		cmd.Flags().BoolVar(&f.apps.all, "all", false, "act on every app in the workspace, in dependency order")

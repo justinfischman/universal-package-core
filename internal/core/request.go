@@ -10,6 +10,9 @@ type Request struct {
 	Dir      string   // project root
 	Packages []string // package specs for add/remove
 	Group    string   // dependency group, e.g. "dev"
+	// Groups are further dependency groups to install together with Group,
+	// as selected by an environment (ADR-0015). Only install reads them.
+	Groups []string
 	// Script is the script to run (run), or the standalone script file the
 	// dependency commands operate on (add, remove, install, ...). For init in
 	// script mode it is the name of the script to create.
@@ -90,4 +93,18 @@ func (r Request) ValidatePackages() error {
 		}
 	}
 	return nil
+}
+
+// AllGroups returns Group followed by Groups, without empty names or
+// duplicates, in the order given.
+func (r Request) AllGroups() []string {
+	var out []string
+	seen := map[string]bool{}
+	for _, g := range append([]string{r.Group}, r.Groups...) {
+		if g != "" && !seen[g] {
+			seen[g] = true
+			out = append(out, g)
+		}
+	}
+	return out
 }

@@ -27,8 +27,8 @@ func groupArgs(group string) ([]string, error) {
 
 // install routes to `npm install`.
 func (n *NPM) install(ctx context.Context, req core.Request) (core.Result, error) {
-	if req.Group != "" {
-		return core.Result{}, fmt.Errorf("%w: npm installs every group; --group applies to add and remove", core.ErrInvalidRequest)
+	if len(req.AllGroups()) > 0 {
+		return core.Result{}, fmt.Errorf("%w: npm installs every group; groups apply to add and remove (subset install by group is not implemented)", core.ErrInvalidRequest)
 	}
 	return n.stream(ctx, req, shared.Concat([]string{"install"}, req.Args), "dependencies installed", "install dependencies")
 }

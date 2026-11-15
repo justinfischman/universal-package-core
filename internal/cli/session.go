@@ -33,6 +33,9 @@ type Session struct {
 	Prompter prompt.Prompter
 	Runner   execx.Runner
 	Store    config.Store
+	// EnvOverride is the environment chosen by `--env` for this invocation; it
+	// wins over the saved selection and is never written to config.
+	EnvOverride string
 }
 
 type sessionKey struct{}

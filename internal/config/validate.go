@@ -89,6 +89,11 @@ func validateEnvironments(c Config) error {
 				return fmt.Errorf("%w: environments.%s: %v", core.ErrInvalidRequest, name, err)
 			}
 		}
+		for _, g := range env.Groups {
+			if err := envs.ValidGroup(g); err != nil {
+				return fmt.Errorf("%w: environments.%s.groups: %v", core.ErrInvalidRequest, name, err)
+			}
+		}
 	}
 	for key, name := range map[string]string{"default_environment": c.DefaultEnvironment, "active_environment": c.ActiveEnvironment} {
 		if name == "" {

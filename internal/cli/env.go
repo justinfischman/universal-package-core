@@ -18,11 +18,11 @@ const envVar = "UPC_ENV"
 func newEnvCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "env",
-		Short: "List, select and show the project's environments",
+		Short: "Add, remove, list, select and show the project's environments",
 		Args:  usageArgs(cobra.NoArgs),
 		RunE:  func(cmd *cobra.Command, _ []string) error { return cmd.Help() },
 	}
-	cmd.AddCommand(newEnvListCmd(), newEnvUseCmd(), newEnvShowCmd())
+	cmd.AddCommand(newEnvListCmd(), newEnvUseCmd(), newEnvShowCmd(), newEnvAddCmd(), newEnvRemoveCmd())
 	return cmd
 }
 
@@ -54,9 +54,9 @@ func loadEnvs(s *Session) (config.Resolved, []envs.Entry, error) {
 }
 
 func discoverEnvs(root fs.FS, c config.Config) ([]envs.Entry, error) {
-	declared := make(map[string]string, len(c.Environments))
+	declared := make(map[string]envs.Declared, len(c.Environments))
 	for name, e := range c.Environments {
-		declared[name] = e.File
+		declared[name] = envs.Declared{File: e.File, Groups: e.Groups}
 	}
 	return envs.Discover(root, declared)
 }
@@ -88,7 +88,7 @@ func newEnvListCmd() *cobra.Command {
 				if !e.Exists {
 					note = " (file missing)"
 				}
-				fmt.Fprintf(&b, "%s %-12s %s [%s]%s\n", mark, e.Name, e.File, e.Source, note)
+				fmt.Fprintf(&b, "%s %-12s %s [%s]%s%s\n", mark, e.Name, e.File, e.Source, groupNote(e), note)
 			}
 			if len(entries) == 0 {
 				b.WriteString("no environments declared or found\n")
@@ -120,7 +120,7 @@ func newEnvShowCmd() *cobra.Command {
 			if !ok {
 				return fmt.Errorf("%w: active environment %q does not exist; run `upc env list`", core.ErrInvalidRequest, name)
 			}
-			summary := fmt.Sprintf("%s (%s) [%s]", e.Name, e.File, e.Source)
+			summary := fmt.Sprintf("%s (%s) [%s]%s", e.Name, e.File, e.Source, groupNote(e))
 			return s.print(core.Result{Summary: summary, Data: envEntry{Entry: e, Active: true}})
 		},
 	}
@@ -186,4 +186,31 @@ func envFindings(s *Session, root fs.FS, res config.Resolved) []findingEntry {
 		return []findingEntry{{Severity: core.SeverityWarn, Message: "active " + err.Error()}}
 	}
 	return nil
+}
+
+// groupNote is the " groups=a,b" suffix of a listing, or "" without groups.
+func groupNote(e envs.Entry) string {
+	if len(e.Groups) == 0 {
+		return ""
+	}
+	return " groups=" + strings.Join(e.Groups, ",")
+}
+
+// selectEnv makes name the environment for this invocation only (`--env`),
+// without saving it. It must exist and have its file. Only the name and the
+// groups are used; the env file is never opened.
+func (s *Session) selectEnv(name string) (envs.Entry, error) {
+	if err := envs.ValidName(name); err != nil {
+		return envs.Entry{}, fmt.Errorf("%w: %v", core.ErrInvalidRequest, err)
+	}
+	_, entries, err := loadEnvs(s)
+	if err != nil {
+		return envs.Entry{}, err
+	}
+	if err := envs.Check(entries, name); err != nil {
+		return envs.Entry{}, fmt.Errorf("%w: %v", core.ErrInvalidRequest, err)
+	}
+	e, _ := envs.Find(entries, name)
+	s.EnvOverride = name
+	return e, nil
 }

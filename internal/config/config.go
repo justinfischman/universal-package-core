@@ -234,7 +234,11 @@ func (s Store) Load() (Resolved, error) {
 	}
 	for _, k := range Keys {
 		if v, _ := p.Get(k); v != "" {
-			res.Config, _ = res.Set(k, v)
+			next, err := res.Set(k, v)
+			if err != nil {
+				return Resolved{}, fmt.Errorf("%w: project config key %q: %v", core.ErrInvalidRequest, k, err)
+			}
+			res.Config = next
 			res.Sources[k] = Project
 		}
 	}

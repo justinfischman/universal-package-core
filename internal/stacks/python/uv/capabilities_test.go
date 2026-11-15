@@ -52,6 +52,7 @@ func TestArgvPerCapability(t *testing.T) {
 		{"init plain", core.CapInit, nil, core.Request{}, []string{"uv init"}},
 		{"install project", core.CapInstall, projectFiles, core.Request{}, []string{"uv sync"}},
 		{"install group", core.CapInstall, projectFiles, core.Request{Group: "docs"}, []string{"uv sync --group docs"}},
+		{"install env groups", core.CapInstall, projectFiles, core.Request{Group: "dev", Groups: []string{"docs", "dev"}}, []string{"uv sync --group dev --group docs"}},
 		{"install script", core.CapInstall, scriptFiles, core.Request{}, []string{"uv sync --script hello.py"}},
 		{"install requirements", core.CapInstall, map[string]string{"requirements.txt": "rich\n"}, core.Request{},
 			[]string{"uv venv", "uv pip install -r requirements.txt"}},

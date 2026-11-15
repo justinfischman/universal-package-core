@@ -14,22 +14,34 @@ import (
 // install routes to `python -m pip install -r requirements.txt` in .venv,
 // creating the environment first when it is missing.
 func (p *PIP) install(ctx context.Context, req core.Request) (core.Result, error) {
-	file, err := requirementsFile(req.Group)
-	if err != nil {
-		return core.Result{}, err
+	groups := req.AllGroups()
+	if len(groups) == 0 {
+		groups = []string{""}
+	}
+	var files []string
+	for _, g := range groups {
+		file, err := requirementsFile(g)
+		if err != nil {
+			return core.Result{}, err
+		}
+		files = append(files, file)
 	}
 	s, err := p.begin(ctx, req)
 	if err != nil {
 		return core.Result{}, err
 	}
-	if _, err := fs.Stat(s.fsys, file); err != nil {
-		return core.Result{}, fmt.Errorf("%w: %s not found in %s; run `upc init` or `upc add`", core.ErrInvalidRequest, file, s.dir)
+	args := []string{"install"}
+	for _, file := range files {
+		if _, err := fs.Stat(s.fsys, file); err != nil {
+			return core.Result{}, fmt.Errorf("%w: %s not found in %s; run `upc init` or `upc add`", core.ErrInvalidRequest, file, s.dir)
+		}
+		args = append(args, "-r", file)
 	}
 	py, err := s.ensureVenv()
 	if err != nil {
 		return core.Result{}, err
 	}
-	if err := s.pip(true, py, shared.Concat([]string{"install", "-r", file}, req.Args)...); err != nil {
+	if err := s.pip(true, py, shared.Concat(args, req.Args)...); err != nil {
 		return core.Result{}, err
 	}
 	return s.Result("dependencies installed", "install dependencies", nil), nil

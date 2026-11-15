@@ -17,12 +17,12 @@ func TestDiscover(t *testing.T) {
 		"conf/prod.env": {},
 		".env.dev":      {},
 	}
-	got, err := envs.Discover(root, map[string]string{"prod": "conf/prod.env", "dev": "", "gone": ".env.gone"})
+	got, err := envs.Discover(root, map[string]envs.Declared{"prod": {File: "conf/prod.env"}, "dev": {Groups: []string{"test"}}, "gone": {File: ".env.gone"}})
 	if err != nil {
 		t.Fatal(err)
 	}
 	want := []envs.Entry{
-		{Name: "dev", File: ".env.dev", Source: envs.SourceConfig, Exists: true},
+		{Name: "dev", File: ".env.dev", Source: envs.SourceConfig, Groups: []string{"test"}, Exists: true},
 		{Name: "gone", File: ".env.gone", Source: envs.SourceConfig},
 		{Name: "local", File: ".env.local", Source: envs.SourceConvention, Exists: true},
 		{Name: "prod", File: "conf/prod.env", Source: envs.SourceConfig, Exists: true},

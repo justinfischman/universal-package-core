@@ -10,7 +10,7 @@ import (
 
 // vars are the template values for this request in this target.
 func (t target) vars(req core.Request) core.Vars {
-	return core.Vars{Packages: req.Packages, GroupName: req.Group, Script: t.scriptArgs(), Dir: req.Dir}
+	return core.Vars{Packages: req.Packages, GroupName: req.Group, GroupNames: req.AllGroups(), Script: t.scriptArgs(), Dir: req.Dir}
 }
 
 // run expands a template and runs it with the request's passthrough args.
@@ -28,9 +28,6 @@ func run(inv *shared.Invocation, s core.CommandSpec, v core.Vars, extra []string
 func (u *UV) install(ctx context.Context, req core.Request) (core.Result, error) {
 	t, err := resolve(req)
 	if err != nil {
-		return core.Result{}, err
-	}
-	if _, err := spec.Sync.Group.Args(req.Group); err != nil {
 		return core.Result{}, err
 	}
 	inv, err := begin(ctx, req)

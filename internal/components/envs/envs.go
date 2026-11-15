@@ -31,8 +31,25 @@ type Entry struct {
 	Name   string `json:"name"`
 	File   string `json:"file"`
 	Source string `json:"source"`
+	// Groups are the dependency groups the environment installs (ADR-0015).
+	Groups []string `json:"groups,omitempty"`
 	// Exists is whether the file is present in the project.
 	Exists bool `json:"exists"`
+}
+
+// Declared is an environment as written in config: an optional file and groups.
+type Declared struct {
+	File   string
+	Groups []string
+}
+
+// ValidGroup rejects group names that are not plain words, so a group is safe to
+// pass to a manager and to put in a file name.
+func ValidGroup(group string) error {
+	if !namePattern.MatchString(group) {
+		return fmt.Errorf("invalid group name %q (use letters, digits, '-' and '_')", group)
+	}
+	return nil
 }
 
 // ValidName rejects names that are not plain words, so a name is safe to put in
@@ -53,16 +70,17 @@ func ValidFile(file string) error {
 	return nil
 }
 
-// Discover returns the declared environments (name to file; an empty file means
+// Discover returns the declared environments (name to file and groups; an empty file means
 // the convention file) followed by `.env.<name>` files in the project root that
 // no declaration covers. The result is sorted by name. root is the project dir.
-func Discover(root fs.FS, declared map[string]string) ([]Entry, error) {
+func Discover(root fs.FS, declared map[string]Declared) ([]Entry, error) {
 	byName := map[string]Entry{}
-	for name, file := range declared {
+	for name, d := range declared {
+		file := d.File
 		if file == "" {
 			file = conventionPrefix + name
 		}
-		byName[name] = Entry{Name: name, File: file, Source: SourceConfig, Exists: exists(root, file)}
+		byName[name] = Entry{Name: name, File: file, Source: SourceConfig, Groups: d.Groups, Exists: exists(root, file)}
 	}
 	items, err := fs.ReadDir(root, ".")
 	if err != nil {

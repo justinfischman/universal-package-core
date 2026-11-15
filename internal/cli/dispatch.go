@@ -43,11 +43,15 @@ func (s *Session) withInstall(ctx context.Context, fn func(context.Context) (cor
 // command it runs also receives UPC_ENV=<name> (ADR-0006); upc passes the name,
 // never any value from the env file.
 func (s *Session) moduleRunner() (execx.Runner, error) {
-	res, err := s.Store.Load()
-	if err != nil {
-		return nil, err
+	name := s.EnvOverride
+	if name == "" {
+		res, err := s.Store.Load()
+		if err != nil {
+			return nil, err
+		}
+		name = res.EffectiveEnvironment()
 	}
-	if name := res.EffectiveEnvironment(); name != "" {
+	if name != "" {
 		return execx.WithEnv(s.Runner, envVar+"="+name), nil
 	}
 	return s.Runner, nil
