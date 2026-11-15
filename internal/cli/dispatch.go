@@ -14,7 +14,7 @@ import (
 func (s *Session) execute(ctx context.Context, pm core.PackageManager, c core.Capability, req core.Request) (core.Result, error) {
 	s.Logger.Info("dispatch", "pm", pm.ID(), "capability", c, "dir", req.Dir, "dry_run", req.DryRun)
 	return s.withInstall(ctx, func(ctx context.Context) (core.Result, error) {
-		return pm.Execute(ctx, c, req)
+		return s.dispatch(ctx, pm, c, req)
 	})
 }
 

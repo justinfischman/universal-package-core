@@ -49,6 +49,7 @@ func NewRoot(d Deps) *cobra.Command {
 	root.AddCommand(newVersionCmd(), newConfigCmd(d.Registries))
 	root.AddCommand(newNewCmd(), newInitCmd(), newDoctorCmd(), newEnvCmd())
 	root.AddCommand(newCapabilityCmds()...)
+	root.AddCommand(newPublishCmd())
 	return root
 }
 

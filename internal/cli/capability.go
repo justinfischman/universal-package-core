@@ -14,7 +14,7 @@ type capFlags struct {
 	group               string
 	script              string
 	version, constraint string
-	member string
+	member              string
 }
 
 // Which flags a capability command accepts.
@@ -54,13 +54,15 @@ var capabilityTable = []capSpec{
 	{use: "install", short: "Install the project's dependencies", cap: core.CapInstall, args: cobra.NoArgs, flags: flagGroup | flagScript | flagMember, build: noArgs},
 	{use: "update [package]...", short: "Upgrade dependencies (all, or the named ones)", cap: core.CapUpdate, args: cobra.ArbitraryArgs, flags: flagScript | flagMember, build: packages},
 	{use: "outdated", short: "Show dependencies with newer versions", cap: core.CapOutdated, args: cobra.NoArgs, flags: flagScript | flagMember, build: noArgs},
-	{use: "build [args...]", short: "Build the project's distributable artifacts", cap: core.CapBuild, args: cobra.ArbitraryArgs, passthrough: true, build: forward},
-	{use: "test [args...]", short: "Run the project's tests", cap: core.CapTest, args: cobra.ArbitraryArgs, passthrough: true, build: forward},
-	{use: "lint [args...]", short: "Lint the project", cap: core.CapLint, args: cobra.ArbitraryArgs, passthrough: true, build: forward},
-	{use: "audit [args...]", short: "Check dependencies for known vulnerabilities", cap: core.CapAudit, args: cobra.ArbitraryArgs, passthrough: true, build: forward},
+	{use: "build [args...]", short: "Build the project's distributable artifacts", cap: core.CapBuild, args: cobra.ArbitraryArgs, passthrough: true, flags: flagMember, build: forward},
+	{use: "test [args...]", short: "Run the project's tests", cap: core.CapTest, args: cobra.ArbitraryArgs, passthrough: true, flags: flagMember, build: forward},
+	{use: "lint [args...]", short: "Lint the project", cap: core.CapLint, args: cobra.ArbitraryArgs, passthrough: true, flags: flagMember, build: forward},
+	{use: "audit [args...]", short: "Check dependencies for known vulnerabilities", cap: core.CapAudit, args: cobra.ArbitraryArgs, passthrough: true, flags: flagMember, build: forward},
+	{use: "up [args...]", short: "Start the project's dev process in the background", cap: core.CapUp, args: cobra.ArbitraryArgs, flags: flagMember, passthrough: true, build: forward},
+	{use: "down", short: "Stop the process started by up", cap: core.CapDown, args: cobra.NoArgs, flags: flagMember, build: noArgs},
 	{
 		use: "run <script> [args...]", short: "Run a file or a named project script", cap: core.CapRun,
-		args: cobra.MinimumNArgs(1), passthrough: true,
+		args: cobra.MinimumNArgs(1), passthrough: true, flags: flagMember,
 		build: func(args []string) core.Request { return core.Request{Script: args[0], Args: args[1:]} },
 	},
 }

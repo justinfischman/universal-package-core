@@ -4,10 +4,13 @@
 package register
 
 import (
+	"github.com/justinfischman/universal-package-core/internal/components/execx"
 	"github.com/justinfischman/universal-package-core/internal/components/fsx"
 	"github.com/justinfischman/universal-package-core/internal/core"
 	"github.com/justinfischman/universal-package-core/internal/projects/packagetype"
 	"github.com/justinfischman/universal-package-core/internal/projects/script"
+	"github.com/justinfischman/universal-package-core/internal/stacks/compose"
+	"github.com/justinfischman/universal-package-core/internal/stacks/just"
 	"github.com/justinfischman/universal-package-core/internal/stacks/node"
 	"github.com/justinfischman/universal-package-core/internal/stacks/node/npm"
 	"github.com/justinfischman/universal-package-core/internal/stacks/node/yarn"
@@ -67,6 +70,8 @@ func Default() (core.Registries, error) {
 	if err := regs.ProjectTypes.Register(packagetype.New(regs, fsx.OS{})); err != nil {
 		return regs, err
 	}
+	regs.RunSources = []core.RunSource{just.New(execx.Ambient{})}
+	regs.UpProviders = []core.UpProvider{compose.New(execx.Ambient{})}
 	regs.DefaultLanguage = python.ID
 	return regs, nil
 }
