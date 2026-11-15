@@ -254,3 +254,19 @@ Decision record: ADR-0016 (Accepted).
 **Tests.** `internal/register/lifecycle_parity_test.go` fails if any manager lacks `up`, `down` or `publish`.
 
 **Known gaps (ADR-0016 follow-ups).** Native `publish --dry-run` per manager; no offer to create an up script when none exists; run state under `-w` keys off the request directory, not the member; `internal/config` has no script/up settings, so the "config script" and "configured up" lookup steps are not wired; Windows `Stop` does not kill child processes and pid reuse is unguarded; `down` keeps `up.log` until the next `up`.
+
+## 15. Phase 6.4: workspace, apps and contracts *(built)*
+
+Decision record: ADR-0014 (Accepted). Config only: no package graph between apps, and no package manager package imports `internal/workspace` (enforced by `internal/arch`).
+
+**Objects.**
+- `Workspace` (`internal/workspace/workspace.go`): root directory, the config `members`, and the apps by name. `Load` validates the `[apps.*]` tables first. It implements `envs.Lookup` for `${apps.<name>.<field>}` and owns `Order`, `Findings` and `ChildEnv`.
+- `App` (`app.go`): name, path (relative) and dir (absolute), port, url, provides, consumes, contract, raw env. `Field` exposes `name`, `path`, `port` and `url` to interpolation.
+- `ContractChecker` (`internal/core/contractchecker.go`): normalizes one contract kind to a snapshot and diffs two snapshots. Implemented by `internal/contracts/openapi` and `internal/contracts/jsonschema`; `internal/contracts/document` parses JSON and a YAML subset for both. `internal/contracts/detect.go` picks the checker.
+- `ContractLocks` (`internal/workspace/contractlock.go`, `contractcheck.go`): the committed lock of each app at `.universal-package-core/contracts/<app>.lock`. `Status` compares (missing, ok, changed with a diff summary), `CheckAll` covers every app with a `contract`, and only `Update` writes.
+- `EnvResolver` (`internal/components/envs/resolver.go`): resolves `${...}` references (nested, with cycle and unresolved-variable errors) and builds a child process env. It depends on the `Lookup` interface, not on the workspace.
+- `Orchestrator` (`internal/workspace/orchestrator.go`): starts apps through a `Runner` in dependency order (`consumes` after `provides`) and stops them in reverse. A failed start rolls back the apps started in that call. `internal/cli/apps.go` supplies the `Runner`, which runs each app's own `up` and `down` capability.
+
+**Commands.** `upc workspace list` (members and apps in start order); `upc workspace check [--update]` (`internal/cli/workspace_check.go`: exits non-zero when a lock is missing or a contract changed, writes locks only with `--update`); `upc up|down --all|--app <name>`; cross-app `doctor` findings `port-collision`, `consumer-without-provider`, `unresolved-variable`, `contract-missing`, `contract-changed` (`internal/workspace/findings.go`, one kind each).
+
+**Known gap.** ADR-0014 decision 3 (config `members` must agree with the manager's native member list) is not checked: the managers expose no cheap native member listing, so `workspace check` compares contracts only.

@@ -1,6 +1,6 @@
 # ADR-0014: Config-only workspaces, apps and contracts
 
-Status: Draft (Phase 6; accepted when 6.4 lands). Revised 2026-11-15 at the start of 6.4, after 6.2 (`-w`, config layering) and 6.3 (`up`/`down`, `runstate`) landed.
+Status: Accepted 2026-11-15 (Phase 6.4 lands). Revised 2026-11-15 at the start of 6.4, after 6.2 (`-w`, config layering) and 6.3 (`up`/`down`, `runstate`) landed.
 
 ## Context
 ADR-0007 (accepted, not edited) chose manager-native workspaces and deferred `workspace add|remove`, per-member overrides and multi-root discovery. Fullstack projects (an API plus a web app) need `upc` to start several apps and wire them together without a second package-dependency system.
@@ -24,3 +24,5 @@ Starting point (6.3): `up`/`down` are capabilities for all five managers, with r
 - No manager package depends on the `workspace` package.
 - Port collisions are checked statically from config; a runtime probe is advisory only.
 - Rollout: a two-uv-app pilot (`api` provides, `web` consumes) locks the method before a Node member is added and before the checkers, `EnvResolver` and orchestrator are built in parallel.
+- YAML contracts are read by `internal/contracts/document`, which supports a YAML subset (block mappings and sequences, single-line flow collections, plain and quoted scalars, literal and folded block scalars). It rejects anchors, aliases, tags, multi-line plain scalars and multi-document files, because a lock must never be built from a wrong parse.
+- Decision 3 (config `members` against the manager's native member list) is not yet enforced by `workspace check`: the managers expose no cheap native member listing. Follow-up.

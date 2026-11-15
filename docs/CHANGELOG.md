@@ -17,6 +17,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Update with ev
 - Tests: arch check confining `just`/`docker`/`compose` literals to their stack packages (`internal/arch/toolliterals.go`), `-w` honored by every capability command (`internal/cli/member_test.go`), lifecycle parity (`internal/register/lifecycle_parity_test.go`).
 - ADR-0016 is Accepted.
 
+### Added (Phase 6.4: workspace, apps and contracts)
+- `[workspace]` and `[apps.<name>]` config (`path`, `port`, `url`, `provides`, `consumes`, `contract`, `env`) with `${apps.<name>.<field>}` interpolation; `upc workspace list`; `upc up|down --all|--app <name>` in dependency order with rollback; run state keyed per app.
+- Contract checkers for OpenAPI and JSON Schema (`internal/contracts/`), with a JSON and YAML-subset reader that rejects anchors, aliases, tags and multi-document files.
+- `upc workspace check [--update]`: compares each app's contract with its committed lock `.universal-package-core/contracts/<app>.lock`; fails on a missing lock or a changed contract; writes locks only with `--update`.
+- `doctor` cross-app findings: `port-collision`, `consumer-without-provider`, `unresolved-variable`, `contract-missing`, `contract-changed`.
+- ADR-0014 is Accepted. Known gap: config `members` are not compared with the manager's native member list.
+
 ### Known gaps (Phase 6.3 follow-ups, see ADR-0016)
 - Native `publish --dry-run` per manager; offer to create an up script; run state under `-w` keyed off the member; config-defined scripts/`up` command not wired; Windows `Stop` leaves child processes and pid reuse is unguarded; `down` keeps `up.log` until the next `up`.
 - Generated-justfile export is not built (deferred).

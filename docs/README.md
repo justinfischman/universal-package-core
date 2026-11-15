@@ -78,6 +78,40 @@ upc env show                      # active environment: name and file path
 ```
 `upc` never reads or prints env values. While an environment is active, every command it runs for you gets `UPC_ENV=<name>`. `doctor` warns when the active environment or its file is gone. Config: `[environments.dev] file = "config/dev.env"` and `default_environment = "dev"` (ADR-0006).
 
+### Workspaces and apps
+A folder with several apps (for example a uv `api` and an npm `web`) is described in `.universal-package-core/config.toml`:
+```toml
+[workspace]
+members = ["apps/api", "apps/web"]
+
+[apps.api]
+path = "apps/api"
+port = 8000
+url = "http://localhost:${apps.api.port}"
+provides = ["http"]
+contract = "openapi.yaml"          # relative to the app; OpenAPI or JSON Schema
+
+[apps.web]
+path = "apps/web"
+port = 3000
+consumes = ["api"]                 # api starts first
+
+[apps.web.env]
+API_URL = "${apps.api.url}/v1"     # resolved when web starts
+```
+```sh
+upc workspace list                # members and apps in start order
+upc up --all                      # start every app, providers first; a failed start stops the ones already started
+upc up --app web                  # start only web (not the apps it consumes)
+upc down --all                    # stop in reverse order
+upc workspace check               # fail if a contract lock is missing or the contract changed
+upc workspace check --update      # accept the current contracts and write the locks
+```
+- Interpolation: `${apps.<name>.<field>}` with field `name`, `path`, `port` or `url`, in `url` and `env` values. An unresolved variable is an error, never an empty string. `${` has no escape syntax, so a literal `${` cannot be written in these values.
+- `--app <name>` starts or stops only that app.
+- Contracts: `.universal-package-core/contracts/<app>.lock` is committed. `workspace check` never writes it; only `--update` does. `doctor` reports `contract-missing` and `contract-changed`, next to `port-collision`, `consumer-without-provider` and `unresolved-variable`.
+- YAML contracts use a subset: anchors, aliases, tags and multi-document files are rejected (see ADR-0014).
+
 ## Planned commands
 `init`, `new {script|package|app}`, `add|remove|list|install`, `update|outdated|audit`, `run`, `build|test|lint`, `up|down`, `env`, `config`, `workspace`, `doctor`, `publish`, `completion`, `version`.
 

@@ -235,11 +235,13 @@ Opt-in E2E: fixture dev server started and stopped via `upc up/down` on uv and n
 - Modify `internal/config/config.go`, `internal/cli/doctor.go`, `internal/cli/capability.go` (`--all`, `--app`).
 
 ### Steps
-1. Update ADR-0014 draft (supersedes the deferred items of ADR-0007 and partly its option B; manager-native workspaces are still detected first).
-2. Pilot: two apps on uv (`api` provides, `web` consumes) with interpolation, `up --all` order and `doctor` checks; review; fix method. Add a Node member after.
-3. Contract checker: store a hash/normalized snapshot under `.universal-package-core/contracts/<app>.lock`, which is COMMITTED (ADR-0014 lists committed paths: `config.toml`, `contracts/*.lock`; gitignored paths: `local.toml`, `run/`); doctor reports "contract missing" when no lock is committed; `workspace check` compares, reports "changed" with a diff summary, never auto-updates; an explicit `--update` accepts.
-4. Cross-app doctor checks, each a separate finding type.
-5. Run state per member/app (carried from 6.3 follow-up c): `up`/`down` under `-w`/`--app` key run state by the member's directory and app name so two apps never clash; test it with the two-app fixture.
+1. [x] Update ADR-0014 draft (supersedes the deferred items of ADR-0007 and partly its option B; manager-native workspaces are still detected first).
+2. [x] Pilot: two apps on uv (`api` provides, `web` consumes) with interpolation, `up --all` order and `doctor` checks; review; fix method. Add a Node member after.
+3. [x] Contract checker: store a hash/normalized snapshot under `.universal-package-core/contracts/<app>.lock`, which is COMMITTED (ADR-0014 lists committed paths: `config.toml`, `contracts/*.lock`; gitignored paths: `local.toml`, `run/`); doctor reports "contract missing" when no lock is committed; `workspace check` compares, reports "changed" with a diff summary, never auto-updates; an explicit `--update` accepts.
+4. [x] Cross-app doctor checks, each a separate finding type.
+5. [x] Run state per member/app (carried from 6.3 follow-up c): `up`/`down` under `-w`/`--app` key run state by the member's directory and app name so two apps never clash; test it with the two-app fixture.
+
+Status 2026-11-15: steps 1-5 DONE on `feature/plan06-phase6-4` (not committed in this slice). `workspace check [--update]`, doctor `contract-missing`/`contract-changed`, docs and ADR-0014 (Accepted) landed. E2E `UPC_E2E=1 go test ./test -run TestE2EScripts/workspace` PASSED with uv and npm: check missing, `--update`, check ok, doctor clean, `up --all`/`down --all`, edit contract, check fails, doctor reports contract-changed. Gap: config `members` vs the manager-native member list (ADR-0014 decision 3) is not checked; no cheap native listing exists. Carry to 6.7.
 
 Status 2026-11-15: 6.4 NOT started. 6.3 branch `feature/plan06-phase6-3` is committed locally but NOT pushed (no `origin` remote is configured); remaining 6.3 follow-ups (a, b, d to h) are deferred to 6.7 by decision. DECISIONS 2026-11-15: ignore the missing remote for now (no push, no PR). Branch plan: once `feature/plan06-phase6-3` is merged to `main`, delete it and start 6.4 on a fresh branch from `main` (not stacked). DONE 2026-11-15: 6.3 fast-forward merged to `main` (a0d0a06), `feature/plan06-phase6-3` deleted, fresh branch `feature/plan06-phase6-4` created from `main`. 6.4 is ready to start (not started).
 
