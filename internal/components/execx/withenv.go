@@ -21,3 +21,30 @@ func (e envRunner) Run(ctx context.Context, cmd Cmd) (Output, error) {
 	cmd.Env = append(append([]string{}, e.env...), cmd.Env...)
 	return e.Runner.Run(ctx, cmd)
 }
+
+var _ Controller = envRunner{}
+
+// Start implements Controller; the environment entries apply here too.
+func (e envRunner) Start(ctx context.Context, cmd Cmd, logPath string) (int, error) {
+	c, ok := e.Runner.(Controller)
+	if !ok {
+		return 0, errNoController
+	}
+	cmd.Env = append(append([]string{}, e.env...), cmd.Env...)
+	return c.Start(ctx, cmd, logPath)
+}
+
+// Alive implements Controller.
+func (e envRunner) Alive(pid int) bool {
+	c, ok := e.Runner.(Controller)
+	return ok && c.Alive(pid)
+}
+
+// Stop implements Controller.
+func (e envRunner) Stop(pid int) error {
+	c, ok := e.Runner.(Controller)
+	if !ok {
+		return errNoController
+	}
+	return c.Stop(pid)
+}

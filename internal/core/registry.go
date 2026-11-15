@@ -67,6 +67,10 @@ type Registries struct {
 	// DefaultLanguage is the language id used when none is chosen and prompts
 	// are disabled. Set only by the composition root.
 	DefaultLanguage string
+	// RunSources are consulted in order after the manifest sources (ADR-0016).
+	RunSources []RunSource
+	// UpProviders are consulted in order when no script starts the project.
+	UpProviders []UpProvider
 }
 
 // NewRegistries creates empty registries.

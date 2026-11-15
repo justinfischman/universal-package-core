@@ -92,3 +92,24 @@ func TestResolveMissingManifestMeansNoScripts(t *testing.T) {
 		t.Errorf("reader errors must surface: %v", err)
 	}
 }
+
+func TestResolveFirstOrderAndMiss(t *testing.T) {
+	r := tableReader{table: Table{
+		Commands:    map[string]string{"start": "serve --port 1", "dev": "flask run"},
+		EntryPoints: map[string]string{"up": "demo-up"},
+	}}
+	got, err := ResolveFirst(nil, UpNames, r)
+	if err != nil || got.Kind != KindEntryPoint || got.Name != "up" {
+		t.Fatalf("up = %+v, %v", got, err)
+	}
+	delete(r.table.EntryPoints, "up")
+	got, err = ResolveFirst(nil, UpNames, r)
+	if err != nil || got.Name != "dev" || len(got.Words) != 2 {
+		t.Fatalf("dev = %+v, %v", got, err)
+	}
+	delete(r.table.Commands, "dev")
+	delete(r.table.Commands, "start")
+	if _, err := ResolveFirst(nil, UpNames, r); !errors.Is(err, core.ErrInvalidRequest) {
+		t.Errorf("miss = %v, want ErrInvalidRequest", err)
+	}
+}

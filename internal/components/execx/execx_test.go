@@ -4,10 +4,14 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
+	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/justinfischman/universal-package-core/internal/components/execx"
 	"github.com/justinfischman/universal-package-core/internal/core"
@@ -99,5 +103,57 @@ func TestWithEnvPrependsEntries(t *testing.T) {
 	}
 	if execx.WithEnv(fake) != execx.Runner(fake) {
 		t.Error("no entries must return the runner unchanged")
+	}
+}
+
+// TestHelperProcess is the background program the OS controller tests start.
+func TestHelperProcess(t *testing.T) {
+	if os.Getenv("UPC_EXECX_HELPER") != "1" {
+		return
+	}
+	fmt.Println("helper up")
+	time.Sleep(time.Minute)
+}
+
+func TestOSControllerStartsAndStopsRealProcess(t *testing.T) {
+	logPath := filepath.Join(t.TempDir(), "up.log")
+	r := execx.OS{}
+	pid, err := r.Start(context.Background(), execx.Cmd{
+		Name: os.Args[0], Args: []string{"-test.run=^TestHelperProcess$"}, Env: []string{"UPC_EXECX_HELPER=1"},
+	}, logPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = r.Stop(pid) })
+	if !r.Alive(pid) {
+		t.Fatal("started process is not alive")
+	}
+	if err := r.Stop(pid); err != nil {
+		t.Fatal(err)
+	}
+	if r.Alive(pid) {
+		t.Error("process alive after Stop")
+	}
+	if err := r.Stop(pid); err != nil {
+		t.Errorf("stopping a gone process = %v, want nil", err)
+	}
+}
+
+func TestOSStartDryRunStartsNothing(t *testing.T) {
+	logPath := filepath.Join(t.TempDir(), "up.log")
+	pid, err := execx.OS{DryRun: true}.Start(context.Background(), execx.Cmd{Name: "does-not-exist"}, logPath)
+	if err != nil || pid != 0 {
+		t.Fatalf("Start = %d, %v", pid, err)
+	}
+	if _, err := os.Stat(logPath); err == nil {
+		t.Error("dry run created a log")
+	}
+}
+
+func TestOSStartMissingToolIsToolMissing(t *testing.T) {
+	_, err := execx.OS{}.Start(context.Background(), execx.Cmd{Name: "upc-no-such-binary"}, filepath.Join(t.TempDir(), "l"))
+	var missing *core.ToolMissingError
+	if !errors.As(err, &missing) {
+		t.Fatalf("err = %v, want ToolMissingError", err)
 	}
 }

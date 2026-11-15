@@ -13,6 +13,21 @@ import (
 	"github.com/justinfischman/universal-package-core/internal/core"
 )
 
+// Sentinels for a lookup that found nothing, so a caller can fall back to a
+// lower-ranked source (ADR-0016). Both also match core.ErrInvalidRequest.
+var (
+	ErrNotDeclared    = errors.New("script not declared")
+	ErrNothingToStart = errors.New("no up script declared")
+)
+
+type lookupError struct {
+	kind error
+	msg  string
+}
+
+func (e lookupError) Error() string   { return core.ErrInvalidRequest.Error() + ": " + e.msg }
+func (e lookupError) Unwrap() []error { return []error{core.ErrInvalidRequest, e.kind} }
+
 // Table is the named scripts a manifest declares.
 type Table struct {
 	// Commands are command lines run inside the project environment
@@ -89,7 +104,7 @@ func Resolve(fsys fs.FS, name string, r Reader) (Target, error) {
 	if names := table.Names(); len(names) > 0 {
 		avail = " (available: " + strings.Join(names, ", ") + ")"
 	}
-	return Target{}, fmt.Errorf("%w: %q is not a file or a declared script%s", core.ErrInvalidRequest, name, avail)
+	return Target{}, lookupError{kind: ErrNotDeclared, msg: fmt.Sprintf("%q is not a file or a declared script%s", name, avail)}
 }
 
 // Split splits a command line into words, honoring single and double quotes.
@@ -130,4 +145,32 @@ func Split(line string) ([]string, error) {
 		return nil, errors.New("empty command")
 	}
 	return words, nil
+}
+
+// UpNames is the neutral lookup order for what `up` starts (ADR-0016): the
+// configured "up" command, then a "dev" script, then a "start" script.
+var UpNames = []string{"up", "dev", "start"}
+
+// ResolveFirst returns the first of names declared in the manifest table, as a
+// command or an entry point. Unlike Resolve it never matches a file in the
+// project directory: a long-running process is only started from a declared
+// script. It fails when none is declared.
+func ResolveFirst(fsys fs.FS, names []string, r Reader) (Target, error) {
+	table, err := r.ReadScripts(fsys)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return Target{}, err
+	}
+	for _, name := range names {
+		if line, ok := table.Commands[name]; ok {
+			words, err := Split(line)
+			if err != nil {
+				return Target{}, fmt.Errorf("%w: script %q: %v", core.ErrInvalidRequest, name, err)
+			}
+			return Target{Kind: KindCommand, Name: name, Words: words}, nil
+		}
+		if _, ok := table.EntryPoints[name]; ok {
+			return Target{Kind: KindEntryPoint, Name: name}, nil
+		}
+	}
+	return Target{}, lookupError{kind: ErrNothingToStart, msg: fmt.Sprintf("nothing to start: declare one of %s as a script", strings.Join(names, ", "))}
 }
