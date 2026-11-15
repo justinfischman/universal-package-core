@@ -191,7 +191,7 @@ Status as of 2026-11-14 (verified against the repo, not the earlier handoff):
 4. [x] `RunSource` and `UpProvider` interfaces in core (`internal/core/runsource.go`); `internal/stacks/just/` and `internal/stacks/compose/` implemented with FakeRunner tests (not yet registered or wired into the CLI up path).
 5. [x] Roll out `up`/`down` by the locked recipe to all five managers (uv, pip, poetry, npm, yarn); Unsupported declarations removed; full build, vet, Windows vet and tests green 2026-11-14.
 6. [x] `publish` CLI (`internal/cli/publish.go`), `up`/`down` capability rows, and `just`/`compose` registration + wiring (`internal/cli/runwire.go`, `execx.Ambient`, `runstate/provider.go`) done 2026-11-14; build, vet, Windows vet, tests green.
-   Documented follow-ups (not blocking exit criteria; carry to 6.7 or later): (a) native `publish --dry-run` per manager (global `--dry-run` prints the plan only: documented fallback); (b) offer to create an up script when none exists; (c) run state under `-w` keys off `req.Dir`, not the member; (d) `internal/config` has no script/up settings, so "config script" and "configured up" lookup steps are not wired; (e) Windows `Stop` does not kill child processes and pid reuse is unguarded; (f) `down` keeps `up.log` until next `up`.
+   Documented follow-ups (not blocking exit criteria; carry to 6.7 or later): (a) native `publish --dry-run` per manager (global `--dry-run` prints the plan only: documented fallback); (b) offer to create an up script when none exists; (c) run state under `-w` keys off `req.Dir`, not the member (DECISION 2026-11-15: pulled forward into 6.4, see 6.4 step 5); (d) `internal/config` has no script/up settings, so "config script" and "configured up" lookup steps are not wired; (e) Windows `Stop` does not kill child processes and pid reuse is unguarded; (f) `down` keeps `up.log` until next `up`.
 7. [x] (`internal/cli/member_test.go`; found and fixed: build/test/lint/audit/run lacked `flagMember` in `capability.go`) Test proving every capability command honors the 6.2 `-w` plumbing without per-command code.
 8. [x] (`internal/register/lifecycle_parity_test.go`) Parity suite: no manager may lack `up`/`down`/`publish` silently.
 9. [x] (`internal/arch/toolliterals.go`) Extend arch tests to enforce `just`/`docker`/`compose` confinement.
@@ -239,6 +239,9 @@ Opt-in E2E: fixture dev server started and stopped via `upc up/down` on uv and n
 2. Pilot: two apps on uv (`api` provides, `web` consumes) with interpolation, `up --all` order and `doctor` checks; review; fix method. Add a Node member after.
 3. Contract checker: store a hash/normalized snapshot under `.universal-package-core/contracts/<app>.lock`, which is COMMITTED (ADR-0014 lists committed paths: `config.toml`, `contracts/*.lock`; gitignored paths: `local.toml`, `run/`); doctor reports "contract missing" when no lock is committed; `workspace check` compares, reports "changed" with a diff summary, never auto-updates; an explicit `--update` accepts.
 4. Cross-app doctor checks, each a separate finding type.
+5. Run state per member/app (carried from 6.3 follow-up c): `up`/`down` under `-w`/`--app` key run state by the member's directory and app name so two apps never clash; test it with the two-app fixture.
+
+Status 2026-11-15: 6.4 NOT started. 6.3 branch `feature/plan06-phase6-3` pushed; remaining 6.3 follow-ups (a, b, d to h) are deferred to 6.7 by decision. Decision for 6.4 start: stack on the 6.3 branch or branch from `main` after review is not yet made.
 
 ### Exit criteria
 - `upc workspace list|check`, `up --all|--app`, `-w` work on a two-app fixture.
