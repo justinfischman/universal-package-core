@@ -2,42 +2,52 @@ package uv
 
 import (
 	"context"
-	"fmt"
 	"io/fs"
-	"strings"
 
 	"github.com/justinfischman/universal-package-core/internal/core"
 	"github.com/justinfischman/universal-package-core/internal/stacks/python/shared"
 )
 
+// vars are the template values for this request in this target.
+func (t target) vars(req core.Request) core.Vars {
+	return core.Vars{Packages: req.Packages, GroupName: req.Group, Script: t.scriptArgs(), Dir: req.Dir}
+}
+
+// run expands a template and runs it with the request's passthrough args.
+func run(inv *shared.Invocation, s core.CommandSpec, v core.Vars, extra []string) error {
+	argv, err := s.Expand(v)
+	if err != nil {
+		return err
+	}
+	_, err = inv.Run(true, shared.Concat(argv, extra)...)
+	return err
+}
+
 // install routes to `uv sync` (project), `uv sync --script f` (script) or a
 // venv plus `uv pip install -r requirements.txt` (requirements-only).
 func (u *UV) install(ctx context.Context, req core.Request) (core.Result, error) {
-	if req.Group != "" && strings.HasPrefix(req.Group, "-") {
-		return core.Result{}, fmt.Errorf("%w: %q is not a valid group", core.ErrInvalidRequest, req.Group)
-	}
 	t, err := resolve(req)
 	if err != nil {
+		return core.Result{}, err
+	}
+	if _, err := spec.Sync.Group.Args(req.Group); err != nil {
 		return core.Result{}, err
 	}
 	inv, err := begin(ctx, req)
 	if err != nil {
 		return core.Result{}, err
 	}
+	v := t.vars(req)
 	switch t.mode {
 	case modeRequirements:
 		if _, err := fs.Stat(shared.DirFS(req.Dir), ".venv"); err != nil {
-			if _, err := inv.Run(true, "venv"); err != nil {
+			if err := run(inv, spec.Venv, v, nil); err != nil {
 				return core.Result{}, err
 			}
 		}
-		_, err = inv.Run(true, shared.Concat([]string{"pip", "install", "-r", "requirements.txt"}, req.Args)...)
+		err = run(inv, spec.PipInstallReqs, v, req.Args)
 	default:
-		args := []string{"sync"}
-		if req.Group != "" {
-			args = append(args, "--group", req.Group)
-		}
-		_, err = inv.Run(true, shared.Concat(args, t.scriptArgs(), req.Args)...)
+		err = run(inv, spec.Sync, v, req.Args)
 	}
 	if err != nil {
 		return core.Result{}, err
@@ -58,30 +68,26 @@ func (u *UV) update(ctx context.Context, req core.Request) (core.Result, error) 
 	if err != nil {
 		return core.Result{}, err
 	}
+	v := t.vars(req)
 	if t.mode == modeRequirements {
-		args := []string{"pip", "install", "--upgrade"}
+		pip := spec.PipUpgradeReqs
 		if len(req.Packages) > 0 {
-			args = append(args, req.Packages...)
-		} else {
-			args = append(args, "-r", "requirements.txt")
+			pip = spec.PipUpgrade
 		}
-		if _, err := inv.Run(true, shared.Concat(args, req.Args)...); err != nil {
+		if err := run(inv, pip, v, req.Args); err != nil {
 			return core.Result{}, err
 		}
 		return inv.Result("dependencies updated", "update dependencies", nil), nil
 	}
 
-	lock := shared.Concat([]string{"lock"}, t.scriptArgs())
-	if len(req.Packages) == 0 {
-		lock = append(lock, "--upgrade")
+	lock := spec.LockAll
+	if len(req.Packages) > 0 {
+		lock = spec.LockPackages
 	}
-	for _, p := range req.Packages {
-		lock = append(lock, "--upgrade-package", p)
-	}
-	if _, err := inv.Run(true, shared.Concat(lock, req.Args)...); err != nil {
+	if err := run(inv, lock, v, req.Args); err != nil {
 		return core.Result{}, err
 	}
-	if _, err := inv.Run(true, shared.Concat([]string{"sync"}, t.scriptArgs())...); err != nil {
+	if err := run(inv, spec.SyncLocked, v, nil); err != nil {
 		return core.Result{}, err
 	}
 	return inv.Result("dependencies updated", "update dependencies", nil), nil

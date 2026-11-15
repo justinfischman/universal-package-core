@@ -10,15 +10,17 @@ import (
 
 // capFlags are the per-command flags the capability table can enable.
 type capFlags struct {
-	dev    bool
-	group  string
-	script string
+	dev                 bool
+	group               string
+	script              string
+	version, constraint string
 }
 
 // Which flags a capability command accepts.
 const (
-	flagGroup  = 1 << iota // --group and --dev
-	flagScript             // --script
+	flagGroup   = 1 << iota // --group and --dev
+	flagScript              // --script
+	flagVersion             // --version and --constraint (add)
 )
 
 // capSpec describes one command that routes a capability. The factory below
@@ -44,7 +46,7 @@ func forward(args []string) core.Request { return core.Request{Args: args} }
 
 // capabilityTable is the whole routed command surface.
 var capabilityTable = []capSpec{
-	{use: "add <package>...", short: "Add packages to the project", cap: core.CapAdd, args: cobra.MinimumNArgs(1), flags: flagGroup | flagScript, build: packages},
+	{use: "add <package>...", short: "Add packages to the project", cap: core.CapAdd, args: cobra.MinimumNArgs(1), flags: flagGroup | flagScript | flagVersion, build: packages},
 	{use: "remove <package>...", short: "Remove packages from the project", cap: core.CapRemove, args: cobra.MinimumNArgs(1), flags: flagGroup | flagScript, build: packages},
 	{use: "list", short: "List the project's dependencies", cap: core.CapList, args: cobra.NoArgs, flags: flagScript, build: noArgs},
 	{use: "install", short: "Install the project's dependencies", cap: core.CapInstall, args: cobra.NoArgs, flags: flagGroup | flagScript, build: noArgs},
@@ -94,6 +96,12 @@ func newCapabilityCmd(spec capSpec) *cobra.Command {
 				return err
 			}
 			req.Dir, req.DryRun, req.Yes = st.Dir, s.DryRun, s.Yes
+			if req.Version, err = pickVersion(f.version, f.constraint); err != nil {
+				return err
+			}
+			if _, ok := st.PM.(core.Versioned); req.Version != "" && !ok {
+				return fmt.Errorf("%w: %s does not support version constraints yet", core.ErrInvalidRequest, st.PM.ID())
+			}
 			s.Logger.Debug("stack", "pm", st.PM.ID(), "language", st.Language.ID(), "source", st.Source)
 			res, err := s.execute(cmd.Context(), st.PM, spec.cap, req)
 			if err != nil {
@@ -112,7 +120,19 @@ func newCapabilityCmd(spec capSpec) *cobra.Command {
 	if spec.flags&flagScript != 0 {
 		cmd.Flags().StringVar(&f.script, "script", "", "act on this standalone script instead of the project")
 	}
+	if spec.flags&flagVersion != 0 {
+		cmd.Flags().StringVar(&f.version, "version", "", `version constraint for the package, e.g. ">=2.3.4"`)
+		cmd.Flags().StringVar(&f.constraint, "constraint", "", "same as --version")
+	}
 	return cmd
+}
+
+// pickVersion merges --version and its alias --constraint.
+func pickVersion(version, constraint string) (string, error) {
+	if version != "" && constraint != "" && version != constraint {
+		return "", fmt.Errorf("%w: --version and --constraint disagree; pass one", core.ErrInvalidRequest)
+	}
+	return firstNonEmpty(version, constraint), nil
 }
 
 func firstNonEmpty(a, b string) string {

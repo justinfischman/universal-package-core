@@ -6,7 +6,6 @@ package uv
 import (
 	"io/fs"
 	"runtime"
-	"strings"
 
 	"github.com/justinfischman/universal-package-core/internal/core"
 	"github.com/justinfischman/universal-package-core/internal/stacks/python"
@@ -46,21 +45,7 @@ func newFor(goos string) (*UV, error) {
 }
 
 // tool describes the binary and how to install it on goos.
-func tool(goos string) core.Tool {
-	t := core.Tool{Binary: Binary, VersionArgs: []string{"--version"}}
-	switch goos {
-	case "darwin":
-		t.InstallCmd = []string{"brew", "install", "uv"}
-		t.InstallHint = strings.Join(t.InstallCmd, " ")
-	case "windows":
-		t.InstallCmd = []string{"powershell", "-ExecutionPolicy", "ByPass", "-c", "irm https://astral.sh/uv/install.ps1 | iex"}
-		t.InstallHint = `powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"`
-	default:
-		t.InstallCmd = []string{"sh", "-c", "curl -LsSf https://astral.sh/uv/install.sh | sh"}
-		t.InstallHint = "curl -LsSf https://astral.sh/uv/install.sh | sh"
-	}
-	return t
-}
+func tool(goos string) core.Tool { return spec.Tool.Tool(goos) }
 
 // declare records every capability (ADR-0003 parity).
 func (u *UV) declare() error {

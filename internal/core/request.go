@@ -18,10 +18,13 @@ type Request struct {
 	ProjectType string
 	// Name is the project to create when init scaffolds a project directory
 	// (for example "package"): the manager creates Dir/Name.
-	Name   string
-	Args   []string // passthrough arguments
-	DryRun bool
-	Yes    bool
+	Name string
+	// Version is a neutral version constraint (">=2.3.4") for add; see
+	// ParseConstraint. Only managers implementing Versioned accept it.
+	Version string
+	Args    []string // passthrough arguments
+	DryRun  bool
+	Yes     bool
 }
 
 // Result is the single output shape for every capability.
@@ -45,6 +48,33 @@ func (r Request) RequirePackages() error {
 		return fmt.Errorf("%w: at least one package is required", ErrInvalidRequest)
 	}
 	return r.ValidatePackages()
+}
+
+// Versioned is implemented by managers that render a Request.Version into their
+// add command. Managers that do not implement it must never see a Version.
+type Versioned interface {
+	ConstraintDialect() Dialect
+}
+
+// RenderConstraint parses Version and renders it for the manager's dialect.
+// It returns "" when no version was requested. A version applies to exactly one
+// package, and that package must not already carry its own constraint.
+func (r Request) RenderConstraint(d Dialect, manager string) (string, error) {
+	if r.Version == "" {
+		return "", nil
+	}
+	if len(r.Packages) != 1 {
+		return "", fmt.Errorf("%w: a version constraint applies to exactly one package, got %d", ErrInvalidRequest, len(r.Packages))
+	}
+	p := r.Packages[0]
+	if strings.ContainsAny(p, "<>=!~^,; ") || strings.Contains(strings.TrimPrefix(p, "@"), "@") {
+		return "", fmt.Errorf("%w: package %q already carries a version; drop it or the version flag", ErrInvalidRequest, p)
+	}
+	c, err := ParseConstraint(r.Version)
+	if err != nil {
+		return "", err
+	}
+	return c.Render(d, manager)
 }
 
 // ValidatePackages rejects empty specs and specs that start with "-".

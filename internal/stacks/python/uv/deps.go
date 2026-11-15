@@ -6,38 +6,27 @@ import (
 	"strings"
 
 	"github.com/justinfischman/universal-package-core/internal/core"
-	"github.com/justinfischman/universal-package-core/internal/stacks/python/shared"
 )
 
-// groupArgs maps upc's group to uv flags: "dev" is uv's --dev.
-func groupArgs(group string) ([]string, error) {
-	switch {
-	case group == "":
-		return nil, nil
-	case group == "dev":
-		return []string{"--dev"}, nil
-	case strings.HasPrefix(group, "-"):
-		return nil, fmt.Errorf("%w: %q is not a valid group", core.ErrInvalidRequest, group)
-	}
-	return []string{"--group", group}, nil
-}
-
-// add routes to `uv add [--dev|--group g] [--script f] pkgs... [args...]`.
+// add routes to `uv add [--dev|--group g] [--script f] pkg[constraint] [args...]`.
 func (u *UV) add(ctx context.Context, req core.Request) (core.Result, error) {
-	return u.change(ctx, req, "add", "added")
+	return u.change(ctx, req, spec.Add, "add", "added")
 }
 
 // remove routes to `uv remove`, with the same shape as add.
 func (u *UV) remove(ctx context.Context, req core.Request) (core.Result, error) {
-	return u.change(ctx, req, "remove", "removed")
+	return u.change(ctx, req, spec.Remove, "remove", "removed")
 }
 
-func (u *UV) change(ctx context.Context, req core.Request, verb, past string) (core.Result, error) {
+// ConstraintDialect makes uv a core.Versioned manager: it renders add's
+// Request.Version in PEP 440 syntax.
+func (u *UV) ConstraintDialect() core.Dialect { return spec.Dialect }
+
+func (u *UV) change(ctx context.Context, req core.Request, cs core.CommandSpec, verb, past string) (core.Result, error) {
 	if err := req.RequirePackages(); err != nil {
 		return core.Result{}, err
 	}
-	group, err := groupArgs(req.Group)
-	if err != nil {
+	if _, err := cs.Group.Args(req.Group); err != nil {
 		return core.Result{}, err
 	}
 	t, err := resolve(req)
@@ -47,12 +36,15 @@ func (u *UV) change(ctx context.Context, req core.Request, verb, past string) (c
 	if t.mode == modeRequirements {
 		return core.Result{}, fmt.Errorf("%w: %s needs a pyproject.toml or a script; this directory only has requirements.txt", core.ErrInvalidRequest, verb)
 	}
+	v := t.vars(req)
+	if v.Constraint, err = req.RenderConstraint(spec.Dialect, ID); err != nil {
+		return core.Result{}, err
+	}
 	inv, err := begin(ctx, req)
 	if err != nil {
 		return core.Result{}, err
 	}
-	args := shared.Concat([]string{verb}, group, t.scriptArgs(), req.Packages, req.Args)
-	if _, err := inv.Run(true, args...); err != nil {
+	if err := run(inv, cs, v, req.Args); err != nil {
 		return core.Result{}, err
 	}
 	list := strings.Join(req.Packages, " ")
