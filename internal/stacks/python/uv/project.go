@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"path/filepath"
 
+	"github.com/justinfischman/universal-package-core/internal/components/invoke"
 	"github.com/justinfischman/universal-package-core/internal/core"
 	"github.com/justinfischman/universal-package-core/internal/stacks/python"
 	"github.com/justinfischman/universal-package-core/internal/stacks/python/shared"
@@ -44,7 +45,7 @@ func (u *UV) initProject(ctx context.Context, req core.Request) (core.Result, er
 	if err != nil {
 		return core.Result{}, err
 	}
-	if _, err := inv.Run(true, shared.Concat(args, req.Args)...); err != nil {
+	if _, err := inv.Run(true, invoke.Concat(args, req.Args)...); err != nil {
 		return core.Result{}, err
 	}
 	if req.ProjectType == "app" && !req.DryRun {
@@ -71,17 +72,17 @@ func (u *UV) audit(ctx context.Context, req core.Request) (core.Result, error) {
 	if t.mode == modeRequirements {
 		return core.Result{}, fmt.Errorf("%w: audit needs a pyproject.toml or a script", core.ErrInvalidRequest)
 	}
-	return u.stream(ctx, req, shared.Concat([]string{"audit"}, t.scriptArgs(), req.Args), "audit dependencies")
+	return u.stream(ctx, req, invoke.Concat([]string{"audit"}, t.scriptArgs(), req.Args), "audit dependencies")
 }
 
 // build routes to `uv build`.
 func (u *UV) build(ctx context.Context, req core.Request) (core.Result, error) {
-	return u.stream(ctx, req, shared.Concat([]string{"build"}, req.Args), "build the project")
+	return u.stream(ctx, req, invoke.Concat([]string{"build"}, req.Args), "build the project")
 }
 
 // publish routes to `uv publish`.
 func (u *UV) publish(ctx context.Context, req core.Request) (core.Result, error) {
-	return u.stream(ctx, req, shared.Concat([]string{"publish"}, req.Args), "publish the project")
+	return u.stream(ctx, req, invoke.Concat([]string{"publish"}, req.Args), "publish the project")
 }
 
 // stream runs one uv command whose output is for the user, not for upc.

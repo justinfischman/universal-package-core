@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/justinfischman/universal-package-core/internal/components/execx"
+	"github.com/justinfischman/universal-package-core/internal/components/invoke"
 	"github.com/justinfischman/universal-package-core/internal/components/runstate"
 	"github.com/justinfischman/universal-package-core/internal/components/scripts"
 	"github.com/justinfischman/universal-package-core/internal/core"
@@ -25,7 +26,7 @@ func (p *PIP) up(ctx context.Context, req core.Request) (core.Result, error) {
 		return core.Result{}, err
 	}
 	name, args := p.upArgv(dir, target)
-	cmd := execx.Cmd{Name: name, Args: shared.Concat(args, req.Args), Dir: req.Dir, Env: req.Env}
+	cmd := execx.Cmd{Name: name, Args: invoke.Concat(args, req.Args), Dir: req.Dir, Env: req.Env}
 	if req.DryRun {
 		return core.Result{Summary: "dry run, nothing changed: would start " + cmd.String(), Commands: []string{cmd.String()}}, nil
 	}

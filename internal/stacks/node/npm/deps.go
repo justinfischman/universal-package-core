@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/justinfischman/universal-package-core/internal/components/invoke"
 	"github.com/justinfischman/universal-package-core/internal/core"
-	"github.com/justinfischman/universal-package-core/internal/stacks/node/shared"
 )
 
 // groupArgs maps upc's group to npm flags: "dev" is -D, "optional" is -O and
@@ -30,7 +30,7 @@ func (n *NPM) install(ctx context.Context, req core.Request) (core.Result, error
 	if len(req.AllGroups()) > 0 {
 		return core.Result{}, fmt.Errorf("%w: npm installs every group; groups apply to add and remove (subset install by group is not implemented)", core.ErrInvalidRequest)
 	}
-	return n.stream(ctx, req, shared.Concat([]string{"install"}, req.Args), "dependencies installed", "install dependencies")
+	return n.stream(ctx, req, invoke.Concat([]string{"install"}, req.Args), "dependencies installed", "install dependencies")
 }
 
 // add routes to `npm install [-D|-O|--save-peer] pkgs... [args...]`.
@@ -52,7 +52,7 @@ func (n *NPM) change(ctx context.Context, req core.Request, verb, past, plan str
 		return core.Result{}, err
 	}
 	list := strings.Join(req.Packages, " ")
-	args := shared.Concat([]string{verb}, group, req.Packages, req.Args)
+	args := invoke.Concat([]string{verb}, group, req.Packages, req.Args)
 	return n.stream(ctx, req, args, past+" "+list, plan+" "+list)
 }
 
@@ -61,18 +61,18 @@ func (n *NPM) update(ctx context.Context, req core.Request) (core.Result, error)
 	if err := req.ValidatePackages(); err != nil {
 		return core.Result{}, err
 	}
-	args := shared.Concat([]string{"update"}, req.Packages, req.Args)
+	args := invoke.Concat([]string{"update"}, req.Packages, req.Args)
 	return n.stream(ctx, req, args, "dependencies updated", "update dependencies")
 }
 
 // audit routes to `npm audit`.
 func (n *NPM) audit(ctx context.Context, req core.Request) (core.Result, error) {
-	return n.stream(ctx, req, shared.Concat([]string{"audit"}, req.Args), "done: audit dependencies", "audit dependencies")
+	return n.stream(ctx, req, invoke.Concat([]string{"audit"}, req.Args), "done: audit dependencies", "audit dependencies")
 }
 
 // publish routes to `npm publish`.
 func (n *NPM) publish(ctx context.Context, req core.Request) (core.Result, error) {
-	return n.stream(ctx, req, shared.Concat([]string{"publish"}, req.Args), "done: publish the project", "publish the project")
+	return n.stream(ctx, req, invoke.Concat([]string{"publish"}, req.Args), "done: publish the project", "publish the project")
 }
 
 // test routes to `npm test [-- args...]`.
@@ -85,7 +85,7 @@ func withPassthrough(base, args []string) []string {
 	if len(args) == 0 {
 		return base
 	}
-	return shared.Concat(base, []string{"--"}, args)
+	return invoke.Concat(base, []string{"--"}, args)
 }
 
 // stream runs one npm command whose output is for the user, not for upc.

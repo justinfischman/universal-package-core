@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/justinfischman/universal-package-core/internal/components/invoke"
 	"github.com/justinfischman/universal-package-core/internal/core"
 	"github.com/justinfischman/universal-package-core/internal/stacks/python"
 	"github.com/justinfischman/universal-package-core/internal/stacks/python/shared"
@@ -29,7 +30,7 @@ type target struct {
 // resolve decides whether a command acts on a script, a pyproject project or a
 // requirements.txt project. An explicit req.Script always selects script mode.
 func resolve(req core.Request) (target, error) {
-	fsys := shared.DirFS(req.Dir)
+	fsys := invoke.DirFS(req.Dir)
 	if req.Script != "" {
 		if err := shared.ValidateName(req.Script); err != nil {
 			return target{}, err

@@ -3,15 +3,15 @@ package npm
 import (
 	"context"
 
+	"github.com/justinfischman/universal-package-core/internal/components/invoke"
 	"github.com/justinfischman/universal-package-core/internal/core"
 	"github.com/justinfischman/universal-package-core/internal/stacks/node"
-	"github.com/justinfischman/universal-package-core/internal/stacks/node/shared"
 )
 
 // build is filled: the project's `build` script, else the TypeScript compiler
 // when the project has a tsconfig.json.
 func (n *NPM) build(ctx context.Context, req core.Request) (core.Result, error) {
-	fsys := shared.DirFS(req.Dir)
+	fsys := invoke.DirFS(req.Dir)
 	p, err := readProject(req)
 	if err != nil {
 		return core.Result{}, err
@@ -20,7 +20,7 @@ func (n *NPM) build(ctx context.Context, req core.Request) (core.Result, error) 
 		return n.stream(ctx, req, withPassthrough([]string{"run", "build"}, req.Args), "done: build the project", "build the project")
 	}
 	if node.IsTypeScript(fsys) {
-		args := shared.Concat([]string{"exec", "--no", "--", "tsc"}, req.Args)
+		args := invoke.Concat([]string{"exec", "--no", "--", "tsc"}, req.Args)
 		return n.stream(ctx, req, args, "done: build the project", "build the project")
 	}
 	return core.Result{}, &core.UnsupportedError{PackageManager: ID, Capability: core.CapBuild,

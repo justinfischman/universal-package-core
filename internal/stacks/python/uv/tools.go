@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/justinfischman/universal-package-core/internal/components/invoke"
 	"github.com/justinfischman/universal-package-core/internal/core"
 	"github.com/justinfischman/universal-package-core/internal/stacks/python/shared"
 )
@@ -28,9 +29,9 @@ func (u *UV) fill(ctx context.Context, req core.Request, c core.Capability, tool
 	if t.mode != modeProject {
 		return core.Result{}, fmt.Errorf("%w: %s needs a pyproject.toml", core.ErrInvalidRequest, c)
 	}
-	words, err := tool.Plan(shared.DirFS(req.Dir), req.Args)
+	words, err := tool.Plan(invoke.DirFS(req.Dir), req.Args)
 	if err != nil {
 		return core.Result{}, shared.AsUnsupported(err, ID, c)
 	}
-	return u.stream(ctx, req, shared.Concat([]string{"run", "--"}, words), what)
+	return u.stream(ctx, req, invoke.Concat([]string{"run", "--"}, words), what)
 }

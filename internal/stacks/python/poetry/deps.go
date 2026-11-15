@@ -6,13 +6,14 @@ import (
 	"io/fs"
 	"strings"
 
+	"github.com/justinfischman/universal-package-core/internal/components/invoke"
 	"github.com/justinfischman/universal-package-core/internal/core"
 	"github.com/justinfischman/universal-package-core/internal/stacks/python"
 	"github.com/justinfischman/universal-package-core/internal/stacks/python/shared"
 )
 
 // begin starts an invocation of the poetry binary.
-func begin(ctx context.Context, req core.Request) (*shared.Invocation, error) {
+func begin(ctx context.Context, req core.Request) (*invoke.Invocation, error) {
 	return shared.Begin(ctx, req, Binary)
 }
 
@@ -26,7 +27,7 @@ func requireProject(req core.Request) error {
 	if req.Script != "" {
 		return fmt.Errorf("%w: poetry does not manage script dependencies; use a pyproject.toml project", core.ErrInvalidRequest)
 	}
-	if _, err := fs.Stat(shared.DirFS(req.Dir), python.PyprojectFilename); err != nil {
+	if _, err := fs.Stat(invoke.DirFS(req.Dir), python.PyprojectFilename); err != nil {
 		return fmt.Errorf("%w: no pyproject.toml in %s; run `upc init` or `upc new`", core.ErrInvalidRequest, dir)
 	}
 	return nil
@@ -67,7 +68,7 @@ func (p *Poetry) change(ctx context.Context, req core.Request, verb, past string
 	if req.Group != "" {
 		group = []string{"--group", req.Group}
 	}
-	if _, err := inv.Run(true, shared.Concat([]string{verb}, group, req.Packages, req.Args)...); err != nil {
+	if _, err := inv.Run(true, invoke.Concat([]string{verb}, group, req.Packages, req.Args)...); err != nil {
 		return core.Result{}, err
 	}
 	list := strings.Join(req.Packages, " ")
@@ -93,7 +94,7 @@ func (p *Poetry) install(ctx context.Context, req core.Request) (core.Result, er
 	if len(groups) > 0 {
 		args = append(args, "--with", strings.Join(groups, ","))
 	}
-	if _, err := inv.Run(true, shared.Concat(args, req.Args)...); err != nil {
+	if _, err := inv.Run(true, invoke.Concat(args, req.Args)...); err != nil {
 		return core.Result{}, err
 	}
 	return inv.Result("dependencies installed", "install dependencies", nil), nil
@@ -111,7 +112,7 @@ func (p *Poetry) update(ctx context.Context, req core.Request) (core.Result, err
 	if err != nil {
 		return core.Result{}, err
 	}
-	if _, err := inv.Run(true, shared.Concat([]string{"update"}, req.Packages, req.Args)...); err != nil {
+	if _, err := inv.Run(true, invoke.Concat([]string{"update"}, req.Packages, req.Args)...); err != nil {
 		return core.Result{}, err
 	}
 	return inv.Result("dependencies updated", "update dependencies", nil), nil

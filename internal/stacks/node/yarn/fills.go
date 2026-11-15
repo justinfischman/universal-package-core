@@ -3,9 +3,9 @@ package yarn
 import (
 	"context"
 
+	"github.com/justinfischman/universal-package-core/internal/components/invoke"
 	"github.com/justinfischman/universal-package-core/internal/core"
 	"github.com/justinfischman/universal-package-core/internal/stacks/node"
-	"github.com/justinfischman/universal-package-core/internal/stacks/node/shared"
 )
 
 // build is filled: the project's `build` script, else the TypeScript compiler
@@ -17,10 +17,10 @@ func (y *Yarn) build(ctx context.Context, req core.Request) (core.Result, error)
 		return core.Result{}, err
 	}
 	if _, ok := p.Scripts["build"]; ok {
-		return y.stream(ctx, req, shared.Concat([]string{"run", "build"}, req.Args), "done: build the project", "build the project")
+		return y.stream(ctx, req, invoke.Concat([]string{"run", "build"}, req.Args), "done: build the project", "build the project")
 	}
-	if node.IsTypeScript(shared.DirFS(req.Dir)) {
-		return y.stream(ctx, req, shared.Concat([]string{"tsc"}, req.Args), "done: build the project", "build the project")
+	if node.IsTypeScript(invoke.DirFS(req.Dir)) {
+		return y.stream(ctx, req, invoke.Concat([]string{"tsc"}, req.Args), "done: build the project", "build the project")
 	}
 	return core.Result{}, &core.UnsupportedError{PackageManager: ID, Capability: core.CapBuild,
 		Reason: "package.json has no `build` script and the project has no tsconfig.json; add a `build` script (for example \"build\": \"tsc\")"}
@@ -37,5 +37,5 @@ func (y *Yarn) lint(ctx context.Context, req core.Request) (core.Result, error) 
 		return core.Result{}, &core.UnsupportedError{PackageManager: ID, Capability: core.CapLint,
 			Reason: "package.json has no `lint` script; add a linter (for example upc add --dev eslint) and a `lint` script"}
 	}
-	return y.stream(ctx, req, shared.Concat([]string{"run", "lint"}, req.Args), "done: lint the project", "lint the project")
+	return y.stream(ctx, req, invoke.Concat([]string{"run", "lint"}, req.Args), "done: lint the project", "lint the project")
 }

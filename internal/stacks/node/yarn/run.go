@@ -3,6 +3,7 @@ package yarn
 import (
 	"context"
 
+	"github.com/justinfischman/universal-package-core/internal/components/invoke"
 	"github.com/justinfischman/universal-package-core/internal/components/scripts"
 	"github.com/justinfischman/universal-package-core/internal/core"
 	"github.com/justinfischman/universal-package-core/internal/stacks/node"
@@ -16,7 +17,7 @@ func (y *Yarn) runScript(ctx context.Context, req core.Request) (core.Result, er
 	if err := requireManifest(req); err != nil {
 		return core.Result{}, err
 	}
-	target, err := scripts.Resolve(shared.DirFS(req.Dir), req.Script, node.ScriptReader{})
+	target, err := scripts.Resolve(invoke.DirFS(req.Dir), req.Script, node.ScriptReader{})
 	if err != nil {
 		return core.Result{}, err
 	}
@@ -27,7 +28,7 @@ func (y *Yarn) runScript(ctx context.Context, req core.Request) (core.Result, er
 	if target.Kind == scripts.KindFile {
 		_, err = inv.RunProgram(true, shared.RuntimeBinary, shared.FileArgs(target.Name, req.Args)...)
 	} else {
-		_, err = inv.Run(true, shared.Concat([]string{"run", target.Name}, req.Args)...)
+		_, err = inv.Run(true, invoke.Concat([]string{"run", target.Name}, req.Args)...)
 	}
 	if err != nil {
 		return core.Result{}, err

@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/justinfischman/universal-package-core/internal/components/drift"
 	"github.com/justinfischman/universal-package-core/internal/core"
 )
 
@@ -82,21 +83,5 @@ func EnvDrift(fsys fs.FS, source string, locked map[string][]string) []core.Find
 			stale = append(stale, fmt.Sprintf("%s (%s installed, %s in %s)", name, have, strings.Join(versions, " or "), source))
 		}
 	}
-	var out []core.Finding
-	for _, group := range []struct {
-		names []string
-		text  string
-	}{
-		{missing, "not installed in " + ModulesDir},
-		{stale, "at a different version than " + source},
-	} {
-		if len(group.names) > 0 {
-			out = append(out, core.Finding{
-				Severity: core.SeverityWarn,
-				Message:  fmt.Sprintf("%s drifted from %s: %s %s", ModulesDir, source, strings.Join(group.names, ", "), group.text),
-				Fix:      core.CapInstall,
-			})
-		}
-	}
-	return out
+	return drift.Findings(ModulesDir, source, missing, stale)
 }

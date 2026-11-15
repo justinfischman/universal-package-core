@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/justinfischman/universal-package-core/internal/components/invoke"
 	"github.com/justinfischman/universal-package-core/internal/core"
 	"github.com/justinfischman/universal-package-core/internal/stacks/node"
 	"github.com/justinfischman/universal-package-core/internal/stacks/node/shared"
@@ -24,7 +25,7 @@ func (y *Yarn) initApp(ctx context.Context, req core.Request) (result core.Resul
 	if _, err := y.fsys.Stat(root); err == nil {
 		return core.Result{}, fmt.Errorf("%w: %s already exists", core.ErrInvalidRequest, root)
 	}
-	inv, err := shared.Begin(ctx, req, Binary)
+	inv, err := invoke.Begin(ctx, req, Binary)
 	if err != nil {
 		return core.Result{}, err
 	}

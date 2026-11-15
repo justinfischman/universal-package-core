@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"path/filepath"
 
+	"github.com/justinfischman/universal-package-core/internal/components/invoke"
 	"github.com/justinfischman/universal-package-core/internal/core"
 	"github.com/justinfischman/universal-package-core/internal/stacks/python/shared"
 )
@@ -13,7 +14,7 @@ import (
 // session is one capability call: the invocation, the project's read-only view
 // and the interpreter to use.
 type session struct {
-	*shared.Invocation
+	*invoke.Invocation
 	p    *PIP
 	dir  string
 	fsys fs.FS
@@ -53,7 +54,7 @@ func (s *session) existingVenv() (string, error) {
 
 // pip runs `python -m pip args...` in the environment.
 func (s *session) pip(stream bool, py string, args ...string) error {
-	_, err := s.RunProgram(stream, py, shared.Concat([]string{"-m", "pip"}, args)...)
+	_, err := s.RunProgram(stream, py, invoke.Concat([]string{"-m", "pip"}, args)...)
 	return err
 }
 

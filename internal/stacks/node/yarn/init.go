@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/justinfischman/universal-package-core/internal/components/invoke"
 	"github.com/justinfischman/universal-package-core/internal/core"
 	"github.com/justinfischman/universal-package-core/internal/stacks/node"
 	"github.com/justinfischman/universal-package-core/internal/stacks/node/shared"
@@ -47,11 +48,11 @@ func (y *Yarn) initProject(ctx context.Context, req core.Request) (core.Result, 
 }
 
 func (y *Yarn) initPlain(ctx context.Context, req core.Request) (core.Result, error) {
-	inv, err := shared.Begin(ctx, req, Binary)
+	inv, err := invoke.Begin(ctx, req, Binary)
 	if err != nil {
 		return core.Result{}, err
 	}
-	if _, err := inv.Run(true, shared.Concat([]string{"init", "--yes"}, req.Args)...); err != nil {
+	if _, err := inv.Run(true, invoke.Concat([]string{"init", "--yes"}, req.Args)...); err != nil {
 		return core.Result{}, err
 	}
 	return inv.Result("initialized project", "initialize project", nil), nil
@@ -72,7 +73,7 @@ func (y *Yarn) initScript(ctx context.Context, req core.Request) (result core.Re
 	if _, err := y.fsys.Stat(dest); err == nil {
 		return core.Result{}, fmt.Errorf("%w: %s already exists", core.ErrInvalidRequest, dest)
 	}
-	inv, err := shared.Begin(ctx, req, Binary)
+	inv, err := invoke.Begin(ctx, req, Binary)
 	if err != nil {
 		return core.Result{}, err
 	}
@@ -114,7 +115,7 @@ func (y *Yarn) initPackage(ctx context.Context, req core.Request) (result core.R
 	if _, err := y.fsys.Stat(root); err == nil {
 		return core.Result{}, fmt.Errorf("%w: %s already exists", core.ErrInvalidRequest, root)
 	}
-	inv, err := shared.Begin(ctx, req, Binary)
+	inv, err := invoke.Begin(ctx, req, Binary)
 	if err != nil {
 		return core.Result{}, err
 	}

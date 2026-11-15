@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"strings"
 
+	"github.com/justinfischman/universal-package-core/internal/components/invoke"
 	"github.com/justinfischman/universal-package-core/internal/components/scripts"
 	"github.com/justinfischman/universal-package-core/internal/core"
 	"github.com/justinfischman/universal-package-core/internal/stacks/python"
@@ -63,10 +64,10 @@ func (t Tool) Plan(fsys fs.FS, args []string) ([]string, error) {
 		if err != nil {
 			return nil, fmt.Errorf("%w: [tool.upc.scripts] %q: %v", core.ErrInvalidRequest, t.Script, err)
 		}
-		return Concat(words, args), nil
+		return invoke.Concat(words, args), nil
 	}
 	if t.declared(fsys, project) {
-		return Concat(t.Command, args), nil
+		return invoke.Concat(t.Command, args), nil
 	}
 	return nil, fmt.Errorf("%w: %s is not configured for this project; %s", ErrNotConfigured, t.Name, t.Enable)
 }

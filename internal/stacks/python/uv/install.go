@@ -4,8 +4,8 @@ import (
 	"context"
 	"io/fs"
 
+	"github.com/justinfischman/universal-package-core/internal/components/invoke"
 	"github.com/justinfischman/universal-package-core/internal/core"
-	"github.com/justinfischman/universal-package-core/internal/stacks/python/shared"
 )
 
 // vars are the template values for this request in this target.
@@ -14,12 +14,12 @@ func (t target) vars(req core.Request) core.Vars {
 }
 
 // run expands a template and runs it with the request's passthrough args.
-func run(inv *shared.Invocation, s core.CommandSpec, v core.Vars, extra []string) error {
+func run(inv *invoke.Invocation, s core.CommandSpec, v core.Vars, extra []string) error {
 	argv, err := s.Expand(v)
 	if err != nil {
 		return err
 	}
-	_, err = inv.Run(true, shared.Concat(argv, extra)...)
+	_, err = inv.Run(true, invoke.Concat(argv, extra)...)
 	return err
 }
 
@@ -37,7 +37,7 @@ func (u *UV) install(ctx context.Context, req core.Request) (core.Result, error)
 	v := t.vars(req)
 	switch t.mode {
 	case modeRequirements:
-		if _, err := fs.Stat(shared.DirFS(req.Dir), ".venv"); err != nil {
+		if _, err := fs.Stat(invoke.DirFS(req.Dir), ".venv"); err != nil {
 			if err := run(inv, spec.Venv, v, nil); err != nil {
 				return core.Result{}, err
 			}

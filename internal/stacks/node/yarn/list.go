@@ -11,9 +11,10 @@ import (
 	"strings"
 
 	"github.com/justinfischman/universal-package-core/internal/components/execx"
+	"github.com/justinfischman/universal-package-core/internal/components/invoke"
+	"github.com/justinfischman/universal-package-core/internal/components/pkgreport"
 	"github.com/justinfischman/universal-package-core/internal/core"
 	"github.com/justinfischman/universal-package-core/internal/stacks/node"
-	"github.com/justinfischman/universal-package-core/internal/stacks/node/shared"
 )
 
 // list shows direct dependencies: `yarn list --depth=0 --json`, narrowed to
@@ -35,7 +36,7 @@ func (y *Yarn) list(ctx context.Context, req core.Request) (core.Result, error) 
 	if err != nil {
 		return core.Result{}, err
 	}
-	summary := shared.PackageSummary(pkgs)
+	summary := pkgreport.Summary(pkgs)
 	if summary == "" {
 		summary = "no dependencies"
 	}
@@ -56,7 +57,7 @@ func (y *Yarn) outdated(ctx context.Context, req core.Request) (core.Result, err
 	if err != nil {
 		return core.Result{}, err
 	}
-	stale, summary := shared.OutdatedPackages(pkgs)
+	stale, summary := pkgreport.Outdated(pkgs)
 	if summary == "" {
 		summary = "all dependencies are up to date"
 	}
@@ -67,7 +68,7 @@ func (y *Yarn) outdated(ctx context.Context, req core.Request) (core.Result, err
 // exits 1 when it has findings, so a failed command with output is returned
 // for the parser to judge; one without output is a real failure. Berry has
 // neither report.
-func (y *Yarn) query(ctx context.Context, req core.Request, cap core.Capability, args []string) (string, *shared.Invocation, error) {
+func (y *Yarn) query(ctx context.Context, req core.Request, cap core.Capability, args []string) (string, *invoke.Invocation, error) {
 	inv, err := begin(ctx, req)
 	if err != nil {
 		return "", nil, err
@@ -79,7 +80,7 @@ func (y *Yarn) query(ctx context.Context, req core.Request, cap core.Capability,
 	if berry {
 		return "", inv, berryUnsupported(cap)
 	}
-	out, err := inv.Run(false, shared.Concat(args, req.Args)...)
+	out, err := inv.Run(false, invoke.Concat(args, req.Args)...)
 	var exit *execx.ExitError
 	if err != nil && (!errors.As(err, &exit) || strings.TrimSpace(out.Stdout) == "") {
 		return "", inv, err
@@ -93,7 +94,7 @@ func directDependencies(req core.Request) ([]string, error) {
 	if err := requireManifest(req); err != nil {
 		return nil, err
 	}
-	data, err := fs.ReadFile(shared.DirFS(req.Dir), node.PackageFilename)
+	data, err := fs.ReadFile(invoke.DirFS(req.Dir), node.PackageFilename)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +143,9 @@ func events(text, what string) ([]event, error) {
 		}
 		if e.Type == "error" {
 			var msg string
-			_ = json.Unmarshal(e.Data, &msg)
+			if err := json.Unmarshal(e.Data, &msg); err != nil {
+				return nil, fmt.Errorf("parse yarn %s error event: %w", what, err)
+			}
 			first, _, _ := strings.Cut(msg, "\n")
 			return nil, fmt.Errorf("yarn %s failed: %s", what, first)
 		}

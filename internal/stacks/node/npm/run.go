@@ -3,6 +3,7 @@ package npm
 import (
 	"context"
 
+	"github.com/justinfischman/universal-package-core/internal/components/invoke"
 	"github.com/justinfischman/universal-package-core/internal/components/scripts"
 	"github.com/justinfischman/universal-package-core/internal/core"
 	"github.com/justinfischman/universal-package-core/internal/stacks/node"
@@ -16,7 +17,7 @@ func (n *NPM) runScript(ctx context.Context, req core.Request) (core.Result, err
 	if err := requireManifest(req); err != nil {
 		return core.Result{}, err
 	}
-	target, err := scripts.Resolve(shared.DirFS(req.Dir), req.Script, node.ScriptReader{})
+	target, err := scripts.Resolve(invoke.DirFS(req.Dir), req.Script, node.ScriptReader{})
 	if err != nil {
 		return core.Result{}, err
 	}

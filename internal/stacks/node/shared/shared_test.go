@@ -54,15 +54,3 @@ func TestIsTypeScriptFile(t *testing.T) {
 		}
 	}
 }
-
-func TestOutdatedPackages(t *testing.T) {
-	stale, summary := OutdatedPackages([]core.Package{
-		{Name: "a", Version: "1", Latest: "2"}, {Name: "b", Version: "1", Latest: "1"}, {Name: "c", Version: "1"},
-	})
-	if len(stale) != 1 || summary != "a 1 -> 2" {
-		t.Errorf("stale = %v, summary = %q", stale, summary)
-	}
-	if got, _ := OutdatedPackages(nil); got == nil {
-		t.Error("stale must be an empty list, not nil, for JSON output")
-	}
-}

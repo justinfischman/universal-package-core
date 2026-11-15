@@ -5,18 +5,18 @@ import (
 	"fmt"
 
 	"github.com/justinfischman/universal-package-core/internal/components/execx"
+	"github.com/justinfischman/universal-package-core/internal/components/invoke"
 	"github.com/justinfischman/universal-package-core/internal/components/runstate"
 	"github.com/justinfischman/universal-package-core/internal/components/scripts"
 	"github.com/justinfischman/universal-package-core/internal/core"
 	"github.com/justinfischman/universal-package-core/internal/stacks/python"
-	"github.com/justinfischman/universal-package-core/internal/stacks/python/shared"
 )
 
 // up starts the project's long-running process in the background (ADR-0016):
 // the configured "up" command, else a "dev" or "start" script, run through
 // `poetry run`. The pid and log are recorded under the app's run directory.
 func (p *Poetry) up(ctx context.Context, req core.Request) (core.Result, error) {
-	target, err := scripts.ResolveFirst(shared.DirFS(req.Dir), scripts.UpNames, python.ScriptReader{})
+	target, err := scripts.ResolveFirst(invoke.DirFS(req.Dir), scripts.UpNames, python.ScriptReader{})
 	if err != nil {
 		return core.Result{}, err
 	}

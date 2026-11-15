@@ -5,11 +5,11 @@ import (
 	"fmt"
 
 	"github.com/justinfischman/universal-package-core/internal/components/execx"
+	"github.com/justinfischman/universal-package-core/internal/components/invoke"
 	"github.com/justinfischman/universal-package-core/internal/components/runstate"
 	"github.com/justinfischman/universal-package-core/internal/components/scripts"
 	"github.com/justinfischman/universal-package-core/internal/core"
 	"github.com/justinfischman/universal-package-core/internal/stacks/node"
-	"github.com/justinfischman/universal-package-core/internal/stacks/node/shared"
 )
 
 // up starts the project's long-running process in the background (ADR-0016):
@@ -19,11 +19,11 @@ func (y *Yarn) up(ctx context.Context, req core.Request) (core.Result, error) {
 	if err := requireManifest(req); err != nil {
 		return core.Result{}, err
 	}
-	target, err := scripts.ResolveFirst(shared.DirFS(req.Dir), scripts.UpNames, node.ScriptReader{})
+	target, err := scripts.ResolveFirst(invoke.DirFS(req.Dir), scripts.UpNames, node.ScriptReader{})
 	if err != nil {
 		return core.Result{}, err
 	}
-	cmd := execx.Cmd{Name: Binary, Args: shared.Concat([]string{"run", target.Name}, req.Args), Dir: req.Dir, Env: req.Env}
+	cmd := execx.Cmd{Name: Binary, Args: invoke.Concat([]string{"run", target.Name}, req.Args), Dir: req.Dir, Env: req.Env}
 	if req.DryRun {
 		return core.Result{Summary: "dry run, nothing changed: would start " + cmd.String(), Commands: []string{cmd.String()}}, nil
 	}

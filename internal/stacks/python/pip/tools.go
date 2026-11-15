@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 
+	"github.com/justinfischman/universal-package-core/internal/components/invoke"
 	"github.com/justinfischman/universal-package-core/internal/components/scripts"
 	"github.com/justinfischman/universal-package-core/internal/core"
 	"github.com/justinfischman/universal-package-core/internal/stacks/python"
@@ -87,7 +88,7 @@ func (p *PIP) runScript(ctx context.Context, req core.Request) (core.Result, err
 	default:
 		name = shared.Program(s.fsys, p.goos, target.Name)
 	}
-	if _, err := s.RunProgram(true, name, shared.Concat(args, req.Args)...); err != nil {
+	if _, err := s.RunProgram(true, name, invoke.Concat(args, req.Args)...); err != nil {
 		return core.Result{}, err
 	}
 	return s.Result("", "run "+req.Script, nil), nil
@@ -144,10 +145,10 @@ func (p *PIP) module(ctx context.Context, req core.Request, module, pkg string, 
 	if err != nil {
 		return core.Result{}, err
 	}
-	if err := s.RequireModule(py, module, pkg); err != nil {
+	if err := shared.RequireModule(s.Invocation, py, module, pkg); err != nil {
 		return core.Result{}, err
 	}
-	if _, err := s.RunProgram(true, py, shared.Concat([]string{"-m"}, args, req.Args)...); err != nil {
+	if _, err := s.RunProgram(true, py, invoke.Concat([]string{"-m"}, args, req.Args)...); err != nil {
 		return core.Result{}, err
 	}
 	return s.Result("done: "+what, what, nil), nil

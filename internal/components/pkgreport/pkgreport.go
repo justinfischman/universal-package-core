@@ -1,4 +1,5 @@
-package shared
+// Package pkgreport renders package lists for list and outdated results.
+package pkgreport
 
 import (
 	"fmt"
@@ -7,8 +8,8 @@ import (
 	"github.com/justinfischman/universal-package-core/internal/core"
 )
 
-// PackageSummary renders list output: one "name version" line per package.
-func PackageSummary(pkgs []core.Package) string {
+// Summary renders list output: one "name version" line per package.
+func Summary(pkgs []core.Package) string {
 	lines := make([]string, len(pkgs))
 	for i, p := range pkgs {
 		lines[i] = strings.TrimSpace(p.Name + " " + p.Version)
@@ -16,8 +17,8 @@ func PackageSummary(pkgs []core.Package) string {
 	return strings.Join(lines, "\n")
 }
 
-// OutdatedPackages keeps the packages with a newer version and renders them.
-func OutdatedPackages(pkgs []core.Package) ([]core.Package, string) {
+// Outdated keeps the packages with a newer version and renders them.
+func Outdated(pkgs []core.Package) ([]core.Package, string) {
 	stale := []core.Package{}
 	var lines []string
 	for _, p := range pkgs {

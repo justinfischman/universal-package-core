@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/justinfischman/universal-package-core/internal/components/invoke"
 	"github.com/justinfischman/universal-package-core/internal/core"
-	"github.com/justinfischman/universal-package-core/internal/stacks/node/shared"
 )
 
 // groupArgs maps upc's group to yarn flags: "dev" is -D, "optional" is -O and
@@ -30,7 +30,7 @@ func (y *Yarn) install(ctx context.Context, req core.Request) (core.Result, erro
 	if len(req.AllGroups()) > 0 {
 		return core.Result{}, fmt.Errorf("%w: yarn installs every group; groups apply to add and remove (subset install by group is not implemented)", core.ErrInvalidRequest)
 	}
-	return y.stream(ctx, req, shared.Concat([]string{"install"}, req.Args), "dependencies installed", "install dependencies")
+	return y.stream(ctx, req, invoke.Concat([]string{"install"}, req.Args), "dependencies installed", "install dependencies")
 }
 
 // add routes to `yarn add [-D|-O|-P] pkgs... [args...]`.
@@ -43,7 +43,7 @@ func (y *Yarn) add(ctx context.Context, req core.Request) (core.Result, error) {
 		return core.Result{}, err
 	}
 	list := strings.Join(req.Packages, " ")
-	args := shared.Concat([]string{"add"}, group, req.Packages, req.Args)
+	args := invoke.Concat([]string{"add"}, group, req.Packages, req.Args)
 	return y.stream(ctx, req, args, "added "+list, "add "+list)
 }
 
@@ -57,7 +57,7 @@ func (y *Yarn) remove(ctx context.Context, req core.Request) (core.Result, error
 		return core.Result{}, err
 	}
 	list := strings.Join(req.Packages, " ")
-	args := shared.Concat([]string{"remove"}, req.Packages, req.Args)
+	args := invoke.Concat([]string{"remove"}, req.Packages, req.Args)
 	return y.stream(ctx, req, args, "removed "+list, "remove "+list)
 }
 
@@ -70,7 +70,7 @@ func (y *Yarn) update(ctx context.Context, req core.Request) (core.Result, error
 	if err != nil {
 		return core.Result{}, err
 	}
-	args := shared.Concat(verb, req.Packages, req.Args)
+	args := invoke.Concat(verb, req.Packages, req.Args)
 	return y.stream(ctx, req, args, "dependencies updated", "update dependencies")
 }
 
@@ -80,7 +80,7 @@ func (y *Yarn) audit(ctx context.Context, req core.Request) (core.Result, error)
 	if err != nil {
 		return core.Result{}, err
 	}
-	return y.stream(ctx, req, shared.Concat(verb, req.Args), "done: audit dependencies", "audit dependencies")
+	return y.stream(ctx, req, invoke.Concat(verb, req.Args), "done: audit dependencies", "audit dependencies")
 }
 
 // publish routes to `yarn publish` (berry: `yarn npm publish`).
@@ -89,12 +89,12 @@ func (y *Yarn) publish(ctx context.Context, req core.Request) (core.Result, erro
 	if err != nil {
 		return core.Result{}, err
 	}
-	return y.stream(ctx, req, shared.Concat(verb, req.Args), "done: publish the project", "publish the project")
+	return y.stream(ctx, req, invoke.Concat(verb, req.Args), "done: publish the project", "publish the project")
 }
 
 // test routes to `yarn test [args...]`; yarn hands trailing arguments to the script.
 func (y *Yarn) test(ctx context.Context, req core.Request) (core.Result, error) {
-	return y.stream(ctx, req, shared.Concat([]string{"test"}, req.Args), "done: run the tests", "run the tests")
+	return y.stream(ctx, req, invoke.Concat([]string{"test"}, req.Args), "done: run the tests", "run the tests")
 }
 
 // verb returns the command words for the project's yarn flavor: classic is the

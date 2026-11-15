@@ -4,8 +4,9 @@ import (
 	"context"
 	"strings"
 
+	"github.com/justinfischman/universal-package-core/internal/components/invoke"
+	"github.com/justinfischman/universal-package-core/internal/components/pkgreport"
 	"github.com/justinfischman/universal-package-core/internal/core"
-	"github.com/justinfischman/universal-package-core/internal/stacks/python/shared"
 )
 
 // list shows direct dependencies with `poetry show --top-level`.
@@ -20,7 +21,7 @@ func (p *Poetry) list(ctx context.Context, req core.Request) (core.Result, error
 	if pkgs == nil {
 		pkgs = []core.Package{}
 	}
-	summary := shared.PackageSummary(pkgs)
+	summary := pkgreport.Summary(pkgs)
 	if summary == "" {
 		summary = "no dependencies"
 	}
@@ -36,7 +37,7 @@ func (p *Poetry) outdated(ctx context.Context, req core.Request) (core.Result, e
 	if req.DryRun {
 		return inv.Result("", "check for outdated dependencies", nil), nil
 	}
-	stale, summary := shared.OutdatedPackages(pkgs)
+	stale, summary := pkgreport.Outdated(pkgs)
 	if summary == "" {
 		summary = "all dependencies are up to date"
 	}
@@ -44,7 +45,7 @@ func (p *Poetry) outdated(ctx context.Context, req core.Request) (core.Result, e
 }
 
 // inventory runs the read-only query shared by list and outdated and parses it.
-func (p *Poetry) inventory(ctx context.Context, req core.Request, outdated bool) ([]core.Package, *shared.Invocation, error) {
+func (p *Poetry) inventory(ctx context.Context, req core.Request, outdated bool) ([]core.Package, *invoke.Invocation, error) {
 	if err := requireProject(req); err != nil {
 		return nil, nil, err
 	}
@@ -56,7 +57,7 @@ func (p *Poetry) inventory(ctx context.Context, req core.Request, outdated bool)
 	if outdated {
 		args = append(args, "--outdated")
 	}
-	out, err := inv.Run(false, shared.Concat(args, req.Args)...)
+	out, err := inv.Run(false, invoke.Concat(args, req.Args)...)
 	if err != nil {
 		return nil, inv, err
 	}

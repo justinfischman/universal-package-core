@@ -7,6 +7,8 @@ import (
 	"io/fs"
 	"strings"
 
+	"github.com/justinfischman/universal-package-core/internal/components/invoke"
+	"github.com/justinfischman/universal-package-core/internal/components/pkgreport"
 	"github.com/justinfischman/universal-package-core/internal/core"
 	"github.com/justinfischman/universal-package-core/internal/stacks/python/shared"
 )
@@ -41,7 +43,7 @@ func (p *PIP) install(ctx context.Context, req core.Request) (core.Result, error
 	if err != nil {
 		return core.Result{}, err
 	}
-	if err := s.pip(true, py, shared.Concat(args, req.Args)...); err != nil {
+	if err := s.pip(true, py, invoke.Concat(args, req.Args)...); err != nil {
 		return core.Result{}, err
 	}
 	return s.Result("dependencies installed", "install dependencies", nil), nil
@@ -67,7 +69,7 @@ func (p *PIP) add(ctx context.Context, req core.Request) (core.Result, error) {
 	if err != nil {
 		return core.Result{}, err
 	}
-	if err := s.pip(true, py, shared.Concat([]string{"install"}, req.Packages, req.Args)...); err != nil {
+	if err := s.pip(true, py, invoke.Concat([]string{"install"}, req.Packages, req.Args)...); err != nil {
 		return core.Result{}, err
 	}
 	installed, err := s.freeze(py)
@@ -125,7 +127,7 @@ func (p *PIP) remove(ctx context.Context, req core.Request) (core.Result, error)
 		sp, _ := parseSpec(raw)
 		names = append(names, sp.name)
 	}
-	if err := s.pip(true, py, shared.Concat([]string{"uninstall", "--yes"}, names, req.Args)...); err != nil {
+	if err := s.pip(true, py, invoke.Concat([]string{"uninstall", "--yes"}, names, req.Args)...); err != nil {
 		return core.Result{}, err
 	}
 	if err := s.edit(file, func(r *requirements) { r.remove(keys) }); err != nil {
@@ -171,7 +173,7 @@ func (p *PIP) update(ctx context.Context, req core.Request) (core.Result, error)
 	if err != nil {
 		return core.Result{}, err
 	}
-	if err := s.pip(true, py, shared.Concat(args, req.Args)...); err != nil {
+	if err := s.pip(true, py, invoke.Concat(args, req.Args)...); err != nil {
 		return core.Result{}, err
 	}
 	installed, err := s.freeze(py)
@@ -226,7 +228,7 @@ func (p *PIP) list(ctx context.Context, req core.Request) (core.Result, error) {
 	if pkgs == nil {
 		pkgs = []core.Package{}
 	}
-	summary := shared.PackageSummary(pkgs)
+	summary := pkgreport.Summary(pkgs)
 	if summary == "" {
 		summary = "no dependencies"
 	}
@@ -242,7 +244,7 @@ func (p *PIP) outdated(ctx context.Context, req core.Request) (core.Result, erro
 	if req.DryRun {
 		return s.Result("", "check for outdated dependencies", nil), nil
 	}
-	stale, summary := shared.OutdatedPackages(pkgs)
+	stale, summary := pkgreport.Outdated(pkgs)
 	if summary == "" {
 		summary = "all dependencies are up to date"
 	}
@@ -262,7 +264,7 @@ func (p *PIP) inventory(ctx context.Context, req core.Request, outdated bool) ([
 	if outdated {
 		args = append(args, "--outdated")
 	}
-	out, err := s.RunProgram(false, py, shared.Concat([]string{"-m", "pip"}, args, req.Args)...)
+	out, err := s.RunProgram(false, py, invoke.Concat([]string{"-m", "pip"}, args, req.Args)...)
 	if err != nil {
 		return nil, s, err
 	}

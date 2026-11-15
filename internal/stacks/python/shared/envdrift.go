@@ -5,9 +5,9 @@ import (
 	"io/fs"
 	"path"
 	"slices"
-	"sort"
 	"strings"
 
+	"github.com/justinfischman/universal-package-core/internal/components/drift"
 	"github.com/justinfischman/universal-package-core/internal/core"
 	"github.com/justinfischman/universal-package-core/internal/stacks/python"
 )
@@ -58,25 +58,7 @@ func EnvDrift(fsys fs.FS, source string, want map[string]string) []core.Finding 
 			stale = append(stale, fmt.Sprintf("%s (%s installed, %s in %s)", name, have, version, source))
 		}
 	}
-	var out []core.Finding
-	for _, group := range []struct {
-		names []string
-		text  string
-	}{
-		{missing, "not installed in " + VenvDir},
-		{stale, "at a different version than " + source},
-	} {
-		if len(group.names) == 0 {
-			continue
-		}
-		sort.Strings(group.names)
-		out = append(out, core.Finding{
-			Severity: core.SeverityWarn,
-			Message:  fmt.Sprintf("%s drifted from %s: %s %s", VenvDir, source, strings.Join(group.names, ", "), group.text),
-			Fix:      core.CapInstall,
-		})
-	}
-	return out
+	return drift.Findings(VenvDir, source, missing, stale)
 }
 
 // RequirementPins reads a requirements file and the files it includes with

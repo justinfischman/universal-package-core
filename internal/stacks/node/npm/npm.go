@@ -11,9 +11,9 @@ import (
 	"strings"
 
 	"github.com/justinfischman/universal-package-core/internal/components/fsx"
+	"github.com/justinfischman/universal-package-core/internal/components/invoke"
 	"github.com/justinfischman/universal-package-core/internal/core"
 	"github.com/justinfischman/universal-package-core/internal/stacks/node"
-	"github.com/justinfischman/universal-package-core/internal/stacks/node/shared"
 )
 
 // ID is the package manager id; Binary is the executable it wraps.
@@ -152,13 +152,13 @@ func readProject(req core.Request) (node.Project, error) {
 	if err := requireManifest(req); err != nil {
 		return node.Project{}, err
 	}
-	return node.ReadProject(shared.DirFS(req.Dir))
+	return node.ReadProject(invoke.DirFS(req.Dir))
 }
 
 // requireManifest checks that the directory holds a manifest: npm would otherwise
 // create one silently in the wrong place.
 func requireManifest(req core.Request) error {
-	if exists(shared.DirFS(req.Dir), node.PackageFilename) {
+	if exists(invoke.DirFS(req.Dir), node.PackageFilename) {
 		return nil
 	}
 	dir := req.Dir
@@ -169,9 +169,9 @@ func requireManifest(req core.Request) error {
 }
 
 // begin starts an invocation of npm in a directory that holds a manifest.
-func begin(ctx context.Context, req core.Request) (*shared.Invocation, error) {
+func begin(ctx context.Context, req core.Request) (*invoke.Invocation, error) {
 	if err := requireManifest(req); err != nil {
 		return nil, err
 	}
-	return shared.Begin(ctx, req, Binary)
+	return invoke.Begin(ctx, req, Binary)
 }

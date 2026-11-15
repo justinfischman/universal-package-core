@@ -6,6 +6,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/justinfischman/universal-package-core/internal/components/invoke"
 	"github.com/justinfischman/universal-package-core/internal/core"
 )
 
@@ -64,7 +65,7 @@ func Program(fsys fs.FS, goos, name string) string {
 // RequireModule checks that a Python module is importable by python and, when it
 // is not, returns a ToolMissingError whose install command adds package pkg, so
 // the caller can offer the install and re-run.
-func (i *Invocation) RequireModule(python, module, pkg string) error {
+func RequireModule(i *invoke.Invocation, python, module, pkg string) error {
 	code := fmt.Sprintf("import importlib.util,sys; sys.exit(0 if importlib.util.find_spec(%q) else 1)", module)
 	if _, err := i.RunProgram(false, python, "-c", code); err != nil {
 		if isExit(err) {

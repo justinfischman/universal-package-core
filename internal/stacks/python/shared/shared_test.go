@@ -1,7 +1,6 @@
 package shared
 
 import (
-	"context"
 	"errors"
 	"os"
 	"path/filepath"
@@ -10,8 +9,8 @@ import (
 	"testing"
 	"testing/fstest"
 
-	"github.com/justinfischman/universal-package-core/internal/components/execx"
 	"github.com/justinfischman/universal-package-core/internal/components/fsx"
+	"github.com/justinfischman/universal-package-core/internal/components/pkgreport"
 	"github.com/justinfischman/universal-package-core/internal/core"
 )
 
@@ -98,10 +97,10 @@ func TestVenvLookup(t *testing.T) {
 
 func TestParsePipListAndSummaries(t *testing.T) {
 	pkgs, err := ParsePipList(`[{"name":"a","version":"1","latest_version":"2"},{"name":"b","version":"3"}]`)
-	if err != nil || len(pkgs) != 2 || PackageSummary(pkgs) != "a 1\nb 3" {
+	if err != nil || len(pkgs) != 2 || pkgreport.Summary(pkgs) != "a 1\nb 3" {
 		t.Fatalf("%+v, %v", pkgs, err)
 	}
-	stale, summary := OutdatedPackages(pkgs)
+	stale, summary := pkgreport.Outdated(pkgs)
 	if len(stale) != 1 || summary != "a 1 -> 2" {
 		t.Errorf("outdated = %+v %q", stale, summary)
 	}
@@ -121,30 +120,6 @@ func TestNames(t *testing.T) {
 		if _, err := ScriptFileName(bad); !errors.Is(err, core.ErrInvalidRequest) {
 			t.Errorf("%q: %v", bad, err)
 		}
-	}
-}
-
-func TestInvocationNeedsARunner(t *testing.T) {
-	if _, err := Begin(context.Background(), core.Request{}, "x"); err == nil {
-		t.Error("missing runner must be an error")
-	}
-	fake := &execx.FakeRunner{}
-	inv, err := Begin(execx.WithRunner(context.Background(), fake), core.Request{Dir: "d", DryRun: true}, "tool")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := inv.Run(false, "a"); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := inv.RunProgram(true, "other", "b"); err != nil {
-		t.Fatal(err)
-	}
-	res := inv.Result("done", "do it", nil)
-	if !reflect.DeepEqual(res.Commands, []string{"tool a", "other b"}) || res.Summary != "dry run, nothing changed: would do it" {
-		t.Errorf("result = %+v", res)
-	}
-	if fake.Calls[0].Dir != "d" || fake.Calls[0].Stream || !fake.Calls[1].Stream {
-		t.Errorf("calls = %+v", fake.Calls)
 	}
 }
 

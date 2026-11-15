@@ -3,10 +3,10 @@ package uv
 import (
 	"context"
 
+	"github.com/justinfischman/universal-package-core/internal/components/invoke"
 	"github.com/justinfischman/universal-package-core/internal/components/scripts"
 	"github.com/justinfischman/universal-package-core/internal/core"
 	"github.com/justinfischman/universal-package-core/internal/stacks/python"
-	"github.com/justinfischman/universal-package-core/internal/stacks/python/shared"
 )
 
 // runScript resolves what to run in a fixed order (ADR-0008, see
@@ -15,7 +15,7 @@ import (
 //  2. [tool.upc.scripts] (a command line, run inside the project environment),
 //  3. [project.scripts] (an installed entry point).
 func (u *UV) runScript(ctx context.Context, req core.Request) (core.Result, error) {
-	target, err := scripts.Resolve(shared.DirFS(req.Dir), req.Script, python.ScriptReader{})
+	target, err := scripts.Resolve(invoke.DirFS(req.Dir), req.Script, python.ScriptReader{})
 	if err != nil {
 		return core.Result{}, err
 	}
@@ -32,10 +32,10 @@ func (u *UV) runScript(ctx context.Context, req core.Request) (core.Result, erro
 func runArgs(t scripts.Target, extra []string) []string {
 	switch t.Kind {
 	case scripts.KindFile:
-		return shared.Concat([]string{"run", t.Name}, extra)
+		return invoke.Concat([]string{"run", t.Name}, extra)
 	case scripts.KindCommand:
-		return shared.Concat([]string{"run", "--"}, t.Words, extra)
+		return invoke.Concat([]string{"run", "--"}, t.Words, extra)
 	default:
-		return shared.Concat([]string{"run", "--", t.Name}, extra)
+		return invoke.Concat([]string{"run", "--", t.Name}, extra)
 	}
 }

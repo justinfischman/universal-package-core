@@ -1,6 +1,10 @@
 package shared
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/justinfischman/universal-package-core/internal/components/invoke"
+)
 
 // Runtime facts every Node package manager shares (ADR-0010).
 const (
@@ -23,9 +27,9 @@ console.log("Hello, " + name + "!");
 // FileArgs is the node command line for a script file.
 func FileArgs(file string, extra []string) []string {
 	if IsTypeScriptFile(file) {
-		return Concat([]string{StripTypesFlag, file}, extra)
+		return invoke.Concat([]string{StripTypesFlag, file}, extra)
 	}
-	return Concat([]string{file}, extra)
+	return invoke.Concat([]string{file}, extra)
 }
 
 // StartCommand is the package.json `start` script for a script file.
