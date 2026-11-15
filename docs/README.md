@@ -4,6 +4,8 @@ One place to create, install and manage packages and apps across languages. `upc
 
 **Status: Phase 4 (Node with `npm` and `yarn` is built).** Working today: Node (TypeScript) with `npm` or `yarn` (classic), and Python with `uv`, `pip` (keeps `requirements.txt` and a `.venv` for you) and `poetry`; the `script` and `package` project types: `new`, `init`, `add`, `remove`, `list`, `install`, `update`, `outdated`, `run`, `build`, `test`, `lint`, `audit`, `doctor`, plus `config` (including `config set pm`), `env list|use|show` (Phase 5, slice 1), `version`, `completion` and the global flags. `publish` is declared by the managers but has no command yet. `up|down`, `workspace`, the `app` type, environment groups and release are planned in `plans/06-agnostic-core-environments-multiapp-release.md`.
 
+**Supported platforms:** macOS and Linux (built, linted and tested in CI, plus an E2E job against real uv, poetry, npm and yarn). Windows is verified by CI only (build, vet, lint and unit tests); Homebrew is the only distribution channel.
+
 ## Goals
 - Create easily installable apps and packages (installable by `upc`).
 - Manage packages in other projects with one tool.

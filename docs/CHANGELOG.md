@@ -9,6 +9,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Update with ev
 - Phase plans in `plans/` (01 foundation through 05 environments/workspace/release).
 - Project spec (`project.devlang`), launch task, Go module and `cmd/upc` placeholder committed as the baseline.
 
+### Added (Phase 6, steps 0 and 6.0)
+- Draft ADRs 0011-0016: config layering and secrets, neutral constraint mapper, data-driven stacks and tool-name confinement, config-only workspaces/apps/contracts, environments and dependency groups, run lookup with optional justfile and `up`/`down`. ADR-0006, 0007 and 0008 are not edited.
+- CI: `e2e` job (`UPC_E2E=1` with uv, poetry, npm and yarn installed) and a Windows job running build, `go vet`, golangci-lint and tests (was build only).
+- `docs/README.md`: supported platforms line.
+
 ### Added (Phase 5, slice 1: environments)
 - ADR-0006 (environment model) and ADR-0007 (monorepos and workspaces; decision only).
 - `upc env list|use|show` (`internal/cli/env.go`) and `internal/components/envs` (discovery of declared and `.env.<name>` environments, name and path validation; never reads env files).

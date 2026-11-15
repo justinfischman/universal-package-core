@@ -101,7 +101,7 @@ See `project.devlang` `cli-commands`. Phase mapping:
 
 ## 9. ADR index
 
-See `docs/adrs/`. ADR-0008 (script `run` lookup order) was added in Phase 2 and ADR-0009 (package-manager switching and detection ranking) in Phase 3 and ADR-0010 (Node and TypeScript template and runtime choices) in Phase 4. ADR-0006 (environment model) and ADR-0007 (monorepos and workspaces; decision only, workspace code is not built) were added in Phase 5.
+See `docs/adrs/`. ADR-0008 (script `run` lookup order) was added in Phase 2 and ADR-0009 (package-manager switching and detection ranking) in Phase 3 and ADR-0010 (Node and TypeScript template and runtime choices) in Phase 4. ADR-0006 (environment model) and ADR-0007 (monorepos and workspaces; decision only, workspace code is not built) were added in Phase 5. ADR-0011 through ADR-0016 (config layering, constraint mapper, data-driven stacks, workspaces/apps, environments and groups, run lookup and `up`/`down`) are drafts for Phase 6.
 
 ## 10. Phase 2 stack: Python, uv, `script` *(built)*
 
