@@ -6,6 +6,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Update with ev
 Not tagged: the Homebrew tap and first release need owner authorization (`docs/RELEASING.md`).
 
 ### Added
+- 6.2 gap: `upc env add|remove`, `--env <name>` on `install`, `run`, `test` and `up` (one command, selection not saved), environment `groups` installed by `install --env` for uv, poetry and pip (`core.Request.Groups`). npm/yarn group install (ADR-0015 option B), `doctor` group checks and `local.toml` / `config show --origin` are still open.
 - `app` project type (6.5), see below.
 - Environment drift in `doctor` for every manager (uv, pip, poetry, npm, yarn), file-based.
 - `upc completion` for bash, zsh, fish and powershell, with tests (`docs/COMPLETION.md`).

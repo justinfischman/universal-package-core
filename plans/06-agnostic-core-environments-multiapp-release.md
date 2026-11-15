@@ -332,6 +332,7 @@ Tap and token setup is an external write; requires explicit user authorization a
 ## Phase 6.7: Hardening
 
 ### Scope
+- Deferred from 6.2 (env gap closed 2026-11-15 except these): npm/yarn arbitrary dependency groups (ADR-0015 option B: workspace-member group manifests), `doctor` group checks (unknown group, missing pip group file, unignored `local.toml`), `local.toml` and `config show --origin`; `--env` on run/test/up must precede the script name; `env remove` leaves the file and active selection alone.
 - CI E2E and Windows jobs moved to Phase 6.0; here only keep them green after the changes below.
 - pip: confirm interpreter resolution (`python3`, `python`, Windows `py`); fix the stack if a machine has only `pip3` or only `python3` (evidence: calls are `python -m pip`, `pip/env.go:56`, `deps.go:177,253`).
 - Discarded errors: fix `internal/config/config.go:227` (if not done in 6.2) and `internal/stacks/node/yarn/list.go:145` (return the unmarshal error). No suppression.

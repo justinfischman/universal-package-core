@@ -78,6 +78,10 @@ With yarn: `upc new package mylib --language node --pm yarn --yes`, then the sam
 upc env list                      # declared ([environments.<name>] in .universal-package-core/config.toml) and .env.<name> files
 upc env use dev                   # validates it exists, then records it as active in the project config
 upc env show                      # active environment: name and file path
+upc env add qa --file config/qa.env --groups test,docs   # declare an environment (groups are dependency groups)
+upc env remove qa                 # drop the declaration; the env file is never touched
+upc install --env qa              # install that environment's groups (uv, poetry, pip; npm/yarn reject groups)
+upc up --env qa 8123              # --env also works on run, test and up, for one command; flags go before the script/args
 ```
 `upc` never reads or prints env values. While an environment is active, every command it runs for you gets `UPC_ENV=<name>`. `doctor` warns when the active environment or its file is gone. Config: `[environments.dev] file = "config/dev.env"` and `default_environment = "dev"` (ADR-0006).
 
