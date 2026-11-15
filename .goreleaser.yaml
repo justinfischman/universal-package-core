@@ -1,0 +1,56 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+version: 2
+
+project_name: upc
+
+before:
+  hooks:
+    - go mod tidy -diff
+
+builds:
+  - id: upc
+    main: ./cmd/upc
+    binary: upc
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+    goos: [darwin, linux, windows]
+    goarch: [amd64, arm64]
+    ignore:
+      - goos: windows
+        goarch: arm64
+
+archives:
+  - id: upc
+    formats: [tar.gz]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+
+checksum:
+  name_template: checksums.txt
+  algorithm: sha256
+
+changelog:
+  use: github
+  sort: asc
+
+# Publishing is skipped for snapshots. Replace OWNER with the real GitHub owner
+# of the tap repository before the first tagged release (see docs/RELEASING.md).
+brews:
+  - name: upc
+    repository:
+      owner: OWNER
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    homepage: https://github.com/OWNER/universal-package-core
+    description: Create, install and manage packages and apps across languages
+    test: |
+      system "#{bin}/upc", "version"
