@@ -1,0 +1,23 @@
+# run: a manifest script beats a justfile recipe; a recipe runs only when no manifest script matches.
+[!exec:just] skip 'just is not installed'
+cd app
+
+exec upc run hello
+stdout 'from-just'
+stdout 'ran recipe'
+
+exec upc run both
+stdout 'from-npm'
+! stdout 'from-just'
+
+! exec upc run nope
+stderr 'not a file or a declared script'
+
+-- app/package.json --
+{"name":"j","version":"1.0.0","scripts":{"both":"echo from-npm"}}
+-- app/justfile --
+hello:
+	echo from-just
+
+both:
+	echo from-just

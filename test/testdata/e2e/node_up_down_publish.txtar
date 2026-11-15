@@ -1,0 +1,44 @@
+# up -> down -> crash cleanup -> publish (dry-run and refusal) with the real npm.
+# A real publish never runs here.
+cd app
+
+exec upc up
+stdout 'started "dev"'
+exists .universal-package-core/run/up.pid
+exec sleep 2
+grep 'serving' .universal-package-core/run/up.log
+
+# a second up is refused while the first is running
+! exec upc up
+stderr 'already running'
+
+exec upc down
+stdout 'stopped'
+! exists .universal-package-core/run/up.pid
+
+# down with nothing running is a no-op
+exec upc down
+stdout 'nothing running'
+
+# crash: the record is cleaned by down, no orphan pid file
+exec upc up
+exec sh -c 'kill -9 $(cat .universal-package-core/run/up.pid)'
+exec sleep 1
+exec upc down
+stdout 'already exited'
+! exists .universal-package-core/run/up.pid
+
+# publish: dry-run only prints the plan
+exec upc --dry-run publish
+stdout 'would publish'
+stdout 'npm publish'
+
+# publish without --yes in non-interactive mode builds but never publishes
+! exec upc publish
+stderr 'needs confirmation'
+
+-- app/package.json --
+{"name":"demo","version":"1.0.0","scripts":{"dev":"node server.js","build":"node -e \"1\""}}
+-- app/server.js --
+setInterval(() => {}, 1000);
+console.log("serving");
