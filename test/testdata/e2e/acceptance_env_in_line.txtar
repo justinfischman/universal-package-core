@@ -1,0 +1,46 @@
+# Acceptance: "Environment never out of line between PM and upc".
+# Changes made through the manager itself show up in upc, and doctor reports
+# a second manager's files and a config that names another manager.
+[!exec:uv] skip 'uv is not on PATH'
+[!exec:npm] skip 'npm is not on PATH'
+
+# uv: a package added by the manager directly is seen by upc; one venv only
+exec upc new package py-pkg --language python --pm uv --yes
+cd py-pkg
+exec upc install
+exec uv add requests
+exec upc list
+stdout 'requests'
+exec upc doctor
+stdout 'findings: none'
+exists .venv
+! exists venv
+! exists env
+
+# a stray lockfile from another manager is reported, and clears when removed
+cp ../poetry.lock.fake poetry.lock
+exec upc doctor
+stdout 'all match'
+rm poetry.lock
+exec upc doctor
+stdout 'findings: none'
+cd ..
+
+# npm: package added by npm directly is seen by upc
+exec upc new package node-pkg --language node --pm npm --yes
+cd node-pkg
+exec npm install is-odd
+exec upc list
+stdout 'is-odd'
+exec upc doctor
+stdout 'findings: none'
+
+# config naming a different manager than the project files is reported
+exec upc config set pm yarn
+exec upc doctor
+stdout 'npm.s files are present but config names yarn'
+exec upc config set pm npm
+exec upc doctor
+stdout 'findings: none'
+-- poetry.lock.fake --
+# fake lock

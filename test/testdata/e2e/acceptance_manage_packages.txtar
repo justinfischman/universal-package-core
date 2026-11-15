@@ -1,0 +1,38 @@
+# Acceptance: "Install and manage packages how I need" (constraints, groups,
+# add/list/remove, update) with the real uv and npm.
+[!exec:uv] skip 'uv is not on PATH'
+[!exec:npm] skip 'npm is not on PATH'
+
+# uv: constraint, dev group, named group
+exec upc new package py-pkg --language python --pm uv --yes
+cd py-pkg
+exec upc add rich --constraint '>=13'
+grep '"rich>=' pyproject.toml
+exec upc add -D pytest
+exec upc add --group docs mkdocs
+grep 'pytest>=' pyproject.toml
+grep 'mkdocs>=' pyproject.toml
+exec upc list
+stdout 'rich'
+stdout 'pytest'
+exec upc remove rich
+! grep '"rich' pyproject.toml
+grep 'mkdocs>=' pyproject.toml
+exec upc outdated --json
+exec upc update
+cd ..
+
+# npm: dev group, remove
+exec upc new package node-pkg --language node --pm npm --yes
+cd node-pkg
+exec upc add is-odd
+grep '"is-odd"' package.json
+exec upc add -D is-even
+grep '"is-even"' package.json
+exec upc list
+stdout 'is-odd'
+stdout 'is-even'
+exec upc remove is-odd
+! grep '"is-odd"' package.json
+exists package-lock.json
+exec upc outdated --json

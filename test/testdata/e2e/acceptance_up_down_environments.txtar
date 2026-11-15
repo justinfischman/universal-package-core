@@ -1,0 +1,62 @@
+# Acceptance: "Spin a project up/down locally in different environments".
+# One uv app declares two environments; the active one is switched with
+# `upc env use`, and the app is brought up and down under each. upc reports names
+# and paths only, never values.
+[!exec:uv] skip 'uv is not on PATH'
+
+exec upc new app demo --language python --pm uv --yes
+cd demo
+exec upc install
+mkdir config
+cp ../dev.env config/dev.env
+cp ../staging.env config/staging.env
+cp ../env.toml .universal-package-core/config.toml
+grep 'project_type = ' .universal-package-core/config.toml
+
+exec upc env list
+stdout 'dev +config/dev.env'
+stdout 'staging +config/staging.env'
+! stdout 'hunter2'
+
+exec upc env use dev
+exec upc env show
+stdout 'dev \(config/dev.env\)'
+exec upc up 8123
+stdout 'started "dev"'
+exists .universal-package-core/run/up.pid
+exec sleep 2
+exec upc down
+stdout 'stopped'
+! exists .universal-package-core/run/up.pid
+
+exec upc env use staging
+exec upc env show
+stdout 'staging \(config/staging.env\)'
+! stdout 'dev \('
+grep 'active_environment = .staging.' .universal-package-core/config.toml
+exec upc up 8124
+stdout 'started "dev"'
+exists .universal-package-core/run/up.pid
+exec sleep 2
+exec upc down
+stdout 'stopped'
+! exists .universal-package-core/run/up.pid
+
+# an unknown environment changes nothing
+! exec upc env use nope
+stderr 'does not exist'
+grep 'active_environment = .staging.' .universal-package-core/config.toml
+exec upc doctor
+-- dev.env --
+TOKEN=hunter2
+-- staging.env --
+TOKEN=hunter2
+-- env.toml --
+project_type = "app"
+default_environment = "dev"
+
+[environments.dev]
+file = "config/dev.env"
+
+[environments.staging]
+file = "config/staging.env"

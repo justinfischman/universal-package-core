@@ -1,0 +1,53 @@
+# Acceptance: "Spin up any project type with any stack".
+# Every project type (script, package, app) is created for both stacks (Python
+# with uv, Node with npm) with the real tools, and each result is exercised.
+
+# Python / uv
+exec upc new script py-script --language python --pm uv --yes
+exists py-script/py-script.py
+grep 'project_type = ''script''' py-script/.universal-package-core/config.toml
+exec upc --project py-script run py-script.py
+exec upc new package py-pkg --language python --pm uv --yes
+exists py-pkg/src/py_pkg/__init__.py
+grep 'project_type = ''package''' py-pkg/.universal-package-core/config.toml
+exec upc --project py-pkg build
+exists py-pkg/dist
+exec upc new app py-app --language python --pm uv --yes
+exists py-app/server.py
+grep 'project_type = ''app''' py-app/.universal-package-core/config.toml
+cd py-app
+exec upc install
+exec upc up 8121
+stdout 'started "dev"'
+exists .universal-package-core/run/up.pid
+exec sleep 2
+exec upc down
+stdout 'stopped'
+! exists .universal-package-core/run/up.pid
+cd ..
+
+# Node / npm
+exec upc new script node-script --language node --pm npm --yes
+exists node-script/node-script.ts
+grep 'project_type = ''script''' node-script/.universal-package-core/config.toml
+exec upc --project node-script run node-script.ts World
+stdout 'Hello, World!'
+exec upc new package node-pkg --language node --pm npm --yes
+exists node-pkg/src/index.ts
+grep 'project_type = ''package''' node-pkg/.universal-package-core/config.toml
+exec upc --project node-pkg build
+exists node-pkg/dist
+exec upc new app node-app --language node --pm npm --yes
+exists node-app/src/main.ts
+grep 'project_type = ''app''' node-app/.universal-package-core/config.toml
+cd node-app
+exec upc install
+exec upc build
+exists dist/main.js
+exec upc up 8122
+stdout 'started "dev"'
+exists .universal-package-core/run/up.pid
+exec sleep 2
+exec upc down
+stdout 'stopped'
+! exists .universal-package-core/run/up.pid
