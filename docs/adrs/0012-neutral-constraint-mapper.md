@@ -1,6 +1,6 @@
 # ADR-0012: Neutral version-constraint mapper
 
-Status: Draft (Phase 6; accepted when 6.1 lands)
+Status: Accepted 2026-11-15 (Phase 6.1 landed)
 
 ## Context
 Each manager spells version constraints differently (`>=2.3.4` for uv and pip, `^2.3.4` and `~` for poetry and npm, `@2.3.4` for yarn). Users want one spelling: `upc add dep --version=">=2.3.4"` on every manager.

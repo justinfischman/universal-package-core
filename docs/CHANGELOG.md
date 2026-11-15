@@ -19,6 +19,9 @@ Not tagged: the Homebrew tap and first release need owner authorization (`docs/R
 
 ### Deferred
 - pnpm and bun, other languages, generated-justfile export.
+- From 6.2: npm/yarn arbitrary dependency groups, `doctor` group checks, `local.toml`, `config show --origin`.
+- From 6.7: native `publish --dry-run`, offer to create an up script, workspace-member comparison with the manager's native list, `--app X` with dependencies, `${...}` escape syntax; app sub-types (CLI, library).
+- Release: tap creation, `v0.1.0` tag and `brew install` check wait for owner actions (`docs/RELEASING.md`).
 
 ## [Unreleased]
 

@@ -1,6 +1,6 @@
 # Architecture
 
-Status: **Phases 1 and 2 built, Phases 6.3 to 6.5 (`up`/`down`/`publish`, workspaces, `app`) built** (core, components, config, CLI, and the MVP stack: Python + uv + `script`). This document describes the design from `project.devlang`. Sections marked *(planned)* are not built yet; see `plans/` for the phase that builds each one. Update this file with every change.
+Status: **Phases 1 to 4 and 6.0 to 6.7 built** (config layering, environments and groups, `up`/`down`/`publish`, workspaces, `app`, drift, hardening; the Homebrew release awaits owner actions and 6.8 is the final audit) (core, components, config, CLI, and the MVP stack: Python + uv + `script`). This document describes the design from `project.devlang`. Sections marked *(planned)* are not built yet; see `plans/` for the phase that builds each one. Update this file with every change.
 
 ## 1. Purpose and boundaries
 
@@ -90,7 +90,7 @@ See `project.devlang` `cli-commands`. Phase mapping:
 | 2 (**built, MVP**) | `new script`, `init`, `add`, `remove`, `list`, `install`, `run`, `update`, `outdated`, `doctor` (uv) |
 | 3 (**built**) | `build`, `test`, `lint`, `audit`, `new package`, `config set pm` switch, pip/poetry. `publish` CLI added in Phase 6.3 |
 | 4 | Node (`npm`, `yarn`) for all of the above |
-| 5 (**in progress**) | `env list|use|show` (**built**, ADR-0006; `internal/components/envs`, active name passed as `UPC_ENV` through the runner modules receive); `workspace` (ADR-0007), `new app`, Homebrew release are not built; `up`/`down`/`publish` are built (Phase 6.3, ADR-0016) |
+| 5 (**built via Phase 6**) | `env list|use|show|add|remove` and `--env` (**built**, ADR-0006; `internal/components/envs`, active name passed as `UPC_ENV` through the runner modules receive); `workspace check`, `new app` (**built**, Phase 6.4/6.5); the Homebrew release is configured but unpublished (`docs/RELEASING.md`); `up`/`down`/`publish` are built (Phase 6.3, ADR-0016) |
 
 ## 8. Testing strategy
 
@@ -102,7 +102,7 @@ See `project.devlang` `cli-commands`. Phase mapping:
 
 ## 9. ADR index
 
-See `docs/adrs/`. ADR-0008 (script `run` lookup order) was added in Phase 2 and ADR-0009 (package-manager switching and detection ranking) in Phase 3 and ADR-0010 (Node and TypeScript template and runtime choices) in Phase 4. ADR-0006 (environment model) and ADR-0007 (monorepos and workspaces; decision only, workspace code is not built) were added in Phase 5. ADR-0011 through ADR-0016 (config layering, constraint mapper, data-driven stacks, workspaces/apps, environments and groups, run lookup and `up`/`down`) belong to Phase 6; ADR-0016 is Accepted and implemented in 6.3, the others are drafts.
+See `docs/adrs/`. ADR-0008 (script `run` lookup order) was added in Phase 2 and ADR-0009 (package-manager switching and detection ranking) in Phase 3 and ADR-0010 (Node and TypeScript template and runtime choices) in Phase 4. ADR-0006 (environment model) and ADR-0007 (monorepos and workspaces; decision only, workspace code is not built) were added in Phase 5. ADR-0011 through ADR-0016 (config layering, constraint mapper, data-driven stacks, workspaces/apps, environments and groups, run lookup and `up`/`down`) belong to Phase 6; ADRs 0011 to 0016 are Accepted and implemented.
 
 ## 10. Phase 2 stack: Python, uv, `script` *(built)*
 

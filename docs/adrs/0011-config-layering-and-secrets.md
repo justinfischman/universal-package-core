@@ -1,6 +1,6 @@
 # ADR-0011: Config layering and secrets
 
-Status: Draft (Phase 6; accepted when 6.2 lands)
+Status: Accepted 2026-11-15 (Phase 6.2 landed; `local.toml` and `config show --origin` deferred)
 
 ## Context
 Config today is one project file. Environments (ADR-0015) and multi-app workspaces (ADR-0014) need layers: a global default, a workspace root, and per-app overrides, plus a place for values that must not be committed.

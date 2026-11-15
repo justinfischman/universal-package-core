@@ -1,6 +1,6 @@
 # ADR-0013: Data-driven stacks and tool-name confinement
 
-Status: Draft (Phase 6; accepted when 6.1 lands)
+Status: Accepted 2026-11-15 (Phase 6.1 landed)
 
 ## Context
 Command lines, install hints, binary names and the default language are Go literals spread over manager packages and `internal/register`. yarn borrows npm's audit and publish verbs (`internal/stacks/node/yarn/deps.go`). That makes `core` and shared code carry per-stack knowledge.

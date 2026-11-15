@@ -2,7 +2,7 @@
 
 One place to create, install and manage packages and apps across languages. `upc` routes to the native package managers (uv, poetry, pip, npm, yarn, ...). It never replaces them.
 
-**Status: Phase 4 (Node with `npm` and `yarn` is built).** Working today: Node (TypeScript) with `npm` or `yarn` (classic), and Python with `uv`, `pip` (keeps `requirements.txt` and a `.venv` for you) and `poetry`; the `script` and `package` project types: `new`, `init`, `add`, `remove`, `list`, `install`, `update`, `outdated`, `run`, `build`, `test`, `lint`, `audit`, `doctor`, plus `config` (including `config set pm`), `env list|use|show` (Phase 5, slice 1), `version`, `completion` and the global flags. `publish` is declared by the managers but has no command yet. `up|down`, `workspace`, the `app` type, environment groups and release are planned in `plans/06-agnostic-core-environments-multiapp-release.md`.
+**Status: Phase 6 (6.0-6.7 built; 6.8 final audit pending).** Working today: Node (TypeScript) with `npm` or `yarn` (classic), and Python with `uv`, `pip` (keeps `requirements.txt` and a `.venv` for you) and `poetry`; the `script`, `package` and `app` project types: `new`, `init`, `add`, `remove`, `list`, `install`, `update`, `outdated`, `run`, `build`, `test`, `lint`, `audit`, `up`, `down`, `publish`, `doctor` (including environment drift), `config` (including `config set pm`), `env list|use|show|add|remove` with `--env`, `workspace check`, `version`, `completion` and the global flags. Not yet released: the Homebrew tap and `v0.1.0` wait for owner actions (`docs/RELEASING.md`). Deferred: npm/yarn dependency groups, `doctor` group checks, `local.toml`, `config show --origin`, pnpm and bun. See `plans/06-agnostic-core-environments-multiapp-release.md`.
 
 **Supported platforms:** macOS and Linux (built, linted and tested in CI, plus an E2E job against real uv, poetry, npm and yarn). Windows is verified by CI only (build, vet, lint and unit tests); Homebrew is the only distribution channel.
 
@@ -119,12 +119,12 @@ upc workspace check --update      # accept the current contracts and write the l
 - Contracts: `.universal-package-core/contracts/<app>.lock` is committed. `workspace check` never writes it; only `--update` does. `doctor` reports `contract-missing` and `contract-changed`, next to `port-collision`, `consumer-without-provider` and `unresolved-variable`.
 - YAML contracts are parsed by `go.yaml.in/yaml/v3`: anchors, aliases and merge keys are resolved; numbers take their canonical form; multi-document files, empty files, duplicate keys and non-string keys are errors (see ADR-0014).
 
-## Planned commands
+## Commands
 `init`, `new {script|package|app}`, `add|remove|list|install`, `update|outdated|audit`, `run`, `build|test|lint`, `up|down`, `env`, `config`, `workspace`, `doctor`, `publish`, `completion`, `version`.
 
 Global flags: `--dry-run`, `--json`, `--yes`, `--verbose`, `--project {path}`, `--global`. Non-interactive mode for CI.
 
-Supported stacks: Python with `uv`, `pip` and `poetry`; Node with `npm` and `yarn` (classic 1.x; berry only for update, audit and publish). Next: other PMs. Project types: `script` and `package` are built; `app` is next.
+Supported stacks: Python with `uv`, `pip` and `poetry`; Node with `npm` and `yarn` (classic 1.x; berry only for update, audit and publish). Next: other PMs. Project types: `script`, `package` and `app` are built.
 
 ## Storage
 Global `~/.universal-package-core/`, per-project `.universal-package-core/` (project wins). Filesystem only.

@@ -153,6 +153,8 @@ ADR-0012, ADR-0013; `docs/ARCHITECTURE.md` section "Command templates and constr
 ### Documentation & testing
 ADR-0011, ADR-0015 (note on ADR-0006); `ARCHITECTURE.md` config and environment sections; `docs/README.md` (config layering, groups, npm/yarn limit); `CHANGELOG.md`.
 
+Status: DONE 2026-11-15 (merged to main), with leftovers deferred to the 6.7 list. Built: config layering, `env list|use|show|add|remove`, `--env` on install/run/test/up, groups for uv, poetry and pip. Deferred: npm/yarn arbitrary groups, `doctor` group checks, `local.toml`, `config show --origin`.
+
 ### Integration validation
 E2E: create project, `env add dev --groups dev`, `add pytest --group dev`, `install --env dev` on uv and poetry; npm `--group dev`; `doctor` clean after each.
 
@@ -287,7 +289,7 @@ Fixture: uv api + npm web; `up --all` starts in order, `doctor` clean, edit the 
 ### Documentation & testing
 `ARCHITECTURE.md` project-type table; `docs/README.md`; template doc; `CHANGELOG.md`.
 
-Status: DONE 2026-11-15, not yet merged. Steps 1-3 and exit criteria done (uv, pip, poetry, npm, yarn; E2E `uv_app_lifecycle` and `node_app_lifecycle`; docs updated). Sub-types (CLI, library) are not implemented.
+Status: DONE 2026-11-15 (merged to main). Steps 1-3 and exit criteria done (uv, pip, poetry, npm, yarn; E2E `uv_app_lifecycle` and `node_app_lifecycle`; docs updated). Sub-types (CLI, library) are not implemented.
 
 ### Integration validation
 E2E scripts for `new app` on uv and npm; `doctor` clean.
@@ -314,9 +316,9 @@ Template drift against tool versions. Mitigation: golden tests plus the CI E2E j
 ### Exit criteria
 Snapshot release builds in CI (pending first CI run); `brew install` from the snapshot formula works on macOS (pending owner authorization: the tap does not exist); [x] completion tests pass; [x] acceptance scripts pass with `UPC_E2E=1`.
 
-Status: IN PROGRESS 2026-11-15. Drift, completion, goreleaser/release.yml/RELEASING.md and the acceptance scripts are done; the tap, `v0.1.0` and the brew install check wait for owner authorization and the first CI snapshot run.
+Status: CODE COMPLETE 2026-11-15 (merged to main); exit criteria PENDING owner actions. Drift, completion tests, goreleaser/release.yml/CI snapshot job/RELEASING.md and the four acceptance scripts are done. Pending: create `OWNER/homebrew-tap`, replace `OWNER` in `.goreleaser.yaml`, add the `HOMEBREW_TAP_GITHUB_TOKEN` CI secret, push `v0.1.0`, `brew install` check, first CI snapshot run. No git remote exists yet; `goreleaser check` fails only for that reason.
 
-Note: the acceptance scripts cover only `env list|use|show`. Phase 6.2 promised `env add|remove`, `install --env`, and `--env` on `run`, `test` and `up` (and env groups), and none of them exist on this branch (`internal/cli/env.go` has only list, show, use; only `--group` exists). The scripts cannot exercise them; this is a real 6.2 gap to close or re-scope.
+Note (resolved): the acceptance scripts cover only `env list|use|show`; the 6.2 gap (`env add|remove`, `--env`, groups) was closed afterwards, see the 6.2 status.
 
 ### Documentation & testing
 `docs/README.md` (Homebrew install, completion), `docs/RELEASING.md`, `CHANGELOG.md` 0.1.0 entry.
@@ -363,6 +365,15 @@ Status: DONE 2026-11-15 (merged to main). Done: pip interpreter fallback, yarn l
 
 ## Phase 6.8: Final documentation audit and integration validation
 
+Status: NOT STARTED.
+
+### Resume here
+- Remaining 6.8 tasks: the bullets below (docs audit, ADR index, post-change audit, `make check`, all E2E, acceptance scripts, snapshot release). Also accept ADR-0011, 0012, 0013 and 0015 (still marked Draft) and fix `docs/ARCHITECTURE.md` sections 3-13 headers/phase table where stale.
+- Owner actions (6.6 exit criteria): create `OWNER/homebrew-tap`; replace `OWNER` in `.goreleaser.yaml`; add the `HOMEBREW_TAP_GITHUB_TOKEN` CI secret; push `v0.1.0`; `brew install` check; first CI snapshot run. No git remote exists yet.
+- Deferred list: npm/yarn groups, `doctor` group checks, `local.toml`, `config show --origin` (from 6.2); native `publish --dry-run`, offer to create an up script, workspace-member comparison with the manager's native list, `--app X` with dependencies, `${...}` escape syntax (from 6.7); pnpm, bun, other languages, justfile export; app sub-types (CLI, library).
+- Decision to confirm: config-before-manager lookup for `run` and `up` (config `scripts.<name>` and `up` outrank the manager's sources; ADR-0016 amended in 6.7).
+- Working method: fresh branch per phase, fast-forward merge to main, delete the old branch, never commit `AGENTS.md`, keep the `codex/phase-5-lifecycle` branch.
+
 - `plans/README.md` already has row 6 and statuses for plans 1-5; at the end of each phase update only its status row.
 - README status line; ARCHITECTURE Phase 5/6 sections; CHANGELOG (including deferred items: pnpm, bun, other languages, generated-justfile export); ADRs 0011-0016 all present and cross-linked; `docs/adrs` index.
 - Post-change audit across the repo: stale docs list, tests run, final `make check`, all E2E, acceptance scripts, snapshot release.
@@ -372,6 +383,16 @@ Status: DONE 2026-11-15 (merged to main). Done: pip interpreter fallback, yarn l
 Docs match code; four acceptance statements demonstrated; `0.1.0` installable via Homebrew; deferred items recorded.
 
 ---
+
+## Status summary (2026-11-15)
+
+| Phase | Status |
+|---|---|
+| 6.0 to 6.5 | DONE, merged to main |
+| 6.2 | DONE; leftovers deferred to the 6.7 list |
+| 6.6 | Code complete, merged; exit criteria pending owner actions |
+| 6.7 | DONE, merged; some items deferred (see its status) |
+| 6.8 | NOT STARTED (see "Resume here") |
 
 ## Requirements traceability (`project.devlang`)
 

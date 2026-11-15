@@ -1,6 +1,6 @@
 # ADR-0015: Environments and dependency groups
 
-Status: Draft (Phase 6; accepted when 6.2 lands)
+Status: Accepted 2026-11-15 (Phase 6.2 landed; npm/yarn arbitrary groups and `doctor` group checks deferred)
 
 ## Context
 ADR-0006 (accepted, not edited) defines an environment as a name plus an env file. Users also want dependency groups (dev, test, docs) selected per environment. Managers differ: uv and poetry have native groups, pip has none, npm and yarn have none beyond dev/optional.
