@@ -50,7 +50,7 @@ upc publish --dry-run             # print the build and publish commands, run no
 upc publish                       # build, ask for confirmation, then publish with the manager's own login
 upc publish --yes                 # skip the question (required when not interactive)
 ```
-- `up` records `up.pid` and `up.log` under `.universal-package-core/run/` in the app directory (add it to `.gitignore`).
+- `up` records `up.pid` and `up.log` under `.universal-package-core/run/` in the app directory (`upc init` adds it to `.gitignore`). `down` removes `up.pid` and keeps `up.log`. `scripts.<name>` and `up` in `config.toml` (argv lists) take precedence over manifest scripts.
 - A `justfile` is optional. If one exists and `just` is installed, its recipes are the last source `upc run` tries, after the project's own scripts; without `just` nothing changes.
 - With no `up`/`dev`/`start` script, `upc up` falls back to `docker-compose.yml` or `compose.yaml` (`docker compose up`); `upc down` then runs `docker compose down`.
 - `publish --dry-run` currently only prints the plan; it does not call the manager's native dry run. Credentials are never stored.

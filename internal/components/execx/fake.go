@@ -2,6 +2,7 @@ package execx
 
 import (
 	"context"
+	"fmt"
 	"sync"
 )
 
@@ -41,6 +42,9 @@ type FakeProcess struct {
 	Cmd     Cmd
 	LogPath string
 	Running bool
+	// Stamp is the identity StartedAt reports; tests change it to simulate a
+	// reused pid.
+	Stamp string
 }
 
 var _ Controller = (*FakeRunner)(nil)
@@ -55,7 +59,7 @@ func (f *FakeRunner) Start(_ context.Context, cmd Cmd, logPath string) (int, err
 		return 0, f.StartErr
 	}
 	pid := 1000 + len(f.Procs)
-	f.Procs = append(f.Procs, &FakeProcess{PID: pid, Cmd: cmd, LogPath: logPath, Running: true})
+	f.Procs = append(f.Procs, &FakeProcess{PID: pid, Cmd: cmd, LogPath: logPath, Running: true, Stamp: fmt.Sprintf("start-%d", pid)})
 	return pid, nil
 }
 
@@ -69,6 +73,18 @@ func (f *FakeRunner) Alive(pid int) bool {
 		}
 	}
 	return false
+}
+
+// StartedAt implements Controller.
+func (f *FakeRunner) StartedAt(pid int) string {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for _, p := range f.Procs {
+		if p.PID == pid {
+			return p.Stamp
+		}
+	}
+	return ""
 }
 
 // Stop implements Controller.

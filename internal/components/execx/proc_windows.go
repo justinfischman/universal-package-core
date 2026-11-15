@@ -6,8 +6,25 @@ import (
 	"errors"
 	"os"
 	"os/exec"
+	"strconv"
 	"syscall"
 )
+
+const processQueryLimitedInformation = 0x1000
+
+// startedAt returns the process creation time (GetProcessTimes), "" on failure.
+func startedAt(pid int) string {
+	h, err := syscall.OpenProcess(processQueryLimitedInformation, false, uint32(pid))
+	if err != nil {
+		return ""
+	}
+	defer syscall.CloseHandle(h)
+	var creation, exit, kernel, user syscall.Filetime
+	if err := syscall.GetProcessTimes(h, &creation, &exit, &kernel, &user); err != nil {
+		return ""
+	}
+	return strconv.FormatInt(creation.Nanoseconds(), 10)
+}
 
 const (
 	createNewProcessGroup = 0x00000200
@@ -36,7 +53,13 @@ func alive(pid int) bool {
 // through to kill after the grace period, so terminate kills directly.
 func terminate(pid int) error { return kill(pid) }
 
+// kill ends the process and its children: taskkill /T walks the process tree
+// (p.Kill alone would leave grandchildren running). It falls back to Kill for
+// the process itself if taskkill is unavailable.
 func kill(pid int) error {
+	if err := exec.Command("taskkill", "/PID", strconv.Itoa(pid), "/T", "/F").Run(); err == nil {
+		return nil
+	}
 	p, err := os.FindProcess(pid)
 	if err != nil {
 		return err

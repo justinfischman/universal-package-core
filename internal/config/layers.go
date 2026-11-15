@@ -30,7 +30,7 @@ const (
 // MergeConfig merges two configs: lower wins for scalars, tables merge, lists replace.
 func MergeConfig(base, override Config) Config {
 	result := base
-	
+
 	// Scalars: override wins if non-empty
 	if override.Language != "" {
 		result.Language = override.Language
@@ -50,7 +50,7 @@ func MergeConfig(base, override Config) Config {
 	if override.ActiveEnvironment != "" {
 		result.ActiveEnvironment = override.ActiveEnvironment
 	}
-	
+
 	// Tables merge: environments
 	if len(override.Environments) > 0 {
 		if result.Environments == nil {
@@ -60,14 +60,36 @@ func MergeConfig(base, override Config) Config {
 			result.Environments[k] = v
 		}
 	}
-	
+
 	// Lists replace: workspace
 	if len(override.Workspace.Members) > 0 {
 		result.Workspace = override.Workspace
 	}
 	result.Apps = mergeApps(result.Apps, override.Apps)
-	
+
+	result.Scripts, result.Up = mergeCommands(base, override)
+
 	return result
+}
+
+// mergeCommands merges the configured commands of two layers: scripts merge by
+// name (a copy, so the base layer is never mutated), and the up command from
+// the override replaces the base one.
+func mergeCommands(base, override Config) (map[string][]string, []string) {
+	scripts, up := base.Scripts, base.Up
+	if len(override.Scripts) > 0 {
+		scripts = make(map[string][]string, len(base.Scripts)+len(override.Scripts))
+		for k, v := range base.Scripts {
+			scripts[k] = v
+		}
+		for k, v := range override.Scripts {
+			scripts[k] = v
+		}
+	}
+	if len(override.Up) > 0 {
+		up = override.Up
+	}
+	return scripts, up
 }
 
 // LoadMerged loads config with full layering: global, root, project, local.
@@ -77,14 +99,14 @@ func (s Store) LoadMerged() (Resolved, error) {
 	if err != nil {
 		return Resolved{}, err
 	}
-	
+
 	res := Resolved{Config: g, Sources: map[string]Scope{}}
 	for _, k := range Keys {
 		if v, _ := g.Get(k); v != "" {
 			res.Sources[k] = Global
 		}
 	}
-	
+
 	// 2. Root (workspace root) - walk up to find it
 	rootDir := s.findWorkspaceRoot()
 	if rootDir != "" && rootDir != s.ProjectRoot {
@@ -117,7 +139,7 @@ func (s Store) LoadMerged() (Resolved, error) {
 			res.Workspace = rootConfig.Workspace
 		}
 	}
-	
+
 	// 3. Project/App (current directory)
 	if s.ProjectRoot != "" {
 		p, err := s.LoadScope(Project)
@@ -148,7 +170,7 @@ func (s Store) LoadMerged() (Resolved, error) {
 			res.Workspace = p.Workspace
 		}
 	}
-	
+
 	// 4. Local (gitignored)
 	if s.ProjectRoot != "" {
 		localPath := filepath.Join(s.ProjectRoot, DirName, LocalName)
@@ -182,7 +204,7 @@ func (s Store) LoadMerged() (Resolved, error) {
 			}
 		}
 	}
-	
+
 	return res, nil
 }
 
@@ -209,13 +231,13 @@ func (s Store) findWorkspaceRoot() string {
 	if s.ProjectRoot == "" {
 		return ""
 	}
-	
+
 	// Walk up looking for a directory that has a marker file or our config dir with workspace config
 	for dir := s.ProjectRoot; ; dir = filepath.Dir(dir) {
 		if dir == s.GlobalDir {
 			break
 		}
-		
+
 		// Check if this directory has a .universal-package-core directory with workspace config
 		configPath := filepath.Join(dir, DirName, FileName)
 		data, err := s.FS.ReadFile(configPath)
@@ -227,7 +249,7 @@ func (s Store) findWorkspaceRoot() string {
 				return dir
 			}
 		}
-		
+
 		// Check for manager marker files
 		dirFS := s.FS.DirFS(dir)
 		for _, pm := range s.Registries.PackageManagers.List() {
@@ -240,7 +262,7 @@ func (s Store) findWorkspaceRoot() string {
 				return dir
 			}
 		}
-		
+
 		if parent := filepath.Dir(dir); parent == dir {
 			break
 		}
@@ -267,5 +289,7 @@ func isEmptyConfig(c Config) bool {
 		c.DefaultEnvironment == "" &&
 		c.ActiveEnvironment == "" &&
 		len(c.Workspace.Members) == 0 &&
-		len(c.Apps) == 0
+		len(c.Apps) == 0 &&
+		len(c.Scripts) == 0 &&
+		len(c.Up) == 0
 }

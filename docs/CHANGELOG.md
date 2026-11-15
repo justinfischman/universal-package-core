@@ -6,12 +6,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Update with ev
 Not tagged: the Homebrew tap and first release need owner authorization (`docs/RELEASING.md`).
 
 ### Added
+- 6.7 hardening: `upc init` adds `.universal-package-core/run/` to `.gitignore` (created if missing, never duplicated); `scripts.<name>` and `up` argv lists in config (`internal/config`) outrank manager sources for `run` and `up` (ADR-0016 amendment); the run state pid file records the process start time (`execx.Controller.StartedAt`) so a reused pid is never treated as the app or signalled; Windows `Stop` kills the process tree (`taskkill /T /F`); `down` removes only the pid file and keeps `up.log` until the next `up`; `cmd/upc` smoke test (version, help, unknown command exit codes).
 - 6.2 gap: `upc env add|remove`, `--env <name>` on `install`, `run`, `test` and `up` (one command, selection not saved), environment `groups` installed by `install --env` for uv, poetry and pip (`core.Request.Groups`). npm/yarn group install (ADR-0015 option B), `doctor` group checks and `local.toml` / `config show --origin` are still open.
 - `app` project type (6.5), see below.
 - Environment drift in `doctor` for every manager (uv, pip, poetry, npm, yarn), file-based.
 - `upc completion` for bash, zsh, fish and powershell, with tests (`docs/COMPLETION.md`).
 - Release pipeline: `.goreleaser.yaml`, `.github/workflows/release.yml`, snapshot build in CI, `docs/RELEASING.md`.
 - Four acceptance scripts `test/testdata/e2e/acceptance_*.txtar` (run with `UPC_E2E=1`).
+
+### Changed
+- Exit-code discrepancy with plan 03: `plans/03-python-stacks-and-package-type.md` says `config set pm` to a manager of another language exits 1; the implementation exits 2 (`core.ErrIncompatible` maps to `ExitUsage`, ADR-0009). Code is authoritative; the read-only plan was not changed (verified by `TestConfigSetRefusesCrossLanguageSwitch`).
 
 ### Deferred
 - pnpm and bun, other languages, generated-justfile export.
@@ -42,7 +46,7 @@ Not tagged: the Homebrew tap and first release need owner authorization (`docs/R
 - ADR-0014 is Accepted. Known gap: config `members` are not compared with the manager's native member list.
 
 ### Known gaps (Phase 6.3 follow-ups, see ADR-0016)
-- Native `publish --dry-run` per manager; offer to create an up script; run state under `-w` keyed off the member; config-defined scripts/`up` command not wired; Windows `Stop` leaves child processes and pid reuse is unguarded; `down` keeps `up.log` until the next `up`.
+- Native `publish --dry-run` per manager; offer to create an up script; run state under `-w` keyed off the member. (Closed in 6.7: config-defined scripts and `up` command, Windows process-tree kill and pid-reuse guard, `down` keeping `up.log`.)
 - Generated-justfile export is not built (deferred).
 
 ### Added (Phase 6, steps 0 and 6.0)

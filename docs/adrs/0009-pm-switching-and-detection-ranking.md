@@ -15,4 +15,4 @@ Python now has three managers (uv, pip, poetry) whose files overlap: a project c
 - Ranking lives in each manager, so a new manager adds its ranks without touching core or the CLI. Ranks only need to be comparable within one detection run.
 - Core and the CLI stay free of file names like `uv.lock`; the rule is enforced by test rather than by review.
 - **Exit code.** `plans/03-python-stacks-and-package-type.md` says a cross-language switch exits 1. The implementation exits 2: `core.ExitCode` maps `ErrInvalidRequest` and `ErrIncompatible` to the usage code (ARCHITECTURE section 6). This ADR records 2 as the decision; the plan is read-only during execution and is not edited.
-- **Known gaps.** `publish` is declared by every manager but has no CLI command yet, and `list --pm` does not exist. A new pip `package` has no `.venv` until `upc install`; a new poetry `package` needs `upc install` before `upc test`.
+- **Known gaps.** `list --pm` does not exist (`publish` is a CLI command since Phase 6.3, ADR-0016). A new pip `package` has no `.venv` until `upc install`; a new poetry `package` needs `upc install` before `upc test`.

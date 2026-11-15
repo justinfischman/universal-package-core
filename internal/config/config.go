@@ -53,6 +53,12 @@ type Config struct {
 	Workspace Workspace `toml:"workspace,omitempty"`
 	// Apps maps a name to its `[apps.<name>]` table (ADR-0014).
 	Apps map[string]App `toml:"apps,omitempty"`
+	// Scripts maps a script name to the argv `upc run <name>` executes in the
+	// project directory (ADR-0016). It is a list, never a shell string.
+	Scripts map[string][]string `toml:"scripts,omitempty"`
+	// Up is the argv `upc up` starts in the background; it wins over scripts
+	// and providers (ADR-0016 decision 3).
+	Up []string `toml:"up,omitempty"`
 }
 
 // Environment is one declared environment. An empty File means the convention
@@ -172,10 +178,10 @@ func DefaultGlobalDir() (string, error) { return GlobalDir(os.Getenv, os.UserHom
 // Store reads and writes config files. ProjectRoot may be empty when no project
 // is in play, in which case only the global scope is available.
 type Store struct {
-	FS           fsx.FS
-	GlobalDir    string
-	ProjectRoot  string
-	Registries   core.Registries
+	FS          fsx.FS
+	GlobalDir   string
+	ProjectRoot string
+	Registries  core.Registries
 }
 
 func (s Store) file(scope Scope) (string, error) {
@@ -262,6 +268,7 @@ func (s Store) Load() (Resolved, error) {
 		res.Workspace = p.Workspace
 	}
 	res.Apps = mergeApps(res.Apps, p.Apps)
+	res.Scripts, res.Up = mergeCommands(res.Config, p)
 	return res, nil
 }
 

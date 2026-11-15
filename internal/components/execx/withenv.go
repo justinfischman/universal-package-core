@@ -40,6 +40,15 @@ func (e envRunner) Alive(pid int) bool {
 	return ok && c.Alive(pid)
 }
 
+// StartedAt implements Controller.
+func (e envRunner) StartedAt(pid int) string {
+	c, ok := e.Runner.(Controller)
+	if !ok {
+		return ""
+	}
+	return c.StartedAt(pid)
+}
+
 // Stop implements Controller.
 func (e envRunner) Stop(pid int) error {
 	c, ok := e.Runner.(Controller)

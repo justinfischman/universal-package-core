@@ -82,28 +82,47 @@ func (s State) LogFile() string { return filepath.Join(s.RunDir(), logFile) }
 
 // Read returns the recorded pid. A missing record is fs.ErrNotExist.
 func (s State) Read() (int, error) {
-	data, err := os.ReadFile(s.PidFile())
-	if err != nil {
-		return 0, err
-	}
-	pid, err := strconv.Atoi(strings.TrimSpace(string(data)))
-	if err != nil || pid <= 0 {
-		return 0, fmt.Errorf("corrupt pid file %s", s.PidFile())
-	}
-	return pid, nil
+	pid, _, err := s.record()
+	return pid, err
 }
 
-// Running reports whether a recorded process is alive.
+// record parses the pid file: the pid, then optionally the process start token
+// (execx.Controller.StartedAt) after a space.
+func (s State) record() (int, string, error) {
+	data, err := os.ReadFile(s.PidFile())
+	if err != nil {
+		return 0, "", err
+	}
+	pidText, stamp, _ := strings.Cut(strings.TrimSpace(string(data)), " ")
+	pid, err := strconv.Atoi(pidText)
+	if err != nil || pid <= 0 {
+		return 0, "", fmt.Errorf("corrupt pid file %s", s.PidFile())
+	}
+	return pid, stamp, nil
+}
+
+// alive reports whether the recorded process is still the one we started: it
+// must be running and, when a start token was recorded and can be read, have
+// the same start time (a reused pid is a different process).
+func (s State) alive(pid int, stamp string) bool {
+	if !s.Ctl.Alive(pid) {
+		return false
+	}
+	now := s.Ctl.StartedAt(pid)
+	return stamp == "" || now == "" || now == stamp
+}
+
+// Running reports whether the recorded process is alive and not a reused pid.
 func (s State) Running() bool {
-	pid, err := s.Read()
-	return err == nil && s.Ctl.Alive(pid)
+	pid, stamp, err := s.record()
+	return err == nil && s.alive(pid, stamp)
 }
 
 // Start launches cmd in the background and records its pid. A stale record
 // (process gone) is replaced. If anything fails the process is stopped and no
 // pid or log file is left behind.
 func (s State) Start(ctx context.Context, cmd execx.Cmd) (Record, error) {
-	if pid, err := s.Read(); err == nil && s.Ctl.Alive(pid) {
+	if pid, stamp, err := s.record(); err == nil && s.alive(pid, stamp) {
 		return Record{}, fmt.Errorf("%w (pid %d); run down first", ErrAlreadyRunning, pid)
 	}
 	if err := s.clean(); err != nil { // stale record and the previous log
@@ -120,7 +139,11 @@ func (s State) Start(ctx context.Context, cmd execx.Cmd) (Record, error) {
 	if pid == 0 { // dry run: nothing started
 		return Record{}, nil
 	}
-	if err := os.WriteFile(s.PidFile(), []byte(strconv.Itoa(pid)), 0o644); err != nil {
+	content := strconv.Itoa(pid)
+	if stamp := s.Ctl.StartedAt(pid); stamp != "" {
+		content += " " + stamp
+	}
+	if err := os.WriteFile(s.PidFile(), []byte(content), 0o644); err != nil {
 		_ = s.Ctl.Stop(pid)
 		_ = s.clean()
 		return Record{}, fmt.Errorf("record pid: %w", err)
@@ -133,7 +156,7 @@ func (s State) Start(ctx context.Context, cmd execx.Cmd) (Record, error) {
 // is already gone (a crash) only the stale record is cleaned. The pid record is
 // kept if the process cannot be stopped, so a retry is possible.
 func (s State) Stop() (Outcome, error) {
-	pid, err := s.Read()
+	pid, stamp, err := s.record()
 	if errors.Is(err, os.ErrNotExist) {
 		return Absent, nil
 	}
@@ -141,7 +164,7 @@ func (s State) Stop() (Outcome, error) {
 		return Stale, s.removePid()
 	}
 	out := Stale
-	if s.Ctl.Alive(pid) {
+	if s.alive(pid, stamp) { // a reused pid is never signalled
 		if err := s.Ctl.Stop(pid); err != nil {
 			return "", err
 		}

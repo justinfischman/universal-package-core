@@ -74,7 +74,27 @@ func Validate(c Config, regs core.Registries) error {
 	if err := ValidateApps(c.Apps); err != nil {
 		return err
 	}
+	if err := validateCommands(c); err != nil {
+		return err
+	}
 	return validateEnvironments(c)
+}
+
+// validateCommands checks the configured script and up commands: a name is not
+// blank and every command has a non-blank program.
+func validateCommands(c Config) error {
+	for name, argv := range c.Scripts {
+		if strings.TrimSpace(name) == "" {
+			return fmt.Errorf("%w: scripts: blank script name", core.ErrInvalidRequest)
+		}
+		if len(argv) == 0 || strings.TrimSpace(argv[0]) == "" {
+			return fmt.Errorf("%w: scripts.%s: the command needs a program as its first element", core.ErrInvalidRequest, name)
+		}
+	}
+	if c.Up != nil && (len(c.Up) == 0 || strings.TrimSpace(c.Up[0]) == "") {
+		return fmt.Errorf("%w: up: the command needs a program as its first element", core.ErrInvalidRequest)
+	}
+	return nil
 }
 
 // validateEnvironments checks names and file paths without touching the disk:

@@ -255,7 +255,7 @@ Decision record: ADR-0016 (Accepted).
 
 **Tests.** `internal/register/lifecycle_parity_test.go` fails if any manager lacks `up`, `down` or `publish`.
 
-**Known gaps (ADR-0016 follow-ups).** Native `publish --dry-run` per manager; no offer to create an up script when none exists; run state under `-w` keys off the request directory, not the member; `internal/config` has no script/up settings, so the "config script" and "configured up" lookup steps are not wired; Windows `Stop` does not kill child processes and pid reuse is unguarded; `down` keeps `up.log` until the next `up`.
+**Known gaps (ADR-0016 follow-ups).** Native `publish --dry-run` per manager; no offer to create an up script when none exists; run state under `-w` keys off the request directory, not the member. Closed in 6.7: config `scripts`/`up` argv lists (`internal/cli/configwire.go`), Windows process-tree kill and a pid-reuse guard (start time in `up.pid`), `down` keeping `up.log`.
 
 ## 15. Phase 6.4: workspace, apps and contracts *(built)*
 

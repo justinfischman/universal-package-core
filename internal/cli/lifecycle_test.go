@@ -189,7 +189,7 @@ func TestInitDoesNotTouchManifests(t *testing.T) {
 	}
 	entries, _ := os.ReadDir(h.project)
 	for _, e := range entries {
-		if e.Name() != "alpha-one.marker" && e.Name() != config.DirName {
+		if e.Name() != "alpha-one.marker" && e.Name() != config.DirName && e.Name() != ".gitignore" {
 			t.Errorf("init created %q", e.Name())
 		}
 	}

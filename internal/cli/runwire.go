@@ -22,6 +22,10 @@ func (s *Session) dispatch(ctx context.Context, pm core.PackageManager, c core.C
 			return res, err
 		}
 	}
+	// A command defined in upc's own config outranks every manager source.
+	if out, handled, err := s.configured(ctx, c, req); handled {
+		return out, err
+	}
 	res, err := pm.Execute(ctx, c, req)
 	switch {
 	case err == nil:

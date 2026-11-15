@@ -21,6 +21,10 @@ type Controller interface {
 	Start(ctx context.Context, cmd Cmd, logPath string) (int, error)
 	// Alive reports whether a process with pid is running.
 	Alive(pid int) bool
+	// StartedAt returns an opaque token that identifies the process instance
+	// (its start time), or "" when it cannot be read. A recorded token that no
+	// longer matches means the pid was reused by another process.
+	StartedAt(pid int) string
 	// Stop terminates the process (and, where the platform allows, its
 	// children) and returns once it has exited or the grace period ended.
 	Stop(pid int) error
@@ -67,6 +71,14 @@ func (r OS) Start(_ context.Context, cmd Cmd, logPath string) (int, error) {
 
 // Alive implements Controller.
 func (OS) Alive(pid int) bool { return pid > 0 && alive(pid) }
+
+// StartedAt implements Controller.
+func (OS) StartedAt(pid int) string {
+	if pid <= 0 {
+		return ""
+	}
+	return startedAt(pid)
+}
 
 // Stop implements Controller. It never reports an already-gone process as an
 // error.

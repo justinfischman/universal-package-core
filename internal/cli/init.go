@@ -36,7 +36,9 @@ type initSummary struct {
 	PackageManager string `json:"package_manager"`
 	Source         string `json:"source"`
 	ConfigWritten  bool   `json:"config_written"`
-	Installed      bool   `json:"installed"`
+	// GitignoreUpdated is true when init added the run directory to .gitignore.
+	GitignoreUpdated bool `json:"gitignore_updated"`
+	Installed        bool `json:"installed"`
 }
 
 func runInit(cmd *cobra.Command, s *Session) error {
@@ -64,6 +66,9 @@ func runInit(cmd *cobra.Command, s *Session) error {
 
 	out := initSummary{Dir: dir, Language: st.Language.ID(), PackageManager: st.PM.ID(), Source: st.Source}
 	if out.ConfigWritten, err = writeInitConfig(&local, st); err != nil {
+		return err
+	}
+	if out.GitignoreUpdated, err = ensureRunIgnored(&local, dir); err != nil {
 		return err
 	}
 

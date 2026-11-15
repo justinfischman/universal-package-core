@@ -5,8 +5,20 @@ package execx
 import (
 	"errors"
 	"os/exec"
+	"strconv"
+	"strings"
 	"syscall"
 )
+
+// startedAt reads the process start time with ps (-o lstart works on Linux and
+// macOS); "" when ps is missing or the process is gone.
+func startedAt(pid int) string {
+	out, err := exec.Command("ps", "-o", "lstart=", "-p", strconv.Itoa(pid)).Output()
+	if err != nil {
+		return ""
+	}
+	return strings.Join(strings.Fields(string(out)), " ")
+}
 
 func errorsIsNotFound(err error) bool { return errors.Is(err, exec.ErrNotFound) }
 
