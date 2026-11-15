@@ -1,6 +1,6 @@
 # Architecture
 
-Status: **Phases 1 and 2 built, Phase 6.3 (`up`/`down`/`publish`) built** (core, components, config, CLI, and the MVP stack: Python + uv + `script`). This document describes the design from `project.devlang`. Sections marked *(planned)* are not built yet; see `plans/` for the phase that builds each one. Update this file with every change.
+Status: **Phases 1 and 2 built, Phases 6.3 to 6.5 (`up`/`down`/`publish`, workspaces, `app`) built** (core, components, config, CLI, and the MVP stack: Python + uv + `script`). This document describes the design from `project.devlang`. Sections marked *(planned)* are not built yet; see `plans/` for the phase that builds each one. Update this file with every change.
 
 ## 1. Purpose and boundaries
 
@@ -41,7 +41,7 @@ Go has no abstract classes. Shared behavior lives in **embedded base structs** i
 | `Module` | Base identity: `ID() string`, `Kind() Kind` (`language`, `pm`, `projecttype`). |
 | `Language` | Detects a language in a directory; lists its PM ids and default PM. |
 | `PackageManager` | Belongs to one language. Declares a `CapabilitySet`; exposes `Tool()` (binary, version probe, install hint) and `Detect()`. |
-| `ProjectType` | `script`, `package`, `app`. Declares which (language, PM) pairs it scaffolds and renders templates. |
+| `ProjectType` | `script`, `package`, `app` (no CLI or library sub-types). Declares which (language, PM) pairs it scaffolds and renders templates. |
 | `PackageFile` | Abstraction over a PM manifest that `upc` must read (e.g. `pyproject.toml`, `package.json`) to detect, never to own. |
 | `Registry` | Generic registries keyed by id; populated only by `register`. |
 | `Capability` | Enumerated operation: `init, install, add, remove, list, update, outdated, audit, run, build, test, lint, up, down, publish`. The set is data in `core`. |
@@ -109,6 +109,8 @@ See `docs/adrs/`. ADR-0008 (script `run` lookup order) was added in Phase 2 and 
 Commands: `new`, `init`, `add`, `remove`, `list`, `install`, `update`, `outdated`, `run`, `doctor`. All but `new`, `init` and `doctor` come from one table-driven `capabilityCommand` factory in `internal/cli`; dispatch (`internal/cli/dispatch.go`) logs every routed command, and when a tool is missing it asks to install it (`--yes` installs, non-interactive otherwise fails with exit code 4) and re-runs the original command. `init` never edits manifests; it writes `.universal-package-core/config.toml` and runs `install`. `doctor` reports tool presence and version, the capability matrix, config-versus-manager drift and uv's own findings, and offers fixes.
 
 `script` (`internal/projects/script`) asks the chosen manager to `init` in script mode, adds neutral extras from its templates, and removes partial output on failure. It finds compatible stacks by querying the registry.
+
+`app` (`internal/projects/app`, Phase 6.5) has the same shape: the manager runs `init` in a staging directory, the language's `templates/app` are rendered into it (`APP.md`, a minimal server, `Dockerfile`, `compose.yaml`; Node adds `tsconfig.json` and `src/`), and the result is moved into place only when complete. Python apps also get the upc-owned `[tool.upc.scripts]` table (`dev`, `start`) in the new `pyproject.toml`; Node apps get `dev`, `build` and `start` in `package.json`. Existing manifests are never edited. Supported for uv, pip, poetry, npm and yarn.
 
 uv capability table (`internal/stacks/python/uv`):
 

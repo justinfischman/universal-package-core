@@ -18,6 +18,9 @@ One place to create, install and manage packages and apps across languages. `upc
 ## Usage
 ```sh
 upc new script hello --yes        # python + uv by default; creates ./hello/hello.py
+upc new app web --language python --pm uv --yes   # server, Dockerfile, compose.yaml, dev/start scripts
+cd web && upc up 8080             # start the dev/start script in the background with a port argument
+upc down                          # stop it
 upc new package mylib --pm poetry --yes   # src layout, tests, README, license placeholder
 upc new package mylib --language node --pm npm --yes   # TypeScript library: tsc build, node:test tests
 upc build && upc test                 # generic commands, routed to the project manager

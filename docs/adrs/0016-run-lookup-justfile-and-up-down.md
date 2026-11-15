@@ -25,3 +25,6 @@ Not blocking acceptance; carry to 6.7 or later (plans/06, Phase 6.3 step 6).
 - d. `internal/config` has no script/up settings, so the "config script" and "configured up" lookup steps are not wired.
 - e. Windows `Stop` does not kill child processes and pid reuse is unguarded.
 - f. `down` keeps `up.log` until the next `up`.
+
+## Amendment (Phase 6.5)
+`upc new app` (Python) writes the upc-owned `[tool.upc.scripts]` table (`dev`, `start`) into the `pyproject.toml` of a freshly created app. New projects only; existing manifests are never edited.

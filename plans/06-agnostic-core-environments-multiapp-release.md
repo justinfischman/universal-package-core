@@ -287,6 +287,8 @@ Fixture: uv api + npm web; `up --all` starts in order, `doctor` clean, edit the 
 ### Documentation & testing
 `ARCHITECTURE.md` project-type table; `docs/README.md`; template doc; `CHANGELOG.md`.
 
+Status: DONE 2026-11-15, not yet merged. Steps 1-3 and exit criteria done (uv, pip, poetry, npm, yarn; E2E `uv_app_lifecycle` and `node_app_lifecycle`; docs updated). Sub-types (CLI, library) are not implemented.
+
 ### Integration validation
 E2E scripts for `new app` on uv and npm; `doctor` clean.
 

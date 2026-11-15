@@ -9,6 +9,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Update with ev
 - Phase plans in `plans/` (01 foundation through 05 environments/workspace/release).
 - Project spec (`project.devlang`), launch task, Go module and `cmd/upc` placeholder committed as the baseline.
 
+### Added (Phase 6.5: app project type)
+- `upc new app NAME --language python|node --pm uv|pip|poetry|npm|yarn`: scaffolds a minimal server with `Dockerfile` and `compose.yaml` from each stack's `templates/app`; Python apps get `[tool.upc.scripts]` `dev`/`start`, Node (TypeScript) apps get `dev`, `build`, `start`. `upc up [port]` / `upc down` run it. E2E: `uv_app_lifecycle`, `node_app_lifecycle`.
+
 ### Added (Phase 6.3: up, down, publish)
 - `upc up` / `upc down` for uv, pip, poetry, npm and yarn: start the `up`, `dev` or `start` script in the background and stop it; `-w/--member` accepted. `CapUp`/`CapDown` are Filled for every manager (the Unsupported declarations are removed).
 - `upc publish`: build, confirm (`--yes` required non-interactively), publish; global `--dry-run` prints the plan.
