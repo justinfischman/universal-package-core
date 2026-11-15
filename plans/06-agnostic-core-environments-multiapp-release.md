@@ -241,7 +241,7 @@ Opt-in E2E: fixture dev server started and stopped via `upc up/down` on uv and n
 4. Cross-app doctor checks, each a separate finding type.
 5. Run state per member/app (carried from 6.3 follow-up c): `up`/`down` under `-w`/`--app` key run state by the member's directory and app name so two apps never clash; test it with the two-app fixture.
 
-Status 2026-11-15: 6.4 NOT started. 6.3 branch `feature/plan06-phase6-3` is committed locally but NOT pushed (no `origin` remote is configured); remaining 6.3 follow-ups (a, b, d to h) are deferred to 6.7 by decision. Decision for 6.4 start: stack on the 6.3 branch or branch from `main` after review is not yet made.
+Status 2026-11-15: 6.4 NOT started. 6.3 branch `feature/plan06-phase6-3` is committed locally but NOT pushed (no `origin` remote is configured); remaining 6.3 follow-ups (a, b, d to h) are deferred to 6.7 by decision. DECISIONS 2026-11-15: ignore the missing remote for now (no push, no PR). Branch plan: once `feature/plan06-phase6-3` is merged to `main`, delete it and start 6.4 on a fresh branch from `main` (not stacked). 6.4 does not start until that merge happens.
 
 ### Exit criteria
 - `upc workspace list|check`, `up --all|--app`, `-w` work on a two-app fixture.
