@@ -50,7 +50,7 @@ n: 007
       "nested"
     ]
   ],
-  "n": "007",
+  "n": 7,
   "openapi": "3.0.0",
   "quoted": "it's # not comment",
   "same": [
@@ -68,16 +68,75 @@ n: 007
 	}
 }
 
-func TestParseYAMLRejectsUnsupported(t *testing.T) {
+func TestParseYAMLResolvesAnchorsAndMerges(t *testing.T) {
+	src := `base: &b
+  a: 1
+  b: 2
+use: *b
+merged:
+  <<: *b
+  b: 3
+multi:
+  <<: [*b, {a: 9, c: 4}]
+tagged: !custom value
+stamp: 2024-01-02
+bin: !!binary aGk=
+`
+	v, err := ParseYAML([]byte(src))
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, _ := Canonical(v)
+	want := `{
+  "base": {
+    "a": 1,
+    "b": 2
+  },
+  "bin": "hi",
+  "merged": {
+    "a": 1,
+    "b": 3
+  },
+  "multi": {
+    "a": 1,
+    "b": 2,
+    "c": 4
+  },
+  "stamp": "2024-01-02T00:00:00Z",
+  "tagged": "value",
+  "use": {
+    "a": 1,
+    "b": 2
+  }
+}
+`
+	if string(got) != want {
+		t.Fatalf("got:\n%s\nwant:\n%s", got, want)
+	}
+}
+
+func TestParseYAMLNumbersAreCanonical(t *testing.T) {
+	v, err := ParseYAML([]byte("a: 1.50\nb: -0\nc: 1e3\nd: 0x1F\ne: .inf\nf: 18446744073709551615\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, _ := Canonical(v)
+	want := "{\n  \"a\": 1.5,\n  \"b\": 0,\n  \"c\": 1000,\n  \"d\": 31,\n  \"e\": \"+Inf\",\n  \"f\": 18446744073709551615\n}\n"
+	if string(got) != want {
+		t.Fatalf("got:\n%s\nwant:\n%s", got, want)
+	}
+}
+
+func TestParseYAMLRejects(t *testing.T) {
 	for name, src := range map[string]string{
-		"anchor":    "a: &x 1\n",
-		"alias":     "a: *x\n",
-		"tab":       "a:\n\tb: 1\n",
-		"duplicate": "a: 1\na: 2\n",
-		"multidoc":  "a: 1\n---\nb: 2\n",
-		"multiline": "a: one\n  two\n",
-		"flow open": "a: [1, 2\n",
-		"empty":     "# nothing\n",
+		"duplicate":     "a: 1\na: 2\n",
+		"multidoc":      "a: 1\n---\nb: 2\n",
+		"flow open":     "a: [1, 2\n",
+		"empty":         "# nothing\n",
+		"blank":         "",
+		"complex key":   "? [a, b]\n: 1\n",
+		"bad merge":     "a:\n  <<: 1\n",
+		"unknown alias": "a: *x\n",
 	} {
 		t.Run(name, func(t *testing.T) {
 			if _, err := ParseYAML([]byte(src)); err == nil {

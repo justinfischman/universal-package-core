@@ -17,7 +17,7 @@ import (
 type Map = map[string]any
 
 // Load reads path and decodes it. A document starting with "{" or "[" is JSON;
-// anything else is read as the YAML subset documented on ParseYAML.
+// anything else is parsed as YAML by go.yaml.in/yaml/v3 (see ParseYAML).
 func Load(path string) (any, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -30,8 +30,8 @@ func Load(path string) (any, error) {
 	return v, nil
 }
 
-// Decode decodes JSON or YAML bytes. Numbers are kept as json.Number so that
-// they render exactly as written.
+// Decode decodes JSON or YAML bytes. Numbers are json.Number: verbatim for JSON,
+// canonical form for YAML.
 func Decode(data []byte) (any, error) {
 	trimmed := bytes.TrimSpace(data)
 	if len(trimmed) == 0 {
