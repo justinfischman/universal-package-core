@@ -272,3 +272,10 @@ Decision record: ADR-0014 (Accepted). Config only: no package graph between apps
 **Commands.** `upc workspace list` (members and apps in start order); `upc workspace check [--update]` (`internal/cli/workspace_check.go`: exits non-zero when a lock is missing or a contract changed, writes locks only with `--update`); `upc up|down --all|--app <name>`; cross-app `doctor` findings `port-collision`, `consumer-without-provider`, `unresolved-variable`, `contract-missing`, `contract-changed` (`internal/workspace/findings.go`, one kind each).
 
 **Known gap.** ADR-0014 decision 3 (config `members` must agree with the manager's native member list) is not checked: the managers expose no cheap native member listing, so `workspace check` compares contracts only.
+
+## 16. Phase 6.6: drift in Diagnose *(built)*
+
+`doctor` reports drift for every manager. It is file-based: each manager's `Diagnose` reads the lockfile or requirements file and the install directory (`.venv`, `node_modules`) and runs no tool.
+- Python (`internal/stacks/python/shared/envdrift.go`): uv and poetry compare every package the lock requires with `.venv` (`uv/drift.go`, `poetry/drift.go`, so transitive packages included; poetry skips optional, non-main-group and marker-guarded ones); pip compares exact pins in the requirements file (`pip/pip.go`).
+- Node (`internal/stacks/node/shared/envdrift.go`): npm and yarn compare the lockfile version of each dependency declared in `package.json` with `node_modules`; transitive packages are not checked. A project with no `node_modules` (not installed, or Plug'n'Play) reports nothing. pnpm is not supported.
+- Manager-selection drift (several managers' files present, or config naming another manager) is separate and lives in `internal/cli/drift.go`.

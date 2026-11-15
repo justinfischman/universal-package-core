@@ -134,11 +134,18 @@ Requires Go 1.27+ and `golangci-lint` v2.
 - `UPC_HOME` overrides the global config directory, which keeps tests and experiments away from `~/.universal-package-core/`.
 
 ## Install
-Homebrew only, for now *(planned, Phase 5)*.
+Homebrew only. **Planned:** the tap does not exist yet, so `brew install` does not work until the owner creates it and cuts `v0.1.0` (steps in `docs/RELEASING.md`). Until then build from source with `make build`.
+
+Shell completion: `upc completion bash|zsh|fish|powershell`, see `docs/COMPLETION.md`.
+
+### Doctor: drift
+`upc doctor` reports drift for every manager by reading files only (no tool is run): the lockfile or requirements file against `.venv` / `node_modules`, and manager files that disagree with the configured manager. uv and poetry check transitive packages; npm and yarn check only declared dependencies; projects without `node_modules` (including Plug'n'Play) report nothing. See `docs/ARCHITECTURE.md` section 16.
 
 ## Documentation map
 - `docs/ARCHITECTURE.md`: design and layering
 - `docs/adrs/`: decisions
+- `docs/COMPLETION.md`: shell completion
+- `docs/RELEASING.md`: release and Homebrew tap steps
 - `docs/CHANGELOG.md`: changes
 - `plans/`: ordered phase plans
 - `project.devlang`: source of truth for requirements

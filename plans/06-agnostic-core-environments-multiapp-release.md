@@ -306,13 +306,17 @@ Template drift against tool versions. Mitigation: golden tests plus the CI E2E j
 - Acceptance E2E testscripts: one per `project.devlang` acceptance bullet (see table at the end).
 
 ### Steps
-1. Pilot: drift for pip (the weakest), then the rest by recipe.
-2. Completion tests and docs.
-3. goreleaser config; `goreleaser check`; snapshot build in CI.
-4. Four acceptance testscripts under `test/testdata/e2e/acceptance_*.txtar`.
+1. [x] Pilot: drift for pip (the weakest), then the rest by recipe.
+2. [x] Completion tests and docs.
+3. [x] goreleaser config; `goreleaser check`; snapshot build in CI (workflow added; first CI run pending).
+4. [x] Four acceptance testscripts under `test/testdata/e2e/acceptance_*.txtar`.
 
 ### Exit criteria
-Snapshot release builds in CI; `brew install` from the snapshot formula works on macOS; completion tests pass; acceptance scripts pass with `UPC_E2E=1`.
+Snapshot release builds in CI (pending first CI run); `brew install` from the snapshot formula works on macOS (pending owner authorization: the tap does not exist); [x] completion tests pass; [x] acceptance scripts pass with `UPC_E2E=1`.
+
+Status: IN PROGRESS 2026-11-15. Drift, completion, goreleaser/release.yml/RELEASING.md and the acceptance scripts are done; the tap, `v0.1.0` and the brew install check wait for owner authorization and the first CI snapshot run.
+
+Note: the acceptance scripts cover only `env list|use|show`. Phase 6.2 promised `env add|remove`, `install --env`, and `--env` on `run`, `test` and `up` (and env groups), and none of them exist on this branch (`internal/cli/env.go` has only list, show, use; only `--group` exists). The scripts cannot exercise them; this is a real 6.2 gap to close or re-scope.
 
 ### Documentation & testing
 `docs/README.md` (Homebrew install, completion), `docs/RELEASING.md`, `CHANGELOG.md` 0.1.0 entry.

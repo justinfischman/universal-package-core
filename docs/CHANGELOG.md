@@ -2,6 +2,19 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Update with every change.
 
+## [0.1.0] - unreleased
+Not tagged: the Homebrew tap and first release need owner authorization (`docs/RELEASING.md`).
+
+### Added
+- `app` project type (6.5), see below.
+- Environment drift in `doctor` for every manager (uv, pip, poetry, npm, yarn), file-based.
+- `upc completion` for bash, zsh, fish and powershell, with tests (`docs/COMPLETION.md`).
+- Release pipeline: `.goreleaser.yaml`, `.github/workflows/release.yml`, snapshot build in CI, `docs/RELEASING.md`.
+- Four acceptance scripts `test/testdata/e2e/acceptance_*.txtar` (run with `UPC_E2E=1`).
+
+### Deferred
+- pnpm and bun, other languages, generated-justfile export.
+
 ## [Unreleased]
 
 ### Added
