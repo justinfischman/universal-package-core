@@ -1,6 +1,6 @@
 # Architecture
 
-Status: **Phases 1 and 2 built** (core, components, config, CLI, and the MVP stack: Python + uv + `script`). This document describes the design from `project.devlang`. Sections marked *(planned)* are not built yet; see `plans/` for the phase that builds each one. Update this file with every change.
+Status: **Phases 1 and 2 built, Phase 6.3 (`up`/`down`/`publish`) built** (core, components, config, CLI, and the MVP stack: Python + uv + `script`). This document describes the design from `project.devlang`. Sections marked *(planned)* are not built yet; see `plans/` for the phase that builds each one. Update this file with every change.
 
 ## 1. Purpose and boundaries
 
@@ -58,6 +58,7 @@ Go has no abstract classes. Shared behavior lives in **embedded base structs** i
 | Package | Responsibility |
 |---|---|
 | `components/execx` | `Runner` interface over `os/exec`: context, working dir, env, dry-run, structured logging of every routed command. A fake runner is used in tests. |
+| `components/runstate` | Tool-neutral run state per app (Phase 6.3): `State` for `<app dir>/.universal-package-core/run/` with `up.pid`, `up.log` and a `provider` record (`provider.go`); `Start`, `Stop` (outcomes stopped, stale, nothing running) and the provider record. |
 | `components/logx` | `log/slog` setup: text or JSON handler to stderr, level from `--verbose`. |
 | `components/prompt` | `Prompter` interface: confirm / choose. Non-interactive (`--yes`, no TTY, CI) never blocks: auto-answers or fails with a clear message. |
 | `components/fsx` | Filesystem access via an interface so tests use temp dirs/`fstest`. Atomic writes. |
@@ -87,9 +88,9 @@ See `project.devlang` `cli-commands`. Phase mapping:
 |---|---|
 | 1 (**built**) | `version`, `completion`, global flags, `config get/set/validate` |
 | 2 (**built, MVP**) | `new script`, `init`, `add`, `remove`, `list`, `install`, `run`, `update`, `outdated`, `doctor` (uv) |
-| 3 (**built**) | `build`, `test`, `lint`, `audit`, `new package`, `config set pm` switch, pip/poetry. `publish` has no CLI command yet (managers declare it; Phase 5) |
+| 3 (**built**) | `build`, `test`, `lint`, `audit`, `new package`, `config set pm` switch, pip/poetry. `publish` CLI added in Phase 6.3 |
 | 4 | Node (`npm`, `yarn`) for all of the above |
-| 5 (**in progress**) | `env list|use|show` (**built**, ADR-0006; `internal/components/envs`, active name passed as `UPC_ENV` through the runner modules receive); `up`/`down`, `workspace` (ADR-0007), `new app`, `publish`, Homebrew release are not built |
+| 5 (**in progress**) | `env list|use|show` (**built**, ADR-0006; `internal/components/envs`, active name passed as `UPC_ENV` through the runner modules receive); `workspace` (ADR-0007), `new app`, Homebrew release are not built; `up`/`down`/`publish` are built (Phase 6.3, ADR-0016) |
 
 ## 8. Testing strategy
 
@@ -101,7 +102,7 @@ See `project.devlang` `cli-commands`. Phase mapping:
 
 ## 9. ADR index
 
-See `docs/adrs/`. ADR-0008 (script `run` lookup order) was added in Phase 2 and ADR-0009 (package-manager switching and detection ranking) in Phase 3 and ADR-0010 (Node and TypeScript template and runtime choices) in Phase 4. ADR-0006 (environment model) and ADR-0007 (monorepos and workspaces; decision only, workspace code is not built) were added in Phase 5. ADR-0011 through ADR-0016 (config layering, constraint mapper, data-driven stacks, workspaces/apps, environments and groups, run lookup and `up`/`down`) are drafts for Phase 6.
+See `docs/adrs/`. ADR-0008 (script `run` lookup order) was added in Phase 2 and ADR-0009 (package-manager switching and detection ranking) in Phase 3 and ADR-0010 (Node and TypeScript template and runtime choices) in Phase 4. ADR-0006 (environment model) and ADR-0007 (monorepos and workspaces; decision only, workspace code is not built) were added in Phase 5. ADR-0011 through ADR-0016 (config layering, constraint mapper, data-driven stacks, workspaces/apps, environments and groups, run lookup and `up`/`down`) belong to Phase 6; ADR-0016 is Accepted and implemented in 6.3, the others are drafts.
 
 ## 10. Phase 2 stack: Python, uv, `script` *(built)*
 
@@ -120,9 +121,9 @@ uv capability table (`internal/stacks/python/uv`):
 | update | Native | `uv lock --upgrade[-package p]` then `uv sync`; requirements `uv pip install --upgrade -r requirements.txt` |
 | outdated | Native | `uv tree --depth 1 --outdated`; requirements `uv pip list --format json --outdated` |
 | run | Native | file, then `[tool.upc.scripts]`, then `[project.scripts]` (ADR-0008) |
-| audit, build, publish | Native | `uv audit`, `uv build`, `uv publish` (`audit` and `build` have CLI commands since Phase 3; `publish` has none yet) |
+| audit, build, publish | Native | `uv audit`, `uv build`, `uv publish` (`audit` and `build` have CLI commands since Phase 3; `publish` since Phase 6.3) |
 | test, lint | Filled (Phase 3) | `uv run -- pytest [args]`, `uv run -- ruff check [args]`, or the `test`/`lint` entry of `[tool.upc.scripts]`; needs a pyproject.toml. Not declared: Unsupported (exit 3) with how to enable |
-| up, down | Unsupported | fails with exit code 3, naming uv and the reason |
+| up, down | Filled (Phase 6.3) | `up`: first of `up`/`dev`/`start` script, started through `uv run` in the background; `down`: stops it (see section Run state) |
 
 uv `Detect` is true for a `uv.lock`, a `[tool.uv]` table or a configured choice. `python.Pyproject` implements `core.PackageFile` (read-only).
 
@@ -146,7 +147,7 @@ pip (`internal/stacks/python/pip`, `pip.New(fsx.FS)`): `requirements.txt` is the
 | run | Filled | shared lookup; files run under the venv python, commands and entry points from the venv `bin` |
 | build, audit, publish | Filled | `python -m build`, `python -m pip_audit`, `python -m twine upload dist/*`; the module is checked first and its install is offered |
 | test, lint | Filled | shared pytest / ruff plans run from the venv; undeclared: Unsupported with the enabling step |
-| up, down | Unsupported | not available yet |
+| up, down | Filled (Phase 6.3) | `up`: first of `up`/`dev`/`start` script started in the background via the manager's `run`; `down` stops it via run state |
 
 Requirements edits happen only after every command succeeded and only when the content changes, so a failure mid-add leaves the file byte-identical; adding a package already listed replaces its line in place (idempotent). Comments, options and ordering are preserved.
 
@@ -168,7 +169,7 @@ poetry (`internal/stacks/python/poetry`, `poetry.New()`): `pyproject.toml` `[too
 | run | Native | file: `poetry run python <file>`; `[tool.upc.scripts]` command: `poetry run <words>`; `[project.scripts]` entry: `poetry run <name>` |
 | build, publish | Native | `poetry build`, `poetry publish` |
 | test, lint, audit | Filled | `poetry run` of pytest, ruff, pip-audit (or the `test`/`lint`/`audit` script); undeclared: Unsupported with the enabling step |
-| up, down | Unsupported | not available yet |
+| up, down | Filled (Phase 6.3) | `up`: first of `up`/`dev`/`start` script started in the background via the manager's `run`; `down` stops it via run state |
 
 Capability summary (from each manager's `declare`):
 
@@ -180,7 +181,7 @@ Capability summary (from each manager's `declare`):
 | build, publish | Native | Filled | Native |
 | audit | Native | Filled | Filled |
 | test, lint | Filled | Filled | Filled |
-| up, down | Unsupported | Unsupported | Unsupported |
+| up, down | Filled | Filled | Filled |
 
 **Detection ranking.** `core.DetectRanker` is optional on a manager. Ranks: uv `uv.lock` 300, `[tool.uv]` 200, inline-metadata script 150; poetry `poetry.lock` 300, `[tool.poetry]` 200; pip `requirements.txt` 100. Auto-detect keeps the highest; equal top ranks are a tie (ask when interactive, otherwise fail listing the candidates). `doctor` reports drift when matches tie or the files point at a manager other than the configured one(s).
 
@@ -189,7 +190,7 @@ Capability summary (from each manager's `declare`):
 **Marker-file rule.** A manager may pass marker file names to `NewBasePackageManager` (`uv.lock`, `poetry.lock`, `requirements.txt`). `core.Registries.MarkerFiles()` maps each name to the owning language, and `arch.CheckMarkers` fails if any scanned `.go`, `.tmpl` or `.toml` file outside `internal/stacks/<language>/` names one (docs, `register`, `internal/arch`, testdata are exempt, as for the id scan). This keeps file-name conventions inside the language tree.
 
 **Known gaps.**
-- `publish` is declared by every manager but has no CLI command; `list --pm` (listing another manager's view) does not exist.
+- `list --pm` (listing another manager's view) does not exist.
 - A new pip `package` has no `.venv` until `upc install` runs.
 - A new poetry `package` needs `upc install` before `upc test` (pytest is not installed until then).
 
@@ -213,6 +214,7 @@ Adding the second language touched only `internal/stacks/node`, `internal/regist
 | list / outdated | Native | `yarn list --depth=0 --json` (narrowed to declared names), `yarn outdated --json` (exit 1 is a result); Unsupported on berry |
 | update, audit, publish | Native | `yarn upgrade`, `yarn audit`, `yarn publish`; berry: `yarn up`, `yarn npm audit`, `yarn npm publish` (chosen by `yarn --version`) |
 | run, test, build, lint | Native / Filled | `yarn run <script>`, `yarn test`, `yarn run build` else `yarn tsc`, `yarn run lint` |
+| up, down | Filled (Phase 6.3) | `up`: first of `up`/`dev`/`start` script started in the background as `yarn run <script>`; `down` stops it via run state |
 
 Detection: `yarn.lock` ranks 300, a `packageManager` of `yarn@...` 200; `yarn.lock` and `package-lock.json` together tie and the CLI asks.
 
@@ -229,6 +231,26 @@ Detection: `yarn.lock` ranks 300, a `packageManager` of `yarn@...` 200; `yarn.lo
 | test | Native | `npm test [-- args]` |
 | build | Filled | `npm run build`, else `npm exec --no -- tsc` when `tsconfig.json` exists, else Unsupported with guidance |
 | lint | Filled | `npm run lint`, else Unsupported with guidance |
-| up, down | Unsupported | not available yet |
+| up, down | Filled (Phase 6.3) | `up`: first of `up`/`dev`/`start` script started in the background via the manager's `run`; `down` stops it via run state |
 
 Every npm command except `init` requires a `package.json` in the project directory (npm would otherwise create one). Detection: `package-lock.json` ranks 300 and `package.json` 100; the manager's markers are `package-lock.json` and `package.json` and may be named only under `internal/stacks/node/`. `doctor` reports a missing lock file and a `packageManager` field that names another manager. A cross-language switch (`config set pm npm` in a Python project, or a Python manager in a Node project) is refused with exit code 2 and covered by `test/testdata/pm_cross_language.txtar`.
+
+## 14. Phase 6.3: `up`, `down`, `publish`, run sources *(built)*
+
+Decision record: ADR-0016 (Accepted).
+
+**Run state.** `internal/components/runstate` (`runstate.go`, `provider.go`) keeps state per app in `<app dir>/.universal-package-core/run/`: `up.pid`, `up.log`, and a `provider` file naming the up provider that started the app (absent when a script started it). `State.Start` cleans a stale record and the previous log, launches the command and records the pid; `State.Stop` returns `Stopped`, `Stale` (process already gone, record cleaned) or nothing running. The orchestrator keeps no shared state file.
+
+**Process control.** `execx.Controller` (`internal/components/execx/process.go`: `Start(ctx, cmd, logPath)`, `Alive(pid)`, `Stop(pid)`), implemented by `execx.OS` with `proc_unix.go` / `proc_windows.go`, so liveness and stopping are portable; `execx.ControllerFor(runner)` returns the runner as a `Controller` or an error when it is not one. `execx.Ambient` is a `Runner` that uses the runner carried by each call's context, so registered providers need no runner at construction.
+
+**`up` resolution.** Each manager's `up` resolves the first script named `up`, `dev` or `start` (`scripts.UpNames`) and starts it in the background through the manager's own run command (`uv run`, `poetry run`, `npm run`, `yarn run`; pip via its venv). With `--dry-run` it prints the command. When no script exists (`scripts.ErrNothingToStart`), `cli/runwire.go` consults `core.Registries.UpProviders` in order (the compose provider). `down` first asks the provider recorded in run state to stop the app; otherwise the manager stops the recorded process.
+
+**`RunSource` and `UpProvider`.** Defined in `internal/core/runsource.go`. `RunSource` (`Recipes`, `Run`) ranks below the manifest sources: when `run` finds no declared script (`scripts.ErrNotDeclared`), `runwire.go` tries each `core.Registries.RunSources`. `UpProvider` (`Name`, `Detect`, `Up`, `Down`) takes `core.UpTarget{Dir, App}`. Implementations: `internal/stacks/just` (recipes from `just --summary` through the runner; no justfile or `just` missing means no recipes, never an error) and `internal/stacks/compose` (`docker compose -p <project> -f <file> up/down`, file `docker-compose.yml` or `compose.yaml`; the project name is per app). Both are registered in `internal/register/register.go`.
+
+**Tool-name confinement.** `just`, `docker` and `compose` as quoted Go literals may appear only under their stack package: `internal/arch/toolliterals.go` (`ToolOwners`, `CheckToolLiterals`; test files and `internal/arch` exempt, comments not matched).
+
+**`publish`.** `internal/cli/publish.go`: runs `build`, asks for confirmation (`Prompter.Confirm`, default no; `--yes` answers yes, non-interactive without `--yes` fails naming the flag, so nothing is published), then the manager's `publish`. Global `--dry-run` runs nothing and prints the build and publish commands (the documented fallback; native per-manager dry-run is a follow-up). Credentials are never read or stored. `-w/--member` is accepted by `up`, `down` and `publish`; `internal/cli/member_test.go` checks every capability command honors it.
+
+**Tests.** `internal/register/lifecycle_parity_test.go` fails if any manager lacks `up`, `down` or `publish`.
+
+**Known gaps (ADR-0016 follow-ups).** Native `publish --dry-run` per manager; no offer to create an up script when none exists; run state under `-w` keys off the request directory, not the member; `internal/config` has no script/up settings, so the "config script" and "configured up" lookup steps are not wired; Windows `Stop` does not kill child processes and pid reuse is unguarded; `down` keeps `up.log` until the next `up`.

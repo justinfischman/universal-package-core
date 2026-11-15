@@ -167,7 +167,7 @@ E2E: create project, `env add dev --groups dev`, `add pytest --group dev`, `inst
 **Depends on:** 6.2 (environment injection), 6.1 (command data).
 
 ### Scope
-- Fill `CapUp`/`CapDown` for all five managers; remove the Unsupported declarations (`uv.go:85-100` and siblings).
+- Fill `CapUp`/`CapDown` for all five managers; remove the Unsupported declarations (`uv.go:70-71` and siblings). `CapPublish` already exists in all five; this phase adds the `publish` CLI.
 - Run lookup (ADR-0016 restates the neutral lookup order per stack; ADR-0008 is not edited): file in project, config script, manifest script, `[project.scripts]`, then an optional `justfile` recipe run through `execx` (`just <recipe>`; if `just` is absent, skip the source with a debug log and do not fail). Justfile support is optional and run-only; generated-justfile export is not built and is listed under deferred items in `CHANGELOG.md`.
 - `up` resolution: configured `up` command, then `dev`/`start` script, then `docker-compose.yml`/`compose.yaml`; offer to create a script if none exist (through the manager, not by editing manifests directly).
 - `up` runs the process and records pid/log under `.universal-package-core/run/`; `down` stops it (`compose down` for compose); down-after-crash cleans stale pid files; no orphan state on failure.
@@ -180,11 +180,22 @@ E2E: create project, `env add dev --groups dev`, `add pytest --group dev`, `inst
 - Modify each manager's `deps`/`run` files plus `spec.go`; new `internal/cli/publish.go`.
 
 ### Steps
-1. Update the ADR-0016 draft.
-2. Pilot (uv): `up`, `down`, `publish` with a fake runner and scripted background process; review; fix method.
-3. Roll out poetry, pip, npm, yarn by the locked recipe.
-4. Test proving every capability command honors the 6.2 `-w` plumbing without per-command code.
-5. Parity suite: no manager may lack `up`/`down`/`publish` silently.
+Status as of 2026-11-14 (verified against the repo, not the earlier handoff):
+- `publish` is already declared and implemented in all five managers (`uv/project.go:71`, pip, poetry, npm, yarn); there is no `publish` CLI command and no `--dry-run`, confirmation or `--yes` handling yet.
+- `up`/`down` are Unsupported in every manager (uv: `uv.go:70-71`; pip test asserts it).
+- Commit 60c0634 added `internal/core/runstate.go` (pid helpers, no tests). It deviates from this plan: run state belongs in `internal/components/runstate/` and process work in `execx` (Windows: `Signal(0)` liveness is not portable). Fix in step 2.
+
+1. [x] Update the ADR-0016 draft (status: Partially Implemented).
+2. [x] (done: `internal/components/runstate`, `execx.Controller`, Windows vet clean) Move `RunState` to `internal/components/runstate/`, make liveness/stop go through `execx` (portable), add tests (write/read/remove, stale pid, per-app dirs).
+3. [x] (uv up/down + `publish` CLI done and reviewed 2026-11-14; recipe locked) Pilot (uv): `up`, `down` with a fake runner and scripted background process; review; fix the method. Then `publish` CLI on uv (`--dry-run`, confirm, `--yes`).
+4. [x] `RunSource` and `UpProvider` interfaces in core (`internal/core/runsource.go`); `internal/stacks/just/` and `internal/stacks/compose/` implemented with FakeRunner tests (not yet registered or wired into the CLI up path).
+5. [x] Roll out `up`/`down` by the locked recipe to all five managers (uv, pip, poetry, npm, yarn); Unsupported declarations removed; full build, vet, Windows vet and tests green 2026-11-14.
+6. [x] `publish` CLI (`internal/cli/publish.go`), `up`/`down` capability rows, and `just`/`compose` registration + wiring (`internal/cli/runwire.go`, `execx.Ambient`, `runstate/provider.go`) done 2026-11-14; build, vet, Windows vet, tests green.
+   Documented follow-ups (not blocking exit criteria; carry to 6.7 or later): (a) native `publish --dry-run` per manager (global `--dry-run` prints the plan only: documented fallback); (b) offer to create an up script when none exists; (c) run state under `-w` keys off `req.Dir`, not the member; (d) `internal/config` has no script/up settings, so "config script" and "configured up" lookup steps are not wired; (e) Windows `Stop` does not kill child processes and pid reuse is unguarded; (f) `down` keeps `up.log` until next `up`.
+7. [x] (`internal/cli/member_test.go`; found and fixed: build/test/lint/audit/run lacked `flagMember` in `capability.go`) Test proving every capability command honors the 6.2 `-w` plumbing without per-command code.
+8. [x] (`internal/register/lifecycle_parity_test.go`) Parity suite: no manager may lack `up`/`down`/`publish` silently.
+9. [x] (`internal/arch/toolliterals.go`) Extend arch tests to enforce `just`/`docker`/`compose` confinement.
+10. [x] (done 2026-11-14; follow-up g: `init` does not gitignore `.universal-package-core/run/`, README tells users to add it; follow-up h: ADR-0009 line 18 stale about publish) Docs: `ARCHITECTURE.md`, `docs/README.md`, `CHANGELOG.md`, ADR-0016 to Accepted when done.
 
 ### Exit criteria
 - `up` then `down` works for each manager against a fixture project; crash leaves no orphan files after `down`.
@@ -202,6 +213,7 @@ ADR-0016; `ARCHITECTURE.md` (run state, compose isolation); `docs/README.md` (`u
 
 ### Integration validation
 Opt-in E2E: fixture dev server started and stopped via `upc up/down` on uv and npm; `publish --dry-run` on uv and npm; `doctor` clean.
+**Result (2026-11-15, local, real tools):** `UPC_E2E=1 go test ./...` green. New scripts `test/testdata/e2e/{node,uv}_up_down_publish.txtar` (up, log, double-up refused, down kills the process group, crash cleanup, `publish --dry-run`, refusal without `--yes`; real publish never runs) and `just_run_fallback.txtar` (recipe vs manifest precedence). Manually verified with real tools: compose `up`/`down` against a live Docker daemon (container started, then removed). Compose is not an E2E script (needs a Docker daemon and an image pull). `doctor` clean on existing scripts.
 
 ### Risks
 - Cross-platform process management (Windows signals). Mitigation: all process work in `execx`; Windows verified by the 6.0 CI job.

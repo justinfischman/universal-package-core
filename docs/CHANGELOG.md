@@ -9,6 +9,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Update with ev
 - Phase plans in `plans/` (01 foundation through 05 environments/workspace/release).
 - Project spec (`project.devlang`), launch task, Go module and `cmd/upc` placeholder committed as the baseline.
 
+### Added (Phase 6.3: up, down, publish)
+- `upc up` / `upc down` for uv, pip, poetry, npm and yarn: start the `up`, `dev` or `start` script in the background and stop it; `-w/--member` accepted. `CapUp`/`CapDown` are Filled for every manager (the Unsupported declarations are removed).
+- `upc publish`: build, confirm (`--yes` required non-interactively), publish; global `--dry-run` prints the plan.
+- `internal/components/runstate` (per-app `up.pid`, `up.log` and `provider` under `.universal-package-core/run/`; stale records cleaned) replacing `internal/core/runstate.go`; `execx.Controller` (`Start`, `Alive`, `Stop`, unix and windows implementations) and `execx.Ambient`.
+- `core.RunSource` and `core.UpProvider`; `internal/stacks/just` (optional justfile recipes as the last `run` source) and `internal/stacks/compose` (`docker compose` fallback for `up`/`down`), wired in `internal/cli/runwire.go`.
+- Tests: arch check confining `just`/`docker`/`compose` literals to their stack packages (`internal/arch/toolliterals.go`), `-w` honored by every capability command (`internal/cli/member_test.go`), lifecycle parity (`internal/register/lifecycle_parity_test.go`).
+- ADR-0016 is Accepted.
+
+### Known gaps (Phase 6.3 follow-ups, see ADR-0016)
+- Native `publish --dry-run` per manager; offer to create an up script; run state under `-w` keyed off the member; config-defined scripts/`up` command not wired; Windows `Stop` leaves child processes and pid reuse is unguarded; `down` keeps `up.log` until the next `up`.
+- Generated-justfile export is not built (deferred).
+
 ### Added (Phase 6, steps 0 and 6.0)
 - Draft ADRs 0011-0016: config layering and secrets, neutral constraint mapper, data-driven stacks and tool-name confinement, config-only workspaces/apps/contracts, environments and dependency groups, run lookup with optional justfile and `up`/`down`. ADR-0006, 0007 and 0008 are not edited.
 - CI: `e2e` job (`UPC_E2E=1` with uv, poetry, npm and yarn installed) and a Windows job running build, `go vet`, golangci-lint and tests (was build only).
@@ -78,13 +90,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Update with ev
 - `docs/ARCHITECTURE.md` section 12: capability table for uv, pip and poetry, project types, ranking, marker rule.
 
 ### Known gaps (Phase 3)
-- `publish` is declared by every manager but has no CLI command; `list --pm` does not exist.
+- `list --pm` does not exist. (`publish` CLI added in Phase 6.3.)
 - A new pip `package` has no `.venv` until `upc install`; a new poetry `package` needs `upc install` before `upc test`.
 - `plans/03-python-stacks-and-package-type.md` says a cross-language `config set pm` exits 1; the implementation exits 2 (`ErrIncompatible` is a usage error, ADR-0009). The plan is read-only and was not changed.
 
 ### Added (Phase 4, slice A: Node language and npm)
 - `internal/stacks/node` (language `node`; detects `package.json`, `tsconfig.json`, `package-lock.json`, `yarn.lock`; TypeScript templates for `script` and `package`; read-only `package.json` `PackageFile`, `ScriptReader`) and `internal/stacks/node/shared`.
-- `internal/stacks/node/npm`: package manager declaring every capability (native init/install/add/remove/list/update/outdated/run/audit/publish/test; filled build and lint; up/down unsupported), JSON parsing for `npm ls` and `npm outdated` (exit 1 with output is a result), `DetectRanker` (`package-lock.json` 300, `package.json` 100), `Diagnoser`. `internal/register` registers `node` and `npm`.
+- `internal/stacks/node/npm`: package manager declaring every capability (native init/install/add/remove/list/update/outdated/run/audit/publish/test; filled build and lint; up/down unsupported at the time, filled in Phase 6.3), JSON parsing for `npm ls` and `npm outdated` (exit 1 with output is a result), `DetectRanker` (`package-lock.json` 300, `package.json` 100), `Diagnoser`. `internal/register` registers `node` and `npm`.
 - ADR-0010: Node/TypeScript template and runtime choices (type stripping for scripts, `tsc` for packages, `node:test`, path for pnpm and bun).
 - Tests: contract suite, argv per capability, recorded `npm ls`/`npm outdated` fixtures (empty, multi-location, error), detection ranking, scaffold goldens (`internal/register/testdata`), cross-language refusal testscript (`test/testdata/pm_cross_language.txtar`), opt-in real-npm E2E (`node_package_lifecycle`, `node_script_lifecycle`).
 - Design defects in core, cli, components, config or the project types: none found. The `script` and `package` types scaffold Node unchanged.

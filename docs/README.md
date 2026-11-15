@@ -36,6 +36,22 @@ upc add rich -v                   # --verbose logs every routed command
 ```
 If `uv` is missing, `upc` offers to install it and then continues; with `--yes` it installs without asking, and non-interactively without `--yes` it fails with instructions (exit code 4). Unsupported capabilities (for example `up` and `down`) fail with exit code 3. `test` and `lint` need pytest / ruff to be declared by the project (or a `test`/`lint` script); otherwise they fail with exit code 3 and say how to enable them. A new `pip` package has no `.venv` and a new `poetry` package has no installed dependencies until `upc install`; run it before `upc test`. A cross-language `config set pm` is refused with exit code 2.
 
+### Run, up, down and publish
+```sh
+upc run build-docs                # file, config/manifest script, then a justfile recipe (optional)
+upc up                            # starts the "up", "dev" or "start" script in the background
+upc up --dry-run                  # print the command, start nothing
+upc down                          # stops what `upc up` started; a crashed process just has its record cleaned
+upc up -w api                     # -w/--member works on up, down, publish and the other capability commands
+upc publish --dry-run             # print the build and publish commands, run nothing
+upc publish                       # build, ask for confirmation, then publish with the manager's own login
+upc publish --yes                 # skip the question (required when not interactive)
+```
+- `up` records `up.pid` and `up.log` under `.universal-package-core/run/` in the app directory (add it to `.gitignore`).
+- A `justfile` is optional. If one exists and `just` is installed, its recipes are the last source `upc run` tries, after the project's own scripts; without `just` nothing changes.
+- With no `up`/`dev`/`start` script, `upc up` falls back to `docker-compose.yml` or `compose.yaml` (`docker compose up`); `upc down` then runs `docker compose down`.
+- `publish --dry-run` currently only prints the plan; it does not call the manager's native dry run. Credentials are never stored.
+
 ### Node (TypeScript) with npm
 ```sh
 upc new package mylib --language node --pm npm --yes   # npm init, tsconfig.json, src/index.ts, test/index.test.ts, typescript installed
