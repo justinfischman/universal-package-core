@@ -127,8 +127,11 @@ func (p *Poetry) DetectRank(fsys fs.FS) int {
 
 // Diagnose implements core.Diagnoser: problems poetry itself would trip over.
 func (p *Poetry) Diagnose(fsys fs.FS) []core.Finding {
-	if !p.Detect(fsys) || p.BasePackageManager.Detect(fsys) {
+	if !p.Detect(fsys) {
 		return nil
+	}
+	if p.BasePackageManager.Detect(fsys) {
+		return lockDrift(fsys)
 	}
 	return []core.Finding{{
 		Severity: core.SeverityWarn,

@@ -142,6 +142,8 @@ func (y *Yarn) Diagnose(fsys fs.FS) []core.Finding {
 			Message:  "yarn.lock is missing, so dependencies are not locked",
 			Fix:      core.CapInstall,
 		})
+	} else {
+		findings = append(findings, lockDrift(fsys)...)
 	}
 	return findings
 }

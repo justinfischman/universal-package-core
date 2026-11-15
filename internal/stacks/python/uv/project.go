@@ -106,6 +106,8 @@ func (u *UV) Diagnose(fsys fs.FS) []core.Finding {
 				Message:  "uv.lock is missing, so dependencies are not locked",
 				Fix:      core.CapInstall,
 			})
+		} else {
+			findings = append(findings, lockDrift(fsys)...)
 		}
 		return findings
 	}

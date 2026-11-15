@@ -136,6 +136,8 @@ func (n *NPM) Diagnose(fsys fs.FS) []core.Finding {
 			Message:  "package-lock.json is missing, so dependencies are not locked",
 			Fix:      core.CapInstall,
 		})
+	} else {
+		findings = append(findings, lockDrift(fsys)...)
 	}
 	return findings
 }

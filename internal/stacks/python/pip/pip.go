@@ -119,8 +119,11 @@ func (p *PIP) DetectRank(fsys fs.FS) int {
 
 // Diagnose implements core.Diagnoser.
 func (p *PIP) Diagnose(fsys fs.FS) []core.Finding {
-	if !p.Detect(fsys) || shared.HasVenv(fsys) {
+	if !p.Detect(fsys) {
 		return nil
+	}
+	if shared.HasVenv(fsys) {
+		return shared.EnvDrift(fsys, manifestFile, shared.RequirementPins(fsys, manifestFile))
 	}
 	return []core.Finding{{
 		Severity: core.SeverityWarn,
