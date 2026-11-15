@@ -24,6 +24,9 @@ type Request struct {
 	Version string
 	// Member is the workspace member to act on (if any).
 	Member string
+	// Env is extra KEY=VALUE child environment, already resolved. Managers
+	// that start processes append it to the child's environment.
+	Env    []string
 	Args   []string // passthrough arguments
 	DryRun bool
 	Yes    bool

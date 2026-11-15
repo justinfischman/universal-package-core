@@ -71,6 +71,9 @@ func Validate(c Config, regs core.Registries) error {
 			return fmt.Errorf("%w: unknown project type %q (known: %v)", core.ErrInvalidRequest, c.ProjectType, regs.ProjectTypes.IDs())
 		}
 	}
+	if err := ValidateApps(c.Apps); err != nil {
+		return err
+	}
 	return validateEnvironments(c)
 }
 

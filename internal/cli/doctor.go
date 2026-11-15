@@ -74,6 +74,7 @@ func runDoctor(cmd *cobra.Command, s *Session) error {
 	st, err := resolveStack(s)
 	if errors.Is(err, errNothingDetected) {
 		rep.Findings = append(rep.Findings, findingEntry{Severity: core.SeverityWarn, Message: err.Error()})
+		rep.Findings = append(rep.Findings, workspaceFindings(s, dir)...)
 		return s.printDoctor(rep)
 	}
 	if err != nil {
@@ -119,6 +120,9 @@ func runDoctor(cmd *cobra.Command, s *Session) error {
 		add(f, nil, "")
 	}
 	for _, f := range envFindings(s, dirFS, res) {
+		add(f, nil, "")
+	}
+	for _, f := range workspaceFindings(s, dir) {
 		add(f, nil, "")
 	}
 	if d, ok := st.PM.(core.Diagnoser); ok {

@@ -23,11 +23,11 @@ func (y *Yarn) up(ctx context.Context, req core.Request) (core.Result, error) {
 	if err != nil {
 		return core.Result{}, err
 	}
-	cmd := execx.Cmd{Name: Binary, Args: shared.Concat([]string{"run", target.Name}, req.Args), Dir: req.Dir}
+	cmd := execx.Cmd{Name: Binary, Args: shared.Concat([]string{"run", target.Name}, req.Args), Dir: req.Dir, Env: req.Env}
 	if req.DryRun {
 		return core.Result{Summary: "dry run, nothing changed: would start " + cmd.String(), Commands: []string{cmd.String()}}, nil
 	}
-	state, err := runstate.ForApp(ctx, req.Dir)
+	state, err := runstate.ForApp(ctx, req.Dir, req.Member)
 	if err != nil {
 		return core.Result{}, err
 	}
@@ -47,7 +47,7 @@ func (y *Yarn) down(ctx context.Context, req core.Request) (core.Result, error) 
 	if req.DryRun {
 		return core.Result{Summary: "dry run, nothing changed: would stop the process started by up"}, nil
 	}
-	state, err := runstate.ForApp(ctx, req.Dir)
+	state, err := runstate.ForApp(ctx, req.Dir, req.Member)
 	if err != nil {
 		return core.Result{}, err
 	}

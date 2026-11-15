@@ -1,0 +1,16 @@
+[workspace]
+members = ["apps/api", "apps/web"]
+
+[apps.api]
+path = "apps/api"
+port = 8000
+url = "http://localhost:${apps.api.port}"
+provides = ["http"]
+
+[apps.web]
+path = "apps/web"
+port = 3000
+consumes = ["api"]
+
+[apps.web.env]
+API_URL = "${apps.api.url}/v1"

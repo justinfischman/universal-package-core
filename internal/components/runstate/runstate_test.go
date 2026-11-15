@@ -191,11 +191,11 @@ func TestStopFailureKeepsRecord(t *testing.T) {
 }
 
 func TestForAppNeedsAController(t *testing.T) {
-	if _, err := ForApp(context.Background(), "d"); err == nil {
+	if _, err := ForApp(context.Background(), "d", ""); err == nil {
 		t.Error("want error without a runner")
 	}
 	ctx := execx.WithRunner(context.Background(), &execx.FakeRunner{})
-	if _, err := ForApp(ctx, "d"); err != nil {
+	if _, err := ForApp(ctx, "d", ""); err != nil {
 		t.Errorf("ForApp = %v", err)
 	}
 }

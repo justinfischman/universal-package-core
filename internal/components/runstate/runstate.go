@@ -1,7 +1,8 @@
 // Package runstate is the tool-neutral record of one app's background process
 // for up/down (ADR-0016): a pid file and a log under
-// <app dir>/.universal-package-core/run/. Each app directory has its own state,
-// so apps in one workspace never clash, and there is no shared state file.
+// <member dir>/.universal-package-core/run/[<app name>/]. State is keyed by
+// member directory and app name, so apps in one workspace never clash, and
+// there is no shared state file.
 // Liveness and stopping go through execx so they are portable.
 package runstate
 
@@ -45,12 +46,14 @@ const (
 
 // State owns the run directory of one app and the controller that acts on it.
 type State struct {
-	Dir string // the app directory
+	Dir string // the member directory
+	App string // the app name inside Dir; empty for a single project
 	Ctl execx.Controller
 }
 
-// ForApp builds the State for an app directory using the runner in ctx.
-func ForApp(ctx context.Context, dir string) (State, error) {
+// ForApp builds the State for a member directory and app name using the runner
+// in ctx. The name keeps two apps in one directory apart (ADR-0014).
+func ForApp(ctx context.Context, dir, app string) (State, error) {
 	r, ok := execx.FromContext(ctx)
 	if !ok {
 		return State{}, errors.New("internal error: no command runner in context")
@@ -59,11 +62,17 @@ func ForApp(ctx context.Context, dir string) (State, error) {
 	if err != nil {
 		return State{}, err
 	}
-	return State{Dir: dir, Ctl: ctl}, nil
+	return State{Dir: dir, App: app, Ctl: ctl}, nil
 }
 
-// RunDir is <app dir>/.universal-package-core/run.
-func (s State) RunDir() string { return filepath.Join(s.Dir, DirName, "run") }
+// RunDir is <dir>/.universal-package-core/run, with the app name as a final
+// element when there is one.
+func (s State) RunDir() string {
+	if s.App == "" {
+		return filepath.Join(s.Dir, DirName, "run")
+	}
+	return filepath.Join(s.Dir, DirName, "run", s.App)
+}
 
 // PidFile is the pid record path.
 func (s State) PidFile() string { return filepath.Join(s.RunDir(), pidFile) }

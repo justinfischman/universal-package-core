@@ -65,6 +65,7 @@ func MergeConfig(base, override Config) Config {
 	if len(override.Workspace.Members) > 0 {
 		result.Workspace = override.Workspace
 	}
+	result.Apps = mergeApps(result.Apps, override.Apps)
 	
 	return result
 }
@@ -265,5 +266,6 @@ func isEmptyConfig(c Config) bool {
 		len(c.Environments) == 0 &&
 		c.DefaultEnvironment == "" &&
 		c.ActiveEnvironment == "" &&
-		len(c.Workspace.Members) == 0
+		len(c.Workspace.Members) == 0 &&
+		len(c.Apps) == 0
 }

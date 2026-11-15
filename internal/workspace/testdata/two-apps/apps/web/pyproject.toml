@@ -1,0 +1,10 @@
+[project]
+name = "web"
+version = "0.1.0"
+requires-python = ">=3.11"
+
+[tool.uv]
+package = false
+
+[project.scripts]
+dev = "web:main"

@@ -51,6 +51,8 @@ type Config struct {
 	ActiveEnvironment string `toml:"active_environment,omitempty"`
 	// Workspace defines member projects.
 	Workspace Workspace `toml:"workspace,omitempty"`
+	// Apps maps a name to its `[apps.<name>]` table (ADR-0014).
+	Apps map[string]App `toml:"apps,omitempty"`
 }
 
 // Environment is one declared environment. An empty File means the convention
@@ -255,6 +257,7 @@ func (s Store) Load() (Resolved, error) {
 	if len(p.Workspace.Members) > 0 {
 		res.Workspace = p.Workspace
 	}
+	res.Apps = mergeApps(res.Apps, p.Apps)
 	return res, nil
 }
 

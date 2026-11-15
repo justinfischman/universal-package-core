@@ -68,7 +68,7 @@ func (s *Session) upProvider(ctx context.Context, req core.Request) (core.Result
 		if req.DryRun {
 			return core.Result{Summary: fmt.Sprintf("dry run, nothing changed: would start with %s", p.Name())}, true, nil
 		}
-		state, err := runstate.ForApp(ctx, req.Dir)
+		state, err := runstate.ForApp(ctx, req.Dir, req.Member)
 		if err != nil {
 			return core.Result{}, true, err
 		}
@@ -89,7 +89,7 @@ func (s *Session) downProvider(ctx context.Context, req core.Request) (core.Resu
 	if req.DryRun {
 		return core.Result{}, false, nil
 	}
-	state, err := runstate.ForApp(ctx, req.Dir)
+	state, err := runstate.ForApp(ctx, req.Dir, req.Member)
 	if err != nil {
 		return core.Result{}, true, err
 	}

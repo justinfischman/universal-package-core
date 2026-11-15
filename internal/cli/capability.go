@@ -15,6 +15,7 @@ type capFlags struct {
 	script              string
 	version, constraint string
 	member              string
+	apps                appTarget
 }
 
 // Which flags a capability command accepts.
@@ -23,6 +24,7 @@ const (
 	flagScript              // --script
 	flagVersion             // --version and --constraint (add)
 	flagMember              // --member
+	flagApps                // --all and --app
 )
 
 // capSpec describes one command that routes a capability. The factory below
@@ -58,8 +60,8 @@ var capabilityTable = []capSpec{
 	{use: "test [args...]", short: "Run the project's tests", cap: core.CapTest, args: cobra.ArbitraryArgs, passthrough: true, flags: flagMember, build: forward},
 	{use: "lint [args...]", short: "Lint the project", cap: core.CapLint, args: cobra.ArbitraryArgs, passthrough: true, flags: flagMember, build: forward},
 	{use: "audit [args...]", short: "Check dependencies for known vulnerabilities", cap: core.CapAudit, args: cobra.ArbitraryArgs, passthrough: true, flags: flagMember, build: forward},
-	{use: "up [args...]", short: "Start the project's dev process in the background", cap: core.CapUp, args: cobra.ArbitraryArgs, flags: flagMember, passthrough: true, build: forward},
-	{use: "down", short: "Stop the process started by up", cap: core.CapDown, args: cobra.NoArgs, flags: flagMember, build: noArgs},
+	{use: "up [args...]", short: "Start the project's dev process in the background", cap: core.CapUp, args: cobra.ArbitraryArgs, flags: flagMember | flagApps, passthrough: true, build: forward},
+	{use: "down", short: "Stop the process started by up", cap: core.CapDown, args: cobra.NoArgs, flags: flagMember | flagApps, build: noArgs},
 	{
 		use: "run <script> [args...]", short: "Run a file or a named project script", cap: core.CapRun,
 		args: cobra.MinimumNArgs(1), passthrough: true, flags: flagMember,
@@ -85,6 +87,12 @@ func newCapabilityCmd(spec capSpec) *cobra.Command {
 			s, err := sessionFrom(cmd)
 			if err != nil {
 				return err
+			}
+			if f.apps.set() {
+				if err := f.apps.validate(f.member, args); err != nil {
+					return err
+				}
+				return runApps(cmd.Context(), s, spec.cap, f.apps)
 			}
 			req := spec.build(args)
 			req.Script = firstNonEmpty(req.Script, f.script)
@@ -131,6 +139,10 @@ func newCapabilityCmd(spec capSpec) *cobra.Command {
 	}
 	if spec.flags&flagMember != 0 {
 		cmd.Flags().StringVarP(&f.member, "member", "w", "", "workspace member to act on")
+	}
+	if spec.flags&flagApps != 0 {
+		cmd.Flags().BoolVar(&f.apps.all, "all", false, "act on every app in the workspace, in dependency order")
+		cmd.Flags().StringVar(&f.apps.app, "app", "", "act on this app of the workspace")
 	}
 	return cmd
 }
