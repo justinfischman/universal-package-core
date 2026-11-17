@@ -42,13 +42,14 @@ changelog:
   use: github
   sort: asc
 
-# Publishing is skipped for snapshots. The tap repository is
-# justinfischman/homebrew-tap (see docs/RELEASING.md). Casks are macOS-only.
+# Publishing is skipped for snapshots. The tap lives in this repository (Casks/),
+# pushed with the workflow's GITHUB_TOKEN (see docs/RELEASING.md).
 homebrew_casks:
   - name: upc
     repository:
       owner: justinfischman
-      name: homebrew-tap
-      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+      name: universal-package-core
+      branch: main
+      token: "{{ .Env.GITHUB_TOKEN }}"
     homepage: https://github.com/justinfischman/universal-package-core
     description: Create, install and manage packages and apps across languages

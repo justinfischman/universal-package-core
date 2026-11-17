@@ -18,18 +18,13 @@ dist/upc_<os>_<arch>*/upc version     # prints upc 0.0.0-SNAPSHOT-<commit>
 `goreleaser check` needs a git remote (`origin`) to be configured. CI runs the
 same snapshot in the `release-snapshot` job of `ci.yml`.
 
-## 2. One-time Homebrew tap setup (OWNER ACTION REQUIRED)
+## 2. Homebrew tap (no setup needed)
 
-These steps create remote resources and secrets. They are not automated and
-must be done explicitly by the repository owner.
-
-1. OWNER ACTION: create a public GitHub repository `justinfischman/homebrew-tap`.
-2. Done: `.goreleaser.yaml` (`homebrew_casks[0]`) already names `justinfischman`.
-3. OWNER ACTION: create a fine-grained personal access token with
-   Contents: read/write on `justinfischman/homebrew-tap` only.
-4. OWNER ACTION: add it as the Actions secret `HOMEBREW_TAP_GITHUB_TOKEN` in
-   this repository. The token is read only from that environment variable;
-   never commit it.
+The tap lives in this repository: on a tagged release GoReleaser commits
+`Casks/upc.rb` to `main` using the workflow's built-in `GITHUB_TOKEN`
+(`contents: write`). There is no separate tap repository and no secret to add.
+If branch protection on `main` blocks that push, allow GitHub Actions to bypass
+it or switch to a fine-grained token in a secret.
 
 ## 3. Cut v0.1.0 (OWNER ACTION REQUIRED)
 
@@ -43,12 +38,13 @@ must be done explicitly by the repository owner.
    ```
 
 3. Confirm the GitHub release has all archives and `checksums.txt`, and that
-   the tap repository received `Casks/upc.rb`.
+   `Casks/upc.rb` was committed to `main`.
 
 ## 4. Verify the install
 
 ```sh
-brew install --cask justinfischman/tap/upc
+brew tap justinfischman/upc https://github.com/justinfischman/universal-package-core
+brew install --cask justinfischman/upc/upc
 upc version        # upc 0.1.0, with commit and date
 ```
 
