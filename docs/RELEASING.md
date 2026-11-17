@@ -2,7 +2,7 @@
 
 Releases are built by GoReleaser (`.goreleaser.yaml`) from a `v*` tag via
 `.github/workflows/release.yml`. Artifacts: darwin and linux (amd64, arm64),
-windows (amd64), `checksums.txt`, and a Homebrew cask. Binaries are built
+`checksums.txt`, and a Homebrew cask. Binaries are built
 with `CGO_ENABLED=0`, `-trimpath`, and `-s -w`; `version`, `commit` and `date`
 are injected into `main.version`, `main.commit` and `main.date`
 (`cmd/upc/main.go`), which `upc version` prints.

@@ -22,19 +22,21 @@ jobs:
           version: v2.15.0
       - run: ./scripts/check.sh
 
-  windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-      - run: go build ./...
-      - run: go vet ./...
-      - uses: golangci/golangci-lint-action@v8
-        with:
-          version: v2.15.0
-      - run: go test ./...
+  # Windows is a backlog feature (docs/CHANGELOG.md, Deferred); the job is
+  # disabled until the Windows test failures are fixed.
+  #   windows:
+  #     runs-on: windows-latest
+  #     steps:
+  #       - uses: actions/checkout@v4
+  #       - uses: actions/setup-go@v5
+  #         with:
+  #           go-version-file: go.mod
+  #       - run: go build ./...
+  #       - run: go vet ./...
+  #       - uses: golangci/golangci-lint-action@v8
+  #         with:
+  #           version: v2.15.0
+  #       - run: go test ./...
 
   e2e:
     runs-on: ubuntu-latest

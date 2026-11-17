@@ -21,6 +21,7 @@ Not tagged: the Homebrew tap and first release need owner authorization (`docs/R
 - Exit-code discrepancy with plan 03: `plans/03-python-stacks-and-package-type.md` says `config set pm` to a manager of another language exits 1; the implementation exits 2 (`core.ErrIncompatible` maps to `ExitUsage`, ADR-0009). Code is authoritative; the read-only plan was not changed (verified by `TestConfigSetRefusesCrossLanguageSwitch`).
 
 ### Deferred
+- Windows support (backlog): the CI job and release build are disabled. The Windows test suite has about 30 failing tests (fake-fs paths, `0755` mode expectations, `upc.exe` lookup in testscript, temp-dir cleanup locks, doctor golden paths); `execx` already has `detach_windows.go`.
 - pnpm and bun, other languages, generated-justfile export.
 - From 6.2: npm/yarn arbitrary dependency groups, `doctor` group checks, root-level `local.toml`, `config show --origin` (app-level `local.toml` is loaded in `internal/config/layers.go` but has no dedicated config test).
 - From 6.7: native `publish --dry-run`, offer to create an up script, workspace-member comparison with the manager's native list, `--app X` with dependencies, `${...}` escape syntax; app sub-types (CLI, library).
