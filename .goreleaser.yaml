@@ -42,15 +42,13 @@ changelog:
   use: github
   sort: asc
 
-# Publishing is skipped for snapshots. Replace OWNER with the real GitHub owner
-# of the tap repository before the first tagged release (see docs/RELEASING.md).
-brews:
+# Publishing is skipped for snapshots. The tap repository is
+# justinfischman/homebrew-tap (see docs/RELEASING.md). Casks are macOS-only.
+homebrew_casks:
   - name: upc
     repository:
-      owner: OWNER
+      owner: justinfischman
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
-    homepage: https://github.com/OWNER/universal-package-core
+    homepage: https://github.com/justinfischman/universal-package-core
     description: Create, install and manage packages and apps across languages
-    test: |
-      system "#{bin}/upc", "version"
