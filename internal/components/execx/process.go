@@ -49,7 +49,7 @@ func (r OS) Start(_ context.Context, cmd Cmd, logPath string) (int, error) {
 	if err != nil {
 		return 0, fmt.Errorf("open log %s: %w", logPath, err)
 	}
-	defer logFile.Close()
+	defer func() { _ = logFile.Close() }()
 
 	// Not CommandContext: the process must outlive the invocation.
 	c := exec.Command(cmd.Name, cmd.Args...)

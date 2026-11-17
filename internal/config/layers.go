@@ -20,6 +20,7 @@ const (
 // ScopeWithLocal extends Scope with Local.
 type ScopeWithLocal string
 
+// Config layer scopes, lowest to highest precedence.
 const (
 	ScopeGlobal  ScopeWithLocal = "global"
 	ScopeRoot    ScopeWithLocal = "root"
