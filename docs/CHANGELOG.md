@@ -5,6 +5,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Update with ev
 ## [0.1.0] - unreleased
 Not tagged: the Homebrew tap and first release need owner authorization (`docs/RELEASING.md`).
 
+### Changed
+- Process control for `up`/`down` uses gopsutil (liveness, start time, whole-tree terminate then kill) instead of `ps`, process-group signals and `taskkill`; only `detach` stays per OS. The CI `check` job runs on Linux only (the macOS runner queue was too slow); Windows and the e2e job are unchanged.
+
 ### Added
 - 6.7 hardening: `upc init` adds `.universal-package-core/run/` to `.gitignore` (created if missing, never duplicated); `scripts.<name>` and `up` argv lists in config (`internal/config`) outrank manager sources for `run` and `up` (ADR-0016 amendment); the run state pid file records the process start time (`execx.Controller.StartedAt`) so a reused pid is never treated as the app or signalled; Windows `Stop` kills the process tree (`taskkill /T /F`); `down` removes only the pid file and keeps `up.log` until the next `up`; `cmd/upc` smoke test (version, help, unknown command exit codes).
 - 6.2 gap: `upc env add|remove`, `--env <name>` on `install`, `run`, `test` and `up` (one command, selection not saved), environment `groups` installed by `install --env` for uv, poetry and pip (`core.Request.Groups`). npm/yarn group install (ADR-0015 option B), `doctor` group checks and `local.toml` / `config show --origin` are still open.

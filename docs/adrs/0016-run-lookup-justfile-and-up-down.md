@@ -23,7 +23,7 @@ Not blocking acceptance; carry to 6.7 or later (plans/06, Phase 6.3 step 6).
 - b. Offer to create an up script when none exists.
 - c. Run state under `-w` keys off the request directory, not the member.
 - d. DONE (6.7): see the amendment below.
-- e. DONE (6.7): Windows `Stop` kills the process tree (`taskkill /T /F`); the pid file records the process start time (`Controller.StartedAt`: `ps -o lstart` on unix, `GetProcessTimes` on Windows) and a pid whose start time differs is neither reported running nor signalled.
+- e. DONE (6.7): Windows `Stop` kills the process tree (`taskkill /T /F`); the pid file records the process start time (`Controller.StartedAt`; originally `ps -o lstart` / `GetProcessTimes`, now gopsutil `CreateTime`) and a pid whose start time differs is neither reported running nor signalled.
 - f. DONE (6.7): `down` removes only the pid file; `up.log` stays for diagnosis until the next `up` replaces it.
 - b stays deferred: no manager capability can create a script without editing the manifest (`add --script` records dependencies, `init`/`new` do not add scripts), and this ADR forbids editing manifests directly.
 

@@ -13,8 +13,8 @@ import (
 )
 
 // Controller starts a long-lived background process and later asks whether it
-// is alive and stops it. Liveness and stopping are platform specific, so they
-// live here rather than in callers (Signal(0) is not portable to Windows).
+// is alive and stops it. Process inspection goes through gopsutil, so callers
+// and this package carry no per-OS code beyond detaching the child.
 type Controller interface {
 	// Start launches cmd detached from the caller, with stdout and stderr
 	// appended to logPath, and returns its pid. A dry run returns pid 0.
@@ -81,22 +81,24 @@ func (OS) StartedAt(pid int) string {
 }
 
 // Stop implements Controller. It never reports an already-gone process as an
-// error.
+// error. The whole process tree is signalled, so children, such as a server
+// started through a wrapper command, do not outlive their parent.
 func (r OS) Stop(pid int) error {
 	if !r.Alive(pid) {
 		return nil
 	}
-	if err := terminate(pid); err != nil && r.Alive(pid) {
+	tree := treeOf(pid)
+	if err := tree.terminate(); err != nil && tree.anyAlive() {
 		return fmt.Errorf("stop pid %d: %w", pid, err)
 	}
 	deadline := time.Now().Add(stopGrace)
-	for r.Alive(pid) && time.Now().Before(deadline) {
+	for tree.anyAlive() && time.Now().Before(deadline) {
 		time.Sleep(25 * time.Millisecond)
 	}
-	if !r.Alive(pid) {
+	if !tree.anyAlive() {
 		return nil
 	}
-	if err := kill(pid); err != nil && r.Alive(pid) {
+	if err := tree.kill(); err != nil && tree.anyAlive() {
 		return fmt.Errorf("kill pid %d: %w", pid, err)
 	}
 	return nil
