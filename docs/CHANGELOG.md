@@ -19,7 +19,7 @@ Not tagged: the Homebrew tap and first release need owner authorization (`docs/R
 
 ### Deferred
 - pnpm and bun, other languages, generated-justfile export.
-- From 6.2: npm/yarn arbitrary dependency groups, `doctor` group checks, `local.toml`, `config show --origin`.
+- From 6.2: npm/yarn arbitrary dependency groups, `doctor` group checks, root-level `local.toml`, `config show --origin` (app-level `local.toml` is loaded in `internal/config/layers.go` but has no dedicated config test).
 - From 6.7: native `publish --dry-run`, offer to create an up script, workspace-member comparison with the manager's native list, `--app X` with dependencies, `${...}` escape syntax; app sub-types (CLI, library).
 - Release: tap creation, `v0.1.0` tag and `brew install` check wait for owner actions (`docs/RELEASING.md`).
 
@@ -53,7 +53,7 @@ Not tagged: the Homebrew tap and first release need owner authorization (`docs/R
 - Generated-justfile export is not built (deferred).
 
 ### Added (Phase 6, steps 0 and 6.0)
-- Draft ADRs 0011-0016: config layering and secrets, neutral constraint mapper, data-driven stacks and tool-name confinement, config-only workspaces/apps/contracts, environments and dependency groups, run lookup with optional justfile and `up`/`down`. ADR-0006, 0007 and 0008 are not edited.
+- ADRs 0011-0016 (written as drafts in step 0, all Accepted by 6.8): config layering and secrets, neutral constraint mapper, data-driven stacks and tool-name confinement, config-only workspaces/apps/contracts, environments and dependency groups, run lookup with optional justfile and `up`/`down`. ADR-0006, 0007 and 0008 are not edited.
 - CI: `e2e` job (`UPC_E2E=1` with uv, poetry, npm and yarn installed) and a Windows job running build, `go vet`, golangci-lint and tests (was build only).
 - `docs/README.md`: supported platforms line.
 

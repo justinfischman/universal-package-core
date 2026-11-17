@@ -365,13 +365,14 @@ Status: DONE 2026-11-15 (merged to main). Done: pip interpreter fallback, yarn l
 
 ## Phase 6.8: Final documentation audit and integration validation
 
-Status: NOT STARTED.
+Status: audit, gates and user decisions DONE 2026-11-17; owner release actions pending (plan exit not met until they are done).
 
 ### Resume here
-- Remaining 6.8 tasks: the bullets below (docs audit, ADR index, post-change audit, `make check`, all E2E, acceptance scripts, snapshot release). Also accept ADR-0011, 0012, 0013 and 0015 (still marked Draft) and fix `docs/ARCHITECTURE.md` sections 3-13 headers/phase table where stale.
+- Done (2026-11-17 docs audit): ADRs 0011 to 0016 are Accepted and cross-linked (Related sections), `docs/ARCHITECTURE.md` config-layering, environments and groups text and ADR index checked against ADR-0011/0015 and the code, README, CHANGELOG, `docs/RELEASING.md` and `plans/README.md` checked.
+- Gates passed 2026-11-17: `make check`, `UPC_E2E=1 go test ./test` (includes acceptance scripts), `goreleaser release --snapshot --clean` (warns about deprecated options; review before v0.1.0). `goreleaser check` fails only for the missing git remote.
 - Owner actions (6.6 exit criteria): create `OWNER/homebrew-tap`; replace `OWNER` in `.goreleaser.yaml`; add the `HOMEBREW_TAP_GITHUB_TOKEN` CI secret; push `v0.1.0`; `brew install` check; first CI snapshot run. No git remote exists yet.
-- Deferred list: npm/yarn groups, `doctor` group checks, `local.toml`, `config show --origin` (from 6.2); native `publish --dry-run`, offer to create an up script, workspace-member comparison with the manager's native list, `--app X` with dependencies, `${...}` escape syntax (from 6.7); pnpm, bun, other languages, justfile export; app sub-types (CLI, library).
-- Decision to confirm: config-before-manager lookup for `run` and `up` (config `scripts.<name>` and `up` outrank the manager's sources; ADR-0016 amended in 6.7).
+- Deferred list: npm/yarn groups, `doctor` group checks, root-level `local.toml`, `config show --origin` (from 6.2); native `publish --dry-run`, offer to create an up script, workspace-member comparison with the manager's native list, `--app X` with dependencies, `${...}` escape syntax (from 6.7); pnpm, bun, other languages, justfile export; app sub-types (CLI, library).
+- Decisions (user, 2026-11-17): config-before-manager lookup for `run` and `up` CONFIRMED (ADR-0016 amendment); ADRs 0011-0013 and 0015 Accepted; ADR-0014 decision 3 (members vs the manager's native list) and `--app X` with dependencies DEFERRED, tracked in the deferred list above and `docs/CHANGELOG.md`.
 - Working method: fresh branch per phase, fast-forward merge to main, delete the old branch, never commit `AGENTS.md`, keep the `codex/phase-5-lifecycle` branch.
 
 - `plans/README.md` already has row 6 and statuses for plans 1-5; at the end of each phase update only its status row.
@@ -392,7 +393,7 @@ Docs match code; four acceptance statements demonstrated; `0.1.0` installable vi
 | 6.2 | DONE; leftovers deferred to the 6.7 list |
 | 6.6 | Code complete, merged; exit criteria pending owner actions |
 | 6.7 | DONE, merged; some items deferred (see its status) |
-| 6.8 | NOT STARTED (see "Resume here") |
+| 6.8 | Docs audit done; gates pending; user decisions and owner release actions pending (see "Resume here") |
 
 ## Requirements traceability (`project.devlang`)
 

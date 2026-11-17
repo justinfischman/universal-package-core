@@ -26,3 +26,9 @@ Starting point (6.3): `up`/`down` are capabilities for all five managers, with r
 - Rollout: a two-uv-app pilot (`api` provides, `web` consumes) locks the method before a Node member is added and before the checkers, `EnvResolver` and orchestrator are built in parallel.
 - YAML contracts are read by `internal/contracts/document`, which parses them with `go.yaml.in/yaml/v3`, so a lock is built from the full parse. Anchors, aliases and merge keys are resolved; numbers take their canonical form (for example `1.50` becomes `1.5`); timestamps become RFC 3339 strings and binary values become strings; mapping keys must be strings. Multi-document files, empty files and duplicate keys are errors.
 - Decision 3 (config `members` against the manager's native member list) is not yet enforced by `workspace check`: the managers expose no cheap native member listing. Follow-up.
+
+## Related
+- ADR-0007 (monorepos and workspaces): superseded in part by this ADR.
+- ADR-0011 (config layering): the workspace root and app config layers.
+- ADR-0015 (environments and groups): npm and yarn groups use workspace members under `.universal-package-core/groups/`.
+- ADR-0016 (run lookup and `up`/`down`): `up` and run state are per app.

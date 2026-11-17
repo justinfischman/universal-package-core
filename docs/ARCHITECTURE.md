@@ -68,9 +68,10 @@ Go has no abstract classes. Shared behavior lives in **embedded base structs** i
 ## 5. Storage and config *(built, Phase 1)*
 
 - Global: `~/.universal-package-core/`. Project: `.universal-package-core/` in the project root. Directories are created lazily.
-- Project overrides global, field by field.
+- Layers, lowest to highest (ADR-0011, `internal/config/layers.go` `LoadMerged`): global, workspace-root config (found by walking up), project or app config, then the gitignored app-level `local.toml`. Scalars override, tables merge, lists replace. Root `local.toml` and `config show --origin` (ADR-0011 decisions 2 and 6) are not built.
 - Format: TOML (`config.toml`). See ADR-0004.
 - Config holds only `upc`'s own choices (language, PM, project type, env mapping, workspace members). It never mirrors dependency lists or versions.
+- An environment is a name, an optional env file and dependency `groups` (ADR-0015); there is no venv per environment. Group install is built for uv, poetry and pip; npm and yarn accept only dev and optional (arbitrary groups, ADR-0015 option B, are deferred; `internal/stacks/node/npm/deps.go`).
 - `config set` validates against registry compatibility: PM switching is allowed within a language and refused across languages.
 
 ## 6. Cross-cutting behavior

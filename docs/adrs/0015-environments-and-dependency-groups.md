@@ -26,3 +26,9 @@ ADR-0006 (accepted, not edited) defines an environment as a name plus an env fil
 - The design is decided per manager (npm and berry B, classic A).
 - `-w/--member` is plumbed once in the shared capability-command factory.
 - The `Environment` type in `internal/config` gains `groups`.
+
+## Related
+- ADR-0006 (environment model): extended by this ADR, text left as written.
+- ADR-0011 (config layering): environments merge by key across layers.
+- ADR-0014 (workspaces): `-w/--member` and the member mechanism behind npm and yarn groups.
+- ADR-0016 (run lookup and `up`/`down`): `--env` applies to `run`, `test` and `up`.

@@ -32,3 +32,9 @@ Not blocking acceptance; carry to 6.7 or later (plans/06, Phase 6.3 step 6).
 
 ## Amendment (Phase 6.5)
 `upc new app` (Python) writes the upc-owned `[tool.upc.scripts]` table (`dev`, `start`) into the `pyproject.toml` of a freshly created app. New projects only; existing manifests are never edited.
+
+## Related
+- ADR-0008 (script `run` lookup order): extended by the optional `just` source.
+- ADR-0013 (data-driven stacks): `just` and `compose` live in stack-style packages.
+- ADR-0014 (workspaces and apps): run state is kept per app.
+- ADR-0015 (environments): `--env` on `run`, `test` and `up`.

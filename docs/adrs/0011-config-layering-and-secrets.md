@@ -1,6 +1,6 @@
 # ADR-0011: Config layering and secrets
 
-Status: Accepted 2026-11-15 (Phase 6.2 landed; `local.toml` and `config show --origin` deferred)
+Status: Accepted 2026-11-15 (Phase 6.2 landed; app-level `local.toml` is loaded; root `local.toml` and `config show --origin` deferred)
 
 ## Context
 Config today is one project file. Environments (ADR-0015) and multi-app workspaces (ADR-0014) need layers: a global default, a workspace root, and per-app overrides, plus a place for values that must not be committed.
@@ -20,3 +20,8 @@ Config today is one project file. Environments (ADR-0015) and multi-app workspac
 - The `Workspace []string` field in `internal/config` is migrated to a typed form (the old list is accepted as `members`).
 - Discarded errors in config loading (`p.Get`, `res.Set`) must be handled when layering is built.
 - A layering test covers each precedence step and each merge rule.
+
+## Related
+- ADR-0014 (workspaces and apps): defines the workspace root and app layers this ADR merges.
+- ADR-0015 (environments and groups): the `Environment` table merged key by key here.
+- ADR-0004 (storage and config format): the TOML format this ADR layers.

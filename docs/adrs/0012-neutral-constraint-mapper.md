@@ -14,3 +14,6 @@ Each manager spells version constraints differently (`>=2.3.4` for uv and pip, `
 ## Consequences
 - One constraint grammar to document and test; per-manager rendering is data-driven (ADR-0013).
 - Some constraints are valid for one manager and an error for another (for example `!=` on npm). The error text states this.
+
+## Related
+- ADR-0013 (data-driven stacks): holds the per-manager rendering tables this mapper feeds.

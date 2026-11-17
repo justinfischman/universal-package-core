@@ -15,3 +15,7 @@ Command lines, install hints, binary names and the default language are Go liter
 - Adding a manager is data plus one package; `core` and `cli` stay neutral.
 - `just` and `compose` live in their own stack-style packages (ADR-0016), not in `internal/components` or `internal/tools`.
 - The pilot is `uv`; roll-out then follows pip, poetry, npm, yarn.
+
+## Related
+- ADR-0012 (constraint mapper): supplies the version-constraint rendering used by the data tables.
+- ADR-0016 (run lookup, `up`/`down`): `just` and `compose` follow the same confinement rule.
