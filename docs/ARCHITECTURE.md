@@ -22,7 +22,7 @@ cmd/upc            main only: build registry, run CLI
   └─ internal/cli         cobra wiring; language-agnostic; talks to core interfaces only
 internal/core        interfaces, base types, registry, errors. Imports nothing concrete.
 internal/components  shared infrastructure (exec, log, prompt, fs, render, output)
-internal/config      layered config (global < project), schema + compatibility checks
+internal/config      layered config (global < workspace root < project; ADR-0011), schema + compatibility checks
 ```
 
 Rules (enforced by an architecture test, see ADR-0002):
