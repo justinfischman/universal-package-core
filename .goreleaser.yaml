@@ -38,10 +38,11 @@ changelog:
   use: github
   sort: asc
 
-# Publishing is skipped for snapshots. The tap lives in this repository (Casks/),
+# Publishing is skipped for snapshots. The tap lives in this repository (Formula/),
 # pushed with the workflow's GITHUB_TOKEN (see docs/RELEASING.md).
-homebrew_casks:
+brews:
   - name: upc
+    directory: Formula
     repository:
       owner: justinfischman
       name: universal-package-core
@@ -49,3 +50,5 @@ homebrew_casks:
       token: "{{ .Env.GITHUB_TOKEN }}"
     homepage: https://github.com/justinfischman/universal-package-core
     description: Create, install and manage packages and apps across languages
+    test: |
+      system "#{bin}/upc", "version"
