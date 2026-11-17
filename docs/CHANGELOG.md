@@ -3,7 +3,7 @@
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Update with every change.
 
 ## [0.1.0] - unreleased
-Not tagged: the Homebrew tap and first release need owner authorization (`docs/RELEASING.md`).
+Not tagged: the first release needs owner authorization (`docs/RELEASING.md`). The Homebrew tap is this repository (`Formula/`).
 
 ### Changed
 - Process control for `up`/`down` uses gopsutil (liveness, start time, whole-tree terminate then kill) instead of `ps`, process-group signals and `taskkill`; only `detach` stays per OS. The CI `check` job runs on Linux only (the macOS runner queue was too slow); Windows and the e2e job are unchanged.
@@ -25,7 +25,7 @@ Not tagged: the Homebrew tap and first release need owner authorization (`docs/R
 - pnpm and bun, other languages, generated-justfile export.
 - From 6.2: npm/yarn arbitrary dependency groups, `doctor` group checks, root-level `local.toml`, `config show --origin` (app-level `local.toml` is loaded in `internal/config/layers.go` but has no dedicated config test).
 - From 6.7: native `publish --dry-run`, offer to create an up script, workspace-member comparison with the manager's native list, `--app X` with dependencies, `${...}` escape syntax; app sub-types (CLI, library).
-- Release: tap creation, `v0.1.0` tag and `brew install` check wait for owner actions (`docs/RELEASING.md`).
+- Release: the `v0.1.0` tag and `brew install` check wait for owner authorization (`docs/RELEASING.md`).
 
 ## [Unreleased]
 

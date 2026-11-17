@@ -15,9 +15,10 @@ goreleaser release --snapshot --clean --skip=homebrew
 dist/upc_<os>_<arch>*/upc version     # prints upc 0.0.0-SNAPSHOT-<commit>
 ```
 
-`goreleaser check` needs a git remote (`origin`) to be configured. It also exits non-zero for the accepted `brews`
-deprecation warning (see Notes); the snapshot command below still succeeds. CI runs the
-same snapshot in the `release-snapshot` job of `ci.yml`.
+`goreleaser check` needs a git remote (`origin`) to be configured. It also
+exits non-zero for the accepted `brews` deprecation warning (see Notes); the
+snapshot command still succeeds. CI runs the same snapshot in the
+`release-snapshot` job of `ci.yml`.
 
 ## 2. Homebrew tap (no setup needed)
 

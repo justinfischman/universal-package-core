@@ -7,7 +7,7 @@ Config today is one project file. Environments (ADR-0015) and multi-app workspac
 
 ## Decision
 1. **Hidden config directories.** Project config lives in `.universal-package-core/config.toml`; global config in `~/.universal-package-core/config.toml`. Secrets live in the gitignored `.universal-package-core/local.toml`.
-2. **Precedence, highest first:** flag, app `local.toml`, app config, root `local.toml`, root config, global config.
+2. **Precedence, highest first:** flag, app `local.toml`, app config, root `local.toml` (designed; not loaded yet, deferred), root config, global config.
 3. **Merge key by key.** Scalars override, tables merge, lists replace. The lowest (most specific) level wins and the walk up fills gaps.
 4. **Walk limits.** The upward walk stops at the git root or a workspace-root marker (the nearest ancestor with a manager-native or config workspace marker).
 5. **No user env vars.** `upc` has no required environment variables. Computed env is injected into child processes only, through `execx.WithEnv`.

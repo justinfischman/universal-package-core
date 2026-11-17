@@ -1,6 +1,6 @@
 # Architecture
 
-Status: **Phases 1 to 4 and 6.0 to 6.7 built** (config layering, environments and groups, `up`/`down`/`publish`, workspaces, `app`, drift, hardening; the Homebrew release awaits owner actions and 6.8 is the final audit) (core, components, config, CLI, and the MVP stack: Python + uv + `script`). This document describes the design from `project.devlang`. Sections marked *(planned)* are not built yet; see `plans/` for the phase that builds each one. Update this file with every change.
+Status: **Phases 1 to 4 and 6.0 to 6.7 built** (config layering, environments and groups, `up`/`down`/`publish`, workspaces, `app`, drift, hardening; the `v0.1.0` release awaits owner authorization and 6.8 is the final audit) (core, components, config, CLI, and the MVP stack: Python + uv + `script`). This document describes the design from `project.devlang`. Sections marked *(planned)* are not built yet; see `plans/` for the phase that builds each one. Update this file with every change.
 
 ## 1. Purpose and boundaries
 

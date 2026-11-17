@@ -2,7 +2,7 @@
 
 One place to create, install and manage packages and apps across languages. `upc` routes to the native package managers (uv, poetry, pip, npm, yarn, ...). It never replaces them.
 
-**Status: Phase 6 (6.0-6.7 built; 6.8 docs audit done; final gates and owner release actions pending).** Working today: Node (TypeScript) with `npm` or `yarn` (classic), and Python with `uv`, `pip` (keeps `requirements.txt` and a `.venv` for you) and `poetry`; the `script`, `package` and `app` project types: `new`, `init`, `add`, `remove`, `list`, `install`, `update`, `outdated`, `run`, `build`, `test`, `lint`, `audit`, `up`, `down`, `publish`, `doctor` (including environment drift), `config` (including `config set pm`), `env list|use|show|add|remove` with `--env`, `workspace check`, `version`, `completion` and the global flags. Not yet released: the Homebrew tap and `v0.1.0` wait for owner actions (`docs/RELEASING.md`). Deferred: npm/yarn dependency groups, `doctor` group checks, root-level `local.toml`, `config show --origin`, pnpm and bun. See `plans/06-agnostic-core-environments-multiapp-release.md`.
+**Status: Phase 6 (6.0-6.7 built; 6.8 docs audit done; gates passed; the `v0.1.0` tag and `brew install` check pending).** Working today: Node (TypeScript) with `npm` or `yarn` (classic 1.x is tested; berry is supported only for the commands that differ and is not E2E tested, see ADR-0010), and Python with `uv`, `pip` (keeps `requirements.txt` and a `.venv` for you) and `poetry`; the `script`, `package` and `app` project types: `new`, `init`, `add`, `remove`, `list`, `install`, `update`, `outdated`, `run`, `build`, `test`, `lint`, `audit`, `up`, `down`, `publish`, `doctor` (including environment drift), `config` (including `config set pm`), `env list|use|show|add|remove` with `--env`, `workspace check`, `version`, `completion` and the global flags. Not yet released: the Homebrew tap and `v0.1.0` wait for owner actions (`docs/RELEASING.md`). Deferred: npm/yarn dependency groups, `doctor` group checks, root-level `local.toml`, `config show --origin`, pnpm and bun. See `plans/06-agnostic-core-environments-multiapp-release.md`.
 
 **Supported platforms:** macOS and Linux (built, linted and tested in CI, plus an E2E job against real uv, poetry, npm and yarn). Windows is not supported yet (backlog); Homebrew is the only distribution channel.
 
@@ -138,7 +138,7 @@ Requires Go 1.27+ and `golangci-lint` v2.
 - `UPC_HOME` overrides the global config directory, which keeps tests and experiments away from `~/.universal-package-core/`.
 
 ## Install
-Homebrew only. **Planned:** the tap does not exist yet, so `brew install` does not work until the owner creates it and cuts `v0.1.0` (steps in `docs/RELEASING.md`). Until then build from source with `make build`.
+Homebrew only. **Planned:** the tap is this repository (`Formula/upc.rb`, published on a tagged release), so `brew install` does not work until `v0.1.0` is cut (steps in `docs/RELEASING.md`). The repository is private for now. Until then build from source with `make build`.
 
 Shell completion: `upc completion bash|zsh|fish|powershell`, see `docs/COMPLETION.md`.
 

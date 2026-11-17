@@ -304,7 +304,7 @@ Template drift against tool versions. Mitigation: golden tests plus the CI E2E j
 ### Scope
 - Drift detection for all managers (venv/node_modules vs lockfile; pip vs requirements files); `doctor` reports it for every manager, not only uv.
 - `upc completion` verified (cobra default or explicit command): tests for bash, zsh, fish, powershell output; docs.
-- Release: `.goreleaser.yaml` (darwin/linux amd64/arm64, Windows build for portability), ldflags for the `version` command, checksums, Homebrew tap formula; `release.yml` on tag; CI `goreleaser release --snapshot --clean`; tap token only as CI secret; `v0.1.0`; `docs/RELEASING.md`. Disk footprint: static binary, `-trimpath -ldflags "-s -w"`.
+- Release: `.goreleaser.yaml` (darwin/linux amd64/arm64; Windows disabled and in the backlog), ldflags for the `version` command, checksums, Homebrew tap formula; `release.yml` on tag; CI `goreleaser release --snapshot --clean`; tap in this repository, pushed with the workflow `GITHUB_TOKEN`; `v0.1.0`; `docs/RELEASING.md`. Disk footprint: static binary, `-trimpath -ldflags "-s -w"`.
 - Acceptance E2E testscripts: one per `project.devlang` acceptance bullet (see table at the end).
 
 ### Steps
@@ -314,9 +314,9 @@ Template drift against tool versions. Mitigation: golden tests plus the CI E2E j
 4. [x] Four acceptance testscripts under `test/testdata/e2e/acceptance_*.txtar`.
 
 ### Exit criteria
-Snapshot release builds in CI (pending first CI run); `brew install` from the snapshot formula works on macOS (pending owner authorization: the tap does not exist); [x] completion tests pass; [x] acceptance scripts pass with `UPC_E2E=1`.
+Snapshot release builds in CI (passing in CI since 2026-11-17); `brew install` from the snapshot formula works on macOS (pending the `v0.1.0` tag; the repository is private); [x] completion tests pass; [x] acceptance scripts pass with `UPC_E2E=1`.
 
-Status: CODE COMPLETE 2026-11-15 (merged to main); exit criteria PENDING owner actions. Drift, completion tests, goreleaser/release.yml/CI snapshot job/RELEASING.md and the four acceptance scripts are done. Pending: create `OWNER/homebrew-tap`, replace `OWNER` in `.goreleaser.yaml`, add the `HOMEBREW_TAP_GITHUB_TOKEN` CI secret, push `v0.1.0`, `brew install` check, first CI snapshot run. No git remote exists yet; `goreleaser check` fails only for that reason.
+Status: CODE COMPLETE 2026-11-15 (merged to main); exit criteria PENDING owner actions. Drift, completion tests, goreleaser/release.yml/CI snapshot job/RELEASING.md and the four acceptance scripts are done. Done 2026-11-17: remote added and `main` pushed, first CI snapshot green, tap moved into this repository (formula, `GITHUB_TOKEN`, no separate repo or secret). Pending: push `v0.1.0` and the `brew install` check.
 
 Note (resolved): the acceptance scripts cover only `env list|use|show`; the 6.2 gap (`env add|remove`, `--env`, groups) was closed afterwards, see the 6.2 status.
 
@@ -370,7 +370,7 @@ Status: audit, gates and user decisions DONE 2026-11-17; owner release actions p
 ### Resume here
 - Done (2026-11-17 docs audit): ADRs 0011 to 0016 are Accepted and cross-linked (Related sections), `docs/ARCHITECTURE.md` config-layering, environments and groups text and ADR index checked against ADR-0011/0015 and the code, README, CHANGELOG, `docs/RELEASING.md` and `plans/README.md` checked.
 - Gates passed 2026-11-17: `make check`, `UPC_E2E=1 go test ./test` (includes acceptance scripts), `goreleaser release --snapshot --clean` (warns about deprecated options; review before v0.1.0). `goreleaser check` fails only for the missing git remote.
-- Owner actions (6.6 exit criteria): create `OWNER/homebrew-tap`; replace `OWNER` in `.goreleaser.yaml`; add the `HOMEBREW_TAP_GITHUB_TOKEN` CI secret; push `v0.1.0`; `brew install` check; first CI snapshot run. No git remote exists yet.
+- Owner actions (6.6 exit criteria): push `v0.1.0`; `brew install` check. Done 2026-11-17: remote and push, first CI snapshot, tap in this repository.
 - Deferred list: npm/yarn groups, `doctor` group checks, root-level `local.toml`, `config show --origin` (from 6.2); native `publish --dry-run`, offer to create an up script, workspace-member comparison with the manager's native list, `--app X` with dependencies, `${...}` escape syntax (from 6.7); pnpm, bun, other languages, justfile export; app sub-types (CLI, library).
 - Decisions (user, 2026-11-17): config-before-manager lookup for `run` and `up` CONFIRMED (ADR-0016 amendment); ADRs 0011-0013 and 0015 Accepted; ADR-0014 decision 3 (members vs the manager's native list) and `--app X` with dependencies DEFERRED, tracked in the deferred list above and `docs/CHANGELOG.md`.
 - Working method: fresh branch per phase, fast-forward merge to main, delete the old branch, never commit `AGENTS.md`, keep the `codex/phase-5-lifecycle` branch.
