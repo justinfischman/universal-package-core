@@ -18,7 +18,7 @@ func startedAt(pid int) string {
 	if err != nil {
 		return ""
 	}
-	defer syscall.CloseHandle(h)
+	defer func() { _ = syscall.CloseHandle(h) }()
 	var creation, exit, kernel, user syscall.Filetime
 	if err := syscall.GetProcessTimes(h, &creation, &exit, &kernel, &user); err != nil {
 		return ""
@@ -64,6 +64,6 @@ func kill(pid int) error {
 	if err != nil {
 		return err
 	}
-	defer p.Release()
+	defer func() { _ = p.Release() }()
 	return p.Kill()
 }

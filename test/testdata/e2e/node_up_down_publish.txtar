@@ -22,7 +22,7 @@ stdout 'nothing running'
 
 # crash: the record is cleaned by down, no orphan pid file
 exec upc up
-exec sh -c 'kill -9 $(cat .universal-package-core/run/up.pid)'
+exec sh -c 'kill -9 $(cut -d" " -f1 .universal-package-core/run/up.pid)'
 exec sleep 1
 exec upc down
 stdout 'already exited'
