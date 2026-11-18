@@ -365,7 +365,7 @@ Status: DONE 2026-11-15 (merged to main). Done: pip interpreter fallback, yarn l
 
 ## Phase 6.8: Final documentation audit and integration validation
 
-Status: audit, gates and user decisions DONE 2026-11-17; owner release actions pending (plan exit not met until they are done).
+Status: audit, gates, user decisions and owner release actions (v0.1.0 tagged, brew install verified) DONE 2026-11-17; plan exit met.
 
 ### Resume here
 - Done (2026-11-17 docs audit): ADRs 0011 to 0016 are Accepted and cross-linked (Related sections), `docs/ARCHITECTURE.md` config-layering, environments and groups text and ADR index checked against ADR-0011/0015 and the code, README, CHANGELOG, `docs/RELEASING.md` and `plans/README.md` checked.
@@ -393,7 +393,7 @@ Docs match code; four acceptance statements demonstrated; `0.1.0` installable vi
 | 6.2 | DONE; leftovers deferred to the 6.7 list |
 | 6.6 | Code complete, merged; exit criteria pending owner actions |
 | 6.7 | DONE, merged; some items deferred (see its status) |
-| 6.8 | Docs audit done; gates pending; user decisions and owner release actions pending (see "Resume here") |
+| 6.8 | Done 2026-11-17: docs audit, gates, user decisions and owner release actions |
 
 ## Requirements traceability (`project.devlang`)
 
