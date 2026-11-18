@@ -381,7 +381,7 @@ Status: audit, gates and user decisions DONE 2026-11-17; owner release actions p
 - Final audit confirms the `plans/README.md` status rows match the finished phases.
 
 ### Exit criteria
-Docs match code; four acceptance statements demonstrated; `0.1.0` installable via Homebrew; deferred items recorded.
+Docs match code; four acceptance statements demonstrated; `0.1.0` installable via Homebrew (done 2026-11-17); deferred items recorded.
 
 ---
 

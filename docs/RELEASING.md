@@ -28,7 +28,12 @@ The tap lives in this repository: on a tagged release GoReleaser commits
 If branch protection on `main` blocks that push, allow GitHub Actions to bypass
 it or switch to a fine-grained token in a secret.
 
-## 3. Cut v0.1.0 (OWNER ACTION REQUIRED)
+## 3. Cut a release (OWNER ACTION REQUIRED)
+
+v0.1.0 was cut this way on 2026-11-17. The workflow ran green and pushed
+`Formula/upc.rb` to `main`. Branch protection was not in play (the plan the
+repository was on does not offer it). A private repository cannot serve
+the release assets, so `brew install` works only while the repository is public.
 
 1. Merge the release changes to `main`; confirm CI (including
    `release-snapshot`) is green.
