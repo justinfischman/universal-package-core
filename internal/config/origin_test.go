@@ -3,6 +3,7 @@ package config_test
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/justinfischman/universal-package-core/internal/components/fsx"
@@ -169,5 +170,91 @@ func TestOriginsFillGapsPerKey(t *testing.T) {
 	}
 	if got := originOf(t, origins, config.KeyProjectType); got.Layer != config.LayerGlobal || got.Value != "gp" {
 		t.Errorf("project_type = %+v, want the walk to fill the gap from global", got)
+	}
+}
+
+func TestOriginsEmptyValueIsUnsetLikeMergePath(t *testing.T) {
+	f := newOriginFixture(t)
+	f.write(f.global, config.FileName, "language = \"g\"\n")
+	f.write(filepath.Join(f.app, config.DirName), config.FileName, "language = \"\"\n")
+	origins, err := f.store().Origins(map[string]string{config.KeyLanguage: ""})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := originOf(t, origins, config.KeyLanguage)
+	if got.Layer != config.LayerGlobal || got.Value != "g" {
+		t.Errorf("origin = %+v, want an empty higher value to leave global in place", got)
+	}
+	merged, err := f.store().LoadMerged()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if merged.Language != got.Value {
+		t.Errorf("merge path language = %q, origin value = %q", merged.Language, got.Value)
+	}
+}
+
+func TestOriginsFlagBeatsEveryFileLayer(t *testing.T) {
+	f := newOriginFixture(t)
+	for _, layer := range config.LayerOrder {
+		f.setLanguage(layer, "file")
+	}
+	origins, err := f.store().Origins(map[string]string{config.KeyLanguage: "from-flag"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := config.Origin{Key: config.KeyLanguage, Value: "from-flag", Layer: config.LayerFlag}
+	if got := originOf(t, origins, config.KeyLanguage); got != want {
+		t.Errorf("origin = %+v, want %+v", got, want)
+	}
+}
+
+func TestOriginsMalformedLayerErrorDoesNotEchoValues(t *testing.T) {
+	bodies := map[string]string{
+		"invalid toml":  "language = hunter2\n",
+		"unknown field": "token = \"hunter2\"\n",
+	}
+	for name, body := range bodies {
+		t.Run(name, func(t *testing.T) {
+			f := newOriginFixture(t)
+			f.write(filepath.Join(f.app, config.DirName), config.LocalName, body)
+			_, err := f.store().Origins(nil)
+			if err == nil {
+				t.Fatal("expected an error")
+			}
+			if strings.Contains(err.Error(), "hunter2") {
+				t.Errorf("error echoes the value: %v", err)
+			}
+		})
+	}
+}
+
+func TestOriginsWorkspaceRootEqualToProjectHasNoRootLayer(t *testing.T) {
+	f := newOriginFixture(t)
+	f.setLanguage(config.LayerRoot, "r")
+	f.setLanguage(config.LayerRootLocal, "rl")
+	s := f.store()
+	s.ProjectRoot = f.root
+	origins, err := s.Origins(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := originOf(t, origins, config.KeyLanguage)
+	if got.Layer != config.LayerAppLocal {
+		t.Errorf("layer = %q, want the project's own files reported as app layers", got.Layer)
+	}
+}
+
+func TestOriginsAbsentWorkspaceRootHasNoRootLayer(t *testing.T) {
+	f := newOriginFixture(t)
+	// A parent config without workspace members is not a workspace root.
+	f.write(filepath.Join(f.root, config.DirName), config.FileName, "language = \"r\"\n")
+	f.write(filepath.Join(f.root, config.DirName), config.LocalName, "language = \"rl\"\n")
+	origins, err := f.store().Origins(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := originOf(t, origins, config.KeyLanguage); got.Layer != "" {
+		t.Errorf("origin = %+v, want unset: no workspace root, so no root layers", got)
 	}
 }

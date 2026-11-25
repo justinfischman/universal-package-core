@@ -17,12 +17,12 @@ func newConfigShowCmd() *cobra.Command {
 		Short: "Show every setting; with --origin, the layer each value came from",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			if !origin {
+				return fmt.Errorf("%w: config show needs --origin (use `config get` for plain values)", core.ErrInvalidRequest)
+			}
 			s, err := sessionFrom(cmd)
 			if err != nil {
 				return err
-			}
-			if !origin {
-				return fmt.Errorf("%w: config show needs --origin (use `config get` for plain values)", core.ErrInvalidRequest)
 			}
 			store := s.Store
 			if s.Global {

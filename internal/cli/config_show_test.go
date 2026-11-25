@@ -59,6 +59,21 @@ func TestConfigShowOriginJSONGolden(t *testing.T) {
 	golden(t, "config_show_origin.json", h.stdout.Bytes())
 }
 
+func TestConfigShowOriginGlobalIgnoresProject(t *testing.T) {
+	h := newHarness(t)
+	h.layered(t)
+	if code := h.run("config", "show", "--origin", "--global"); code != core.ExitOK {
+		t.Fatalf("exit %d: %s", code, h.stderr)
+	}
+	want := "language = global-lang (global)\n" +
+		"package_manager = (unset)\n" +
+		"package_managers = (unset)\n" +
+		"project_type = global-type (global)\n"
+	if got := h.stdout.String(); got != want {
+		t.Errorf("stdout = %q, want %q", got, want)
+	}
+}
+
 func TestConfigShowRequiresOrigin(t *testing.T) {
 	h := newHarness(t)
 	if code := h.run("config", "show"); code != core.ExitUsage {
