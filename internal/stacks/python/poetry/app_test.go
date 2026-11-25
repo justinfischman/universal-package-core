@@ -58,3 +58,30 @@ func TestInitAppDryRunAndBadInput(t *testing.T) {
 		}
 	}
 }
+
+// TestInitAppPassesTheKindToTheScripts requires req.Kind to reach the app
+// scripts, so `--kind cli` and `--kind library` run their own entry file.
+func TestInitAppPassesTheKindToTheScripts(t *testing.T) {
+	for kind, command := range map[string]string{"cli": "python cli.py", "library": "python demo.py"} {
+		dir := t.TempDir()
+		root := filepath.Join(dir, "demo")
+		if err := os.MkdirAll(root, 0o755); err != nil { // what `poetry new` would create
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(root, "pyproject.toml"), []byte("[tool.poetry]\nname = \"demo\"\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		req := core.Request{Dir: dir, ProjectType: "app", Name: "demo", Kind: kind}
+		if _, err := call(t, core.CapInit, req, &execx.FakeRunner{}); err != nil {
+			t.Fatalf("%s: %v", kind, err)
+		}
+		body, err := os.ReadFile(filepath.Join(root, "pyproject.toml"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		want := "dev = \"" + command + "\"\nstart = \"" + command + "\"\n"
+		if !strings.Contains(string(body), want) {
+			t.Errorf("%s pyproject.toml lacks %q:\n%s", kind, want, body)
+		}
+	}
+}

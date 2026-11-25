@@ -60,3 +60,19 @@ func TestInitAppRejectsBadInputAndCleansUp(t *testing.T) {
 		t.Errorf("err = %v, files = %v", err, m.files)
 	}
 }
+
+// TestInitAppPassesTheKindToTheScripts requires req.Kind to reach the app
+// scripts, so `--kind cli` and `--kind library` run their own entry file.
+func TestInitAppPassesTheKindToTheScripts(t *testing.T) {
+	for kind, command := range map[string]string{"cli": "python cli.py", "library": "python demo.py"} {
+		m := newMem(nil)
+		if _, err := call(t, m, core.CapInit, core.Request{ProjectType: "app", Name: "demo", Kind: kind}, &execx.FakeRunner{}); err != nil {
+			t.Fatalf("%s: %v", kind, err)
+		}
+		body := m.files[filepath.Join(proj, "demo", "pyproject.toml")]
+		want := "dev = \"" + command + "\"\nstart = \"" + command + "\"\n"
+		if !strings.Contains(body, want) {
+			t.Errorf("%s pyproject.toml lacks %q:\n%s", kind, want, body)
+		}
+	}
+}
