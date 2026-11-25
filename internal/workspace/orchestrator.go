@@ -22,12 +22,12 @@ type Orchestrator struct {
 	Runner    Runner
 }
 
-// Up starts the named apps (every app when names is empty), consumed apps
-// first. If one fails to start, the apps already started in this call are
+// Up starts the named apps and every app they consume, directly or not (every
+// app when names is empty), consumed apps first. If one fails to start, the apps already started in this call are
 // stopped in reverse order and the start failure is returned, joined with any
 // stop failures. It returns the names started, in order.
 func (o Orchestrator) Up(ctx context.Context, names ...string) ([]string, error) {
-	apps, err := o.selected(names)
+	apps, err := o.selected(o.withDependencies(names))
 	if err != nil {
 		return nil, err
 	}
@@ -76,6 +76,27 @@ func (o Orchestrator) Down(ctx context.Context, names ...string) ([]string, erro
 		stopped = append(stopped, a)
 	}
 	return appNames(stopped), errors.Join(errs...)
+}
+
+// withDependencies is names plus the apps they consume, transitively. Unknown
+// names are kept so selected reports them; no names means every app.
+func (o Orchestrator) withDependencies(names []string) []string {
+	if len(names) == 0 {
+		return nil
+	}
+	out := slices.Clone(names)
+	for i := 0; i < len(out); i++ {
+		a, ok := o.Workspace.App(out[i])
+		if !ok {
+			continue
+		}
+		for _, d := range a.Consumes {
+			if !slices.Contains(out, d) {
+				out = append(out, d)
+			}
+		}
+	}
+	return out
 }
 
 // selected is the start order restricted to names; unknown names are an error.

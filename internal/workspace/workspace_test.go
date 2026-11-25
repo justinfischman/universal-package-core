@@ -221,7 +221,8 @@ func TestSelectedAppsAndUnknownName(t *testing.T) {
 	if _, err := o.Up(context.Background(), "web", "db"); err != nil {
 		t.Fatal(err)
 	}
-	if want := []string{"start db", "start web"}; !reflect.DeepEqual(r.calls, want) {
+	// web consumes api, which consumes db: the named apps bring their dependencies.
+	if want := []string{"start db", "start api", "start web"}; !reflect.DeepEqual(r.calls, want) {
 		t.Errorf("calls = %v, want %v", r.calls, want)
 	}
 	if _, err := o.Up(context.Background(), "ghost"); err == nil || !strings.Contains(err.Error(), `"ghost"`) {

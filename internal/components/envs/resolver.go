@@ -17,7 +17,11 @@ var (
 	ErrCycle = errors.New("variable cycle")
 )
 
-var variablePattern = regexp.MustCompile(`\$\{([^}]*)\}`)
+// variablePattern matches the escape `$${` first, so `$${name}` is not a
+// reference, then a `${ref}` reference.
+var variablePattern = regexp.MustCompile(`\$\$\{|\$\{([^}]*)\}`)
+
+const escapedOpen = "$${"
 
 // Lookup supplies the raw (not yet resolved) value of a reference such as
 // "apps.api.url". It reports false when the reference names nothing or the
@@ -33,7 +37,8 @@ type EnvResolver struct {
 	Lookup Lookup
 }
 
-// Resolve replaces every ${ref} in text. A value that itself holds references
+// Resolve replaces every ${ref} in text; `$${` writes a literal `${` (the
+// escape for values that must keep the text). A value that itself holds references
 // is resolved in turn. An unknown reference is ErrUnresolved naming it; a loop
 // is ErrCycle naming the chain.
 func (r EnvResolver) Resolve(text string) (string, error) {
@@ -45,6 +50,9 @@ func (r EnvResolver) resolve(text string, chain []string) (string, error) {
 	out := variablePattern.ReplaceAllStringFunc(text, func(match string) string {
 		if firstErr != nil {
 			return match
+		}
+		if match == escapedOpen {
+			return "${"
 		}
 		ref := strings.TrimSpace(match[2 : len(match)-1])
 		v, err := r.value(ref, chain)

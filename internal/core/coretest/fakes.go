@@ -18,6 +18,21 @@ type PackageManager struct {
 	Requests []core.Request
 	// Hook, when set, runs before each handler and may fail the call.
 	Hook func(core.Capability, core.Request) error
+	// PublishCheckArgs, when set, is the native publish dry-run the fake offers
+	// (core.NativeDryRunner).
+	PublishCheckArgs []string
+	// Members is what NativeMembers reports (core.MemberLister).
+	Members []string
+}
+
+// NativeDryRunArgs implements core.NativeDryRunner for publish only.
+func (p *PackageManager) NativeDryRunArgs(c core.Capability) ([]string, bool) {
+	return p.PublishCheckArgs, c == core.CapPublish && len(p.PublishCheckArgs) > 0
+}
+
+// NativeMembers implements core.MemberLister.
+func (p *PackageManager) NativeMembers(context.Context, string) ([]string, error) {
+	return p.Members, nil
 }
 
 // NewPackageManager builds a fake manager for a language.

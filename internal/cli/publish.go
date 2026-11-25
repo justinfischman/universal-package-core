@@ -14,6 +14,7 @@ import (
 // Credentials are never read or stored: the manager's own login applies.
 func newPublishCmd() *cobra.Command {
 	var f capFlags
+	var native bool
 	cmd := &cobra.Command{
 		Use:   "publish [args...]",
 		Short: "Build the project, then publish it to a registry (asks first)",
@@ -27,6 +28,10 @@ func newPublishCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			nativeArgs, err := nativePublishArgs(st.PM, native)
+			if err != nil {
+				return err
+			}
 			req := core.Request{Dir: st.Dir, DryRun: s.DryRun, Yes: s.Yes, Member: f.member}
 			ctx := cmd.Context()
 
@@ -34,7 +39,7 @@ func newPublishCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if !s.DryRun {
+			if !s.DryRun && !native {
 				ok, err := s.Prompter.Confirm(fmt.Sprintf("Publish %s with %s? This sends the package to a registry.", st.Dir, st.PM.ID()), false)
 				if err != nil {
 					return err
@@ -43,7 +48,7 @@ func newPublishCmd() *cobra.Command {
 					return s.print(core.Result{Summary: "publish cancelled; nothing was published", Commands: build.Commands})
 				}
 			}
-			req.Args = args
+			req.Args = append(append([]string{}, args...), nativeArgs...)
 			pub, err := s.execute(ctx, st.PM, core.CapPublish, req)
 			if err != nil {
 				return err
@@ -54,5 +59,20 @@ func newPublishCmd() *cobra.Command {
 	}
 	cmd.Flags().SetInterspersed(false)
 	cmd.Flags().StringVarP(&f.member, "member", "w", "", "workspace member to act on")
+	cmd.Flags().BoolVar(&native, "native-dry-run", false, "build, then run the manager's own publish check; sends nothing")
 	return cmd
+}
+
+// nativePublishArgs is the manager's publish-check arguments when native is
+// set, or nil when it is not. A manager without a native check is a usage error.
+func nativePublishArgs(pm core.PackageManager, native bool) ([]string, error) {
+	if !native {
+		return nil, nil
+	}
+	if d, ok := pm.(core.NativeDryRunner); ok {
+		if args, ok := d.NativeDryRunArgs(core.CapPublish); ok {
+			return args, nil
+		}
+	}
+	return nil, fmt.Errorf("%w: %s has no native publish dry run; use the global --dry-run to print the plan", core.ErrInvalidRequest, pm.ID())
 }
