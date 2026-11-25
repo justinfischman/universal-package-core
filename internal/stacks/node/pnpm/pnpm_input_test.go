@@ -17,22 +17,22 @@ func TestInvalidInputRunsNothing(t *testing.T) {
 		cap core.Capability
 		req core.Request
 	}{
-		"add no packages":      {core.CapAdd, core.Request{Dir: dir}},
-		"add flag-like":        {core.CapAdd, core.Request{Dir: dir, Packages: []string{"--registry=evil"}}},
-		"add unknown group":    {core.CapAdd, core.Request{Dir: dir, Packages: []string{"x"}, Group: "docs"}},
-		"remove no packages":   {core.CapRemove, core.Request{Dir: dir}},
-		"remove unknown group": {core.CapRemove, core.Request{Dir: dir, Packages: []string{"x"}, Group: "docs"}},
-		"update flag-like":     {core.CapUpdate, core.Request{Dir: dir, Packages: []string{"--force"}}},
-		"install group":        {core.CapInstall, core.Request{Dir: dir, Group: "dev"}},
-		"run unknown script":   {core.CapRun, core.Request{Dir: dir, Script: "nope"}},
-		"run flag-like script": {core.CapRun, core.Request{Dir: dir, Script: "--help"}},
-		"script flag-like":     {core.CapInit, core.Request{Dir: t.TempDir(), ProjectType: "script", Script: "-x"}},
-		"script exists":        {core.CapInit, core.Request{Dir: existing, ProjectType: "script", Script: "hello"}},
-		"package upper case":   {core.CapInit, core.Request{Dir: t.TempDir(), ProjectType: "package", Name: "Demo"}},
-		"package exists":       {core.CapInit, core.Request{Dir: existing, ProjectType: "package", Name: "demo"}},
-		"app upper case":       {core.CapInit, core.Request{Dir: t.TempDir(), ProjectType: "app", Name: "Demo"}},
-		"app exists":           {core.CapInit, core.Request{Dir: existing, ProjectType: "app", Name: "demo"}},
-		"unknown project type": {core.CapInit, core.Request{Dir: t.TempDir(), ProjectType: "service", Name: "demo"}},
+		"add no packages":              {core.CapAdd, core.Request{Dir: dir}},
+		"add flag-like":                {core.CapAdd, core.Request{Dir: dir, Packages: []string{"--registry=evil"}}},
+		"add invalid group name":       {core.CapAdd, core.Request{Dir: dir, Packages: []string{"x"}, Group: "Bad Group"}},
+		"remove no packages":           {core.CapRemove, core.Request{Dir: dir}},
+		"remove group without member":  {core.CapRemove, core.Request{Dir: dir, Packages: []string{"x"}, Group: "docs"}},
+		"update flag-like":             {core.CapUpdate, core.Request{Dir: dir, Packages: []string{"--force"}}},
+		"install group without member": {core.CapInstall, core.Request{Dir: dir, Groups: []string{"docs"}}},
+		"run unknown script":           {core.CapRun, core.Request{Dir: dir, Script: "nope"}},
+		"run flag-like script":         {core.CapRun, core.Request{Dir: dir, Script: "--help"}},
+		"script flag-like":             {core.CapInit, core.Request{Dir: t.TempDir(), ProjectType: "script", Script: "-x"}},
+		"script exists":                {core.CapInit, core.Request{Dir: existing, ProjectType: "script", Script: "hello"}},
+		"package upper case":           {core.CapInit, core.Request{Dir: t.TempDir(), ProjectType: "package", Name: "Demo"}},
+		"package exists":               {core.CapInit, core.Request{Dir: existing, ProjectType: "package", Name: "demo"}},
+		"app upper case":               {core.CapInit, core.Request{Dir: t.TempDir(), ProjectType: "app", Name: "Demo"}},
+		"app exists":                   {core.CapInit, core.Request{Dir: existing, ProjectType: "app", Name: "demo"}},
+		"unknown project type":         {core.CapInit, core.Request{Dir: t.TempDir(), ProjectType: "service", Name: "demo"}},
 	}
 	for name, c := range cases {
 		t.Run(name, func(t *testing.T) {
