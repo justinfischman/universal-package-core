@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -77,7 +78,8 @@ func TestScaffoldCreatesNativeFileAndNeutralExtras(t *testing.T) {
 	if !strings.Contains(string(readme), "# hello") || !strings.Contains(string(readme), "alpha-one") {
 		t.Errorf("README = %q", readme)
 	}
-	if info, _ := os.Stat(dest); info.Mode().Perm() != 0o755 {
+	// Windows does not model Unix permission bits, so the mode is checked elsewhere.
+	if info, _ := os.Stat(dest); runtime.GOOS != "windows" && info.Mode().Perm() != 0o755 {
 		t.Errorf("project dir mode = %v, want 0755", info.Mode().Perm())
 	}
 	if len(pm.Requests) != 1 || pm.Requests[0].ProjectType != "script" || pm.Requests[0].Script != "hello" {

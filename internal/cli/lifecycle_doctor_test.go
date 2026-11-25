@@ -66,7 +66,7 @@ func TestDoctorJSONGolden(t *testing.T) {
 	if code := h.run("doctor", "--json"); code != core.ExitOK {
 		t.Fatalf("exit %d: %s", code, h.stderr)
 	}
-	golden(t, "doctor.json", []byte(strings.ReplaceAll(h.stdout.String(), h.project, "<project>")))
+	golden(t, "doctor.json", []byte(redactProjectDir(h.stdout.String(), h.project)))
 }
 
 func TestDoctorMissingToolIsOfferedAndFixedWithYes(t *testing.T) {
@@ -131,4 +131,11 @@ func TestDoctorDryRunDoesNotProbe(t *testing.T) {
 	if len(p.calls) != 0 || !strings.Contains(h.stdout.String(), "not checked") {
 		t.Errorf("calls %v, stdout %q", p.calls, h.stdout)
 	}
+}
+
+// redactProjectDir replaces the project directory in JSON output. On Windows
+// the directory appears with escaped backslashes, so that form goes first.
+func redactProjectDir(out, dir string) string {
+	escaped := strings.ReplaceAll(dir, `\`, `\\`)
+	return strings.ReplaceAll(strings.ReplaceAll(out, escaped, "<project>"), dir, "<project>")
 }
