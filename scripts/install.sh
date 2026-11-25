@@ -25,7 +25,7 @@ need() {
 }
 
 fetch() { # url dest
-	curl --proto '=https' --tlsv1.2 -fsSL -o "$2" "$1" || die "download failed: $1"
+	curl --proto '=https' --proto-redir '=https' --tlsv1.2 -fsSL -o "$2" "$1" || die "download failed: $1"
 }
 
 sha256_of() { # file
@@ -37,6 +37,12 @@ sha256_of() { # file
 		die "need sha256sum or shasum to verify the download"
 	fi
 }
+
+case "$repo" in
+*/*/* | */ | /* | *[!A-Za-z0-9._/-]*) die "invalid UPC_REPO: ${repo}" ;;
+*/*) ;;
+*) die "invalid UPC_REPO: ${repo}" ;;
+esac
 
 need curl
 need tar
@@ -57,7 +63,7 @@ esac
 
 tag="${UPC_VERSION:-}"
 if [ -z "$tag" ]; then
-	final="$(curl --proto '=https' --tlsv1.2 -fsSL -o /dev/null -w '%{url_effective}' "${base}/latest")" ||
+	final="$(curl --proto '=https' --proto-redir '=https' --tlsv1.2-fsSL -o /dev/null -w '%{url_effective}' "${base}/latest")" ||
 		die "could not resolve the latest release"
 	tag="${final##*/}"
 fi
@@ -73,7 +79,8 @@ version="${tag#v}"
 archive="upc_${version}_${os}_${arch}.tar.gz"
 
 tmp="$(mktemp -d)" || die "could not create a temporary directory"
-trap 'rm -rf "$tmp"' EXIT INT TERM
+trap 'rm -rf "$tmp"' EXIT
+trap 'exit 1' INT TERM
 
 printf 'Downloading upc %s (%s/%s)\n' "$tag" "$os" "$arch"
 fetch "${base}/download/${tag}/${archive}" "${tmp}/${archive}"
@@ -92,13 +99,17 @@ printf 'Checksum verified: %s\n' "$actual"
 
 mkdir "${tmp}/extract"
 tar -xzf "${tmp}/${archive}" -C "${tmp}/extract" upc || die "archive does not contain upc"
+[ ! -L "${tmp}/extract/upc" ] || die "upc in the archive is a symlink; refusing to install"
 [ -f "${tmp}/extract/upc" ] || die "archive does not contain upc"
 
 dest="${UPC_INSTALL_DIR:-${HOME:?HOME is not set}/.local/bin}"
 mkdir -p "$dest" || die "cannot create ${dest}"
 [ -w "$dest" ] || die "${dest} is not writable; set UPC_INSTALL_DIR to a writable directory"
-cp "${tmp}/extract/upc" "${dest}/upc.new" && chmod 0755 "${dest}/upc.new" &&
-	mv -f "${dest}/upc.new" "${dest}/upc" || die "could not install to ${dest}"
+staged="$(mktemp "${dest}/.upc.XXXXXX")" || die "could not create a file in ${dest}"
+if ! { cp "${tmp}/extract/upc" "$staged" && chmod 0755 "$staged" && mv -f "$staged" "${dest}/upc"; }; then
+	rm -f "$staged"
+	die "could not install to ${dest}"
+fi
 
 printf 'Installed %s/upc\n' "$dest"
 case ":${PATH}:" in

@@ -1,6 +1,6 @@
 # Installing upc
 
-Platforms: macOS and Linux (amd64, arm64). Windows is not supported yet.
+Platforms: macOS and Linux (amd64, arm64) via Homebrew and `scripts/install.sh`. Windows (amd64, arm64) is released as a `.zip` archive; download it from the release page, verify it against `checksums.txt`, and unpack it yourself. `install.sh` does not handle Windows.
 
 ## Homebrew (recommended)
 
@@ -30,11 +30,13 @@ brew untap justinfischman/upc     # optional: remove the tap
 
 `scripts/install.sh` installs a release archive for macOS or Linux. It downloads the archive and `checksums.txt`, verifies the archive's sha256, and installs only on a match; any failure aborts with nothing installed. It does not use sudo: the default target is `$HOME/.local/bin`.
 
+Prefer a tag-pinned script URL so the script you run matches the release you install (replace `v0.2.0`):
+
 ```sh
-curl -fsSL https://raw.githubusercontent.com/justinfischman/universal-package-core/main/scripts/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/justinfischman/universal-package-core/v0.2.0/scripts/install.sh | UPC_VERSION=v0.2.0 sh
 ```
 
-Set `UPC_VERSION` (for example `v0.2.0`; default is the latest release) and `UPC_INSTALL_DIR` to change the version or directory. To read the script before running it, download it first and run `sh install.sh`. Releases are not signed yet (signing is deferred until the repository is public); the checksum protects against corruption, not against a compromised release.
+The installer overwrites an existing `upc` in the target directory. Set `UPC_VERSION` (for example `v0.2.0`; default is the latest release) and `UPC_INSTALL_DIR` to change the version or directory. To read the script before running it, download it first and run `sh install.sh`. Releases are not signed yet (signing is deferred until the repository is public); the checksum protects against corruption, not against a compromised release.
 
 ## Verify a download manually
 
@@ -47,7 +49,7 @@ sha256sum --ignore-missing -c checksums.txt
 shasum -a 256 --ignore-missing -c checksums.txt
 ```
 
-The line for your archive must print `OK`.
+The line for your archive must print `OK`. The SBOMs are an unsigned inventory of what is in each archive, not build provenance.
 
 ## go install
 
