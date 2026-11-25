@@ -14,6 +14,24 @@ type RunSource interface {
 	Run(ctx context.Context, dir, recipe string, args []string) error
 }
 
+// RecipeFile is a recipe file a RunSource generates for a project.
+type RecipeFile struct {
+	// Name is the file name, relative to the project directory.
+	Name string
+	// Body is the file content.
+	Body string
+}
+
+// RecipeExporter is a RunSource that can also write the project's upc
+// capabilities as recipes of its own format.
+type RecipeExporter interface {
+	// Exists reports whether dir already holds the source's recipe file.
+	Exists(dir string) bool
+	// RecipeFile renders one recipe per verb that calls program with that verb;
+	// the recipe's own command line supplies extra arguments.
+	RecipeFile(program string, verbs []string) RecipeFile
+}
+
 // UpTarget identifies the project to bring up or down. App isolates one app
 // of a workspace from the others (ADR-0014); it may be empty for a single
 // project.

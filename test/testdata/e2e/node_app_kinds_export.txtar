@@ -1,0 +1,33 @@
+# app sub-types (cli, library) replace the service files; `upc export` writes a justfile
+[!exec:npm] skip 'npm is not installed'
+exec upc new app tool --kind cli --language node --pm npm --yes
+exists tool/src/main.ts
+exists tool/APP.md
+! exists tool/Dockerfile
+! exists tool/compose.yaml
+cd tool
+exec upc run dev world
+stdout 'Hello, world!'
+cd ..
+
+exec upc new app lib --kind library --language node --pm npm --yes
+exists lib/src/lib.ts
+! exists lib/Dockerfile
+cd lib
+exec upc run dev
+stdout 'Hello, world!'
+exec upc export
+exists justfile
+grep 'upc build' justfile
+! exec upc export
+stderr 'already exists'
+exec upc export --force
+cd ..
+
+# an unknown kind, a kind on another type and a language without kind templates are refused
+! exec upc new app bad --kind daemon --language node --pm npm --yes
+stderr 'unknown app kind'
+! exec upc new package bad --kind cli --language node --pm npm --yes
+stderr '--kind applies to app'
+! exec upc new app pyapp --kind cli --language python --yes
+stderr 'no cli app templates'

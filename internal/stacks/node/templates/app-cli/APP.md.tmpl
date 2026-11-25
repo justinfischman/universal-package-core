@@ -1,0 +1,8 @@
+# {{.Name}}
+
+Created by `upc new app --kind cli`: a command-line program.
+
+- `upc install` installs the dependencies (TypeScript and the Node types).
+- `upc run dev world` runs `src/main.ts` directly with Node's type stripping and prints a greeting.
+- `upc build` compiles to `dist/`; `upc run start world` runs the compiled program.
+- It exits 0 on success and 2 on a usage error. It is not a long-running service, so `upc up` is not meant for it.

@@ -12,7 +12,7 @@ import (
 )
 
 func newNewCmd() *cobra.Command {
-	var language, manager, name string
+	var language, manager, name, kind string
 	cmd := &cobra.Command{
 		Use:   "new <type> [name]",
 		Short: "Create a new project of a type (for example a script)",
@@ -28,16 +28,17 @@ func newNewCmd() *cobra.Command {
 				}
 				name = args[1]
 			}
-			return runNew(cmd, s, args[0], name, choice{language: language, manager: manager})
+			return runNew(cmd, s, args[0], name, kind, choice{language: language, manager: manager})
 		},
 	}
 	cmd.Flags().StringVar(&language, "language", "", "language of the project (default: configured, or asked)")
 	cmd.Flags().StringVar(&manager, "pm", "", "package manager of the project (default: the language's default)")
 	cmd.Flags().StringVar(&name, "name", "", "project name (alternative to the positional argument)")
+	cmd.Flags().StringVar(&kind, "kind", "", "app sub-type: cli or library (default: a service)")
 	return cmd
 }
 
-func runNew(cmd *cobra.Command, s *Session, typeID, name string, want choice) error {
+func runNew(cmd *cobra.Command, s *Session, typeID, name, kind string, want choice) error {
 	if s.Global {
 		return fmt.Errorf("%w: --global applies to `config`, not to `new`", core.ErrInvalidRequest)
 	}
@@ -47,6 +48,9 @@ func runNew(cmd *cobra.Command, s *Session, typeID, name string, want choice) er
 	}
 	if name == "" {
 		return fmt.Errorf("%w: a name is required: upc new %s <name>", core.ErrInvalidRequest, typeID)
+	}
+	if kind != "" && typeID != "app" {
+		return fmt.Errorf("%w: --kind applies to app projects, not %s", core.ErrInvalidRequest, typeID)
 	}
 	base, err := newBaseDir(s)
 	if err != nil {
@@ -66,6 +70,7 @@ func runNew(cmd *cobra.Command, s *Session, typeID, name string, want choice) er
 	req := core.ScaffoldRequest{
 		Request:        core.Request{Dir: base, DryRun: s.DryRun, Yes: s.Yes},
 		Name:           name,
+		Kind:           kind,
 		Language:       lang.ID(),
 		PackageManager: pm.ID(),
 		Manager:        pm,
