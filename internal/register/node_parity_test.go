@@ -30,38 +30,35 @@ func implements[T any](pm core.PackageManager) bool {
 	return ok
 }
 
-var nodeOptionalInterfaces = []optionalInterface{
+// nodeExpectedInterfaces is the fixed set every Node manager, npm included,
+// must implement. It is a literal list, not derived from npm, so deleting an
+// interface from npm (or any other manager) fails (D7.6). The manager-level
+// RunSource, UpProvider and PackageFile interfaces are not part of any manager.
+var nodeExpectedInterfaces = []optionalInterface{
 	{"group diagnoser (DiagnoseGroups)", implements[groupDiagnoser]},
 	{"core.Diagnoser", implements[core.Diagnoser]},
 	{"core.DetectRanker", implements[core.DetectRanker]},
 	{"core.NativeDryRunner", implements[core.NativeDryRunner]},
 	{"core.MemberLister", implements[core.MemberLister]},
-	{"core.RunSource", implements[core.RunSource]},
-	{"core.UpProvider", implements[core.UpProvider]},
-	{"core.PackageFile", implements[core.PackageFile]},
 }
 
-// nodeInterfaceExceptions lists optional interfaces npm implements that a
-// manager may lack, with the reason. It is empty.
+// nodeInterfaceExceptions lists expected interfaces a manager may lack, with
+// the reason. It is empty: npm, yarn, pnpm and bun all implement each one.
 var nodeInterfaceExceptions = map[string]map[string]string{}
 
 // TestNodeManagersHaveOptionalInterfaceParity requires every Node manager to
-// implement each optional interface npm implements, so features such as
+// implement each expected optional interface, so features such as
 // dependency-group checks do not exist for only some managers (D7.6).
 func TestNodeManagersHaveOptionalInterfaceParity(t *testing.T) {
 	regs := defaults(t)
-	ref, ok := regs.PackageManagers.Get("npm")
-	if !ok {
-		t.Fatal("npm must be registered")
-	}
-	for _, id := range []string{"yarn", "pnpm", "bun"} {
+	for _, id := range []string{"npm", "yarn", "pnpm", "bun"} {
 		pm, ok := regs.PackageManagers.Get(id)
 		if !ok {
 			t.Fatalf("%s must be registered", id)
 		}
-		for _, oi := range nodeOptionalInterfaces {
-			if oi.has(ref) && !oi.has(pm) && nodeInterfaceExceptions[id][oi.name] == "" {
-				t.Errorf("%s lacks %s, which npm implements, with no documented exception", id, oi.name)
+		for _, oi := range nodeExpectedInterfaces {
+			if !oi.has(pm) && nodeInterfaceExceptions[id][oi.name] == "" {
+				t.Errorf("%s lacks %s with no documented exception", id, oi.name)
 			}
 		}
 	}

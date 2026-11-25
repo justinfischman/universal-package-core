@@ -28,7 +28,7 @@ func (p *Poetry) DiagnoseGroups(fsys fs.FS, groups []string) []core.Finding {
 	var out []core.Finding
 	for _, g := range groups {
 		name := python.NormalizeName(g)
-		if g == mainGroup || decls.Poetry[name] || decls.DependencyGroups[name] {
+		if name == mainGroup || decls.Poetry[name] || decls.DependencyGroups[name] {
 			continue
 		}
 		out = append(out, core.Finding{Severity: core.SeverityWarn, Message: fmt.Sprintf(

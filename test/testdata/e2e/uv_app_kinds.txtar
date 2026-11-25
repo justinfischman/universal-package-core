@@ -1,0 +1,24 @@
+# app sub-types (cli, library) for Python replace the service files (D7.6 parity with Node)
+[!exec:uv] skip 'uv is not installed'
+exec upc new app tool --kind cli --language python --pm uv --yes
+exists tool/cli.py
+exists tool/APP.md
+! exists tool/server.py
+! exists tool/Dockerfile
+grep 'python cli.py' tool/pyproject.toml
+cd tool
+exec upc run dev world
+stdout 'Hello, world!'
+cd ..
+
+exec upc new app lib --kind library --language python --pm uv --yes
+exists lib/lib.py
+! exists lib/Dockerfile
+grep 'python demo.py' lib/pyproject.toml
+cd lib
+exec upc run dev
+stdout 'Hello, world!'
+cd ..
+
+! exec upc new app bad --kind daemon --language python --pm uv --yes
+stderr 'unknown app kind'

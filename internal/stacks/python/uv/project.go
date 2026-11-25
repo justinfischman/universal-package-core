@@ -49,7 +49,7 @@ func (u *UV) initProject(ctx context.Context, req core.Request) (core.Result, er
 		return core.Result{}, err
 	}
 	if req.ProjectType == "app" && !req.DryRun {
-		if err := shared.AppendAppScripts(u.fsys, filepath.Join(req.Dir, req.Name)); err != nil {
+		if err := shared.AppendAppScripts(u.fsys, filepath.Join(req.Dir, req.Name), req.Kind); err != nil {
 			return core.Result{}, err
 		}
 	}

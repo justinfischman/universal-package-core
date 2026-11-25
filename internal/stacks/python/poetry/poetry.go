@@ -31,6 +31,11 @@ const (
 )
 
 // Poetry implements core.PackageManager, core.Diagnoser and core.DetectRanker.
+//
+// Documented parity exception (D7.6, guarded by pythonInterfaceExceptions in
+// internal/register/python_parity_test.go): poetry does not implement
+// core.MemberLister because it has no workspace feature; multi-project repos
+// use path dependencies, which are not a member list.
 type Poetry struct {
 	core.BasePackageManager
 	fsys fsx.FS

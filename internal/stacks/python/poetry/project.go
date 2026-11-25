@@ -32,7 +32,7 @@ func (p *Poetry) initProject(ctx context.Context, req core.Request) (core.Result
 			return core.Result{}, err
 		}
 		if !req.DryRun {
-			if err := shared.AppendAppScripts(p.fsys, filepath.Join(req.Dir, req.Name)); err != nil {
+			if err := shared.AppendAppScripts(p.fsys, filepath.Join(req.Dir, req.Name), req.Kind); err != nil {
 				return core.Result{}, err
 			}
 		}

@@ -92,7 +92,7 @@ func (t *Type) Scaffold(ctx context.Context, req core.ScaffoldRequest) (core.Res
 	} else if !errors.Is(err, fs.ErrNotExist) {
 		return core.Result{}, err
 	}
-	initReq := core.Request{Dir: req.Dir, Name: req.Name, ProjectType: ID, DryRun: req.DryRun, Yes: req.Yes}
+	initReq := core.Request{Dir: req.Dir, Name: req.Name, ProjectType: ID, Kind: req.Kind, DryRun: req.DryRun, Yes: req.Yes}
 
 	if req.DryRun {
 		res, err := req.Manager.Execute(ctx, core.CapInit, initReq)

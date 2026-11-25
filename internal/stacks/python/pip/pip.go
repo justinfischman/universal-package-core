@@ -27,6 +27,12 @@ const (
 const rankRequirements = 100
 
 // PIP implements core.PackageManager, core.Diagnoser and core.DetectRanker.
+//
+// Documented parity exceptions (D7.6, guarded by pythonInterfaceExceptions in
+// internal/register/python_parity_test.go): pip does not implement
+// core.NativeDryRunner because it publishes through `twine upload`, which has
+// no dry-run flag, and not core.MemberLister because pip has no workspace
+// concept.
 type PIP struct {
 	core.BasePackageManager
 	fsys fsx.FS
