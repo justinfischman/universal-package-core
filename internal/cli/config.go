@@ -11,6 +11,6 @@ func newConfigCmd(regs core.Registries) *cobra.Command {
 		Use:   "config",
 		Short: "Read and change upc's own settings",
 	}
-	cmd.AddCommand(newConfigGetCmd(), newConfigSetCmd(regs), newConfigValidateCmd(regs))
+	cmd.AddCommand(newConfigGetCmd(), newConfigShowCmd(), newConfigSetCmd(regs), newConfigValidateCmd(regs))
 	return cmd
 }

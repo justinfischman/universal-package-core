@@ -1,0 +1,29 @@
+{
+  "summary": "language = global-lang (global)\npackage_manager = alpha-one (app config)\npackage_managers = (unset)\nproject_type = **** (app local)",
+  "data": [
+    {
+      "key": "language",
+      "value": "global-lang",
+      "layer": "global",
+      "masked": false
+    },
+    {
+      "key": "package_manager",
+      "value": "alpha-one",
+      "layer": "app config",
+      "masked": false
+    },
+    {
+      "key": "package_managers",
+      "value": "",
+      "layer": "",
+      "masked": false
+    },
+    {
+      "key": "project_type",
+      "value": "****",
+      "layer": "app local",
+      "masked": true
+    }
+  ]
+}
