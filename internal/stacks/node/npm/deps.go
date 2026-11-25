@@ -7,6 +7,7 @@ import (
 
 	"github.com/justinfischman/universal-package-core/internal/components/invoke"
 	"github.com/justinfischman/universal-package-core/internal/core"
+	"github.com/justinfischman/universal-package-core/internal/stacks/node/shared"
 )
 
 // groupArgs maps upc's group to npm flags: "dev" is -D, "optional" is -O and
@@ -27,10 +28,58 @@ func groupArgs(group string) ([]string, error) {
 
 // install routes to `npm install`.
 func (n *NPM) install(ctx context.Context, req core.Request) (core.Result, error) {
-	if len(req.AllGroups()) > 0 {
-		return core.Result{}, fmt.Errorf("%w: npm installs every group; groups apply to add and remove (subset install by group is not implemented)", core.ErrInvalidRequest)
+	custom, err := shared.CustomGroups(req.AllGroups())
+	if err != nil {
+		return core.Result{}, err
 	}
-	return n.stream(ctx, req, invoke.Concat([]string{"install"}, req.Args), "dependencies installed", "install dependencies")
+	if len(custom) == 0 {
+		return n.stream(ctx, req, invoke.Concat([]string{"install"}, req.Args), shared.FullInstallSummary(req.AllGroups()), "install dependencies")
+	}
+	if err := requireManifest(req); err != nil {
+		return core.Result{}, err
+	}
+	if err := shared.RequireMembers(invoke.DirFS(req.Dir), custom); err != nil {
+		return core.Result{}, err
+	}
+	args := invoke.Concat([]string{"install"}, workspaceFlags(custom), req.Args)
+	list := strings.Join(custom, ", ")
+	return n.stream(ctx, req, args, "dependency groups installed: "+list, "install dependency groups "+list)
+}
+
+// workspaceFlags renders `-w <member dir>` for each group member; the subset is
+// not remembered, so it is passed on every command (ADR-0015).
+func workspaceFlags(groups []string) []string {
+	var out []string
+	for _, dir := range shared.GroupDirs(groups) {
+		out = append(out, "-w", dir)
+	}
+	return out
+}
+
+// groupFlags returns the flags that place a package in req.Group: a manager flag
+// for dev, optional and peer, otherwise `-w` for the group's member. add creates
+// the member (and registers it as a workspace) when missing; remove needs it.
+func (n *NPM) groupFlags(req core.Request, mustExist bool) ([]string, error) {
+	if req.Group == "" || shared.IsBuiltinGroup(req.Group) {
+		return groupArgs(req.Group)
+	}
+	if err := shared.ValidateGroupName(req.Group); err != nil {
+		return nil, err
+	}
+	if err := requireManifest(req); err != nil {
+		return nil, err
+	}
+	switch {
+	case mustExist:
+		if err := shared.RequireMembers(invoke.DirFS(req.Dir), []string{req.Group}); err != nil {
+			return nil, err
+		}
+	case !req.DryRun:
+		if err := shared.EnsureMember(n.fsys, req.Dir, req.Group); err != nil {
+			return nil, err
+		}
+	}
+	return workspaceFlags([]string{req.Group}), nil
 }
 
 // add routes to `npm install [-D|-O|--save-peer] pkgs... [args...]`.
@@ -47,7 +96,7 @@ func (n *NPM) change(ctx context.Context, req core.Request, verb, past, plan str
 	if err := req.RequirePackages(); err != nil {
 		return core.Result{}, err
 	}
-	group, err := groupArgs(req.Group)
+	group, err := n.groupFlags(req, verb == "uninstall")
 	if err != nil {
 		return core.Result{}, err
 	}

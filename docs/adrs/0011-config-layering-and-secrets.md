@@ -1,13 +1,13 @@
 # ADR-0011: Config layering and secrets
 
-Status: Accepted 2026-11-15 (Phase 6.2 landed; app-level `local.toml` is loaded; `config show --origin` implemented in Plan 07 phase 7.2; root `local.toml` is read only by that command, the merge path still skips it)
+Status: Accepted 2026-11-15 (Phase 6.2 landed; app-level `local.toml` is loaded; `config show --origin` implemented in Plan 07 phase 7.2; root `local.toml` is loaded by the merge path between the root config and the app config, Plan 07 workstream B1)
 
 ## Context
 Config today is one project file. Environments (ADR-0015) and multi-app workspaces (ADR-0014) need layers: a global default, a workspace root, and per-app overrides, plus a place for values that must not be committed.
 
 ## Decision
 1. **Hidden config directories.** Project config lives in `.universal-package-core/config.toml`; global config in `~/.universal-package-core/config.toml`. Secrets live in the gitignored `.universal-package-core/local.toml`.
-2. **Precedence, highest first:** flag, app `local.toml`, app config, root `local.toml` (read only by `config show --origin`; the merge path does not load it yet; no CLI flag sets a config key yet, so the flag layer is empty in practice), root config, global config.
+2. **Precedence, highest first:** flag, app `local.toml`, app config, root `local.toml` (loaded by the merge path and shown by `config show --origin`; no CLI flag sets a config key yet, so the flag layer is empty in practice), root config, global config.
 3. **Merge key by key.** Scalars override, tables merge, lists replace. The lowest (most specific) level wins and the walk up fills gaps.
 4. **Walk limits.** The upward walk stops at the git root or a workspace-root marker (the nearest ancestor with a manager-native or config workspace marker).
 5. **No user env vars.** `upc` has no required environment variables. Computed env is injected into child processes only, through `execx.WithEnv`.

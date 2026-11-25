@@ -115,30 +115,13 @@ func (s Store) LoadMerged() (Resolved, error) {
 		if err != nil {
 			return Resolved{}, err
 		}
-		res.Config = MergeConfig(res.Config, rootConfig)
-		// Track sources for root
-		for _, k := range Keys {
-			if v, _ := rootConfig.Get(k); v != "" {
-				res.Sources[k] = Project // root treated as project-level
-			}
+		s.overlay(&res, rootConfig)
+		// 2b. Root local (gitignored), above root config, below the project.
+		rootLocal, err := s.loadFromPath(filepath.Join(rootDir, DirName, LocalName))
+		if err != nil {
+			return Resolved{}, err
 		}
-		if rootConfig.DefaultEnvironment != "" {
-			res.DefaultEnvironment = rootConfig.DefaultEnvironment
-		}
-		if rootConfig.ActiveEnvironment != "" {
-			res.ActiveEnvironment = rootConfig.ActiveEnvironment
-		}
-		if len(rootConfig.Environments) > 0 {
-			if res.Environments == nil {
-				res.Environments = make(map[string]Environment)
-			}
-			for k, v := range rootConfig.Environments {
-				res.Environments[k] = v
-			}
-		}
-		if len(rootConfig.Workspace.Members) > 0 {
-			res.Workspace = rootConfig.Workspace
-		}
+		s.overlay(&res, rootLocal)
 	}
 
 	// 3. Project/App (current directory)
@@ -147,29 +130,7 @@ func (s Store) LoadMerged() (Resolved, error) {
 		if err != nil {
 			return Resolved{}, err
 		}
-		res.Config = MergeConfig(res.Config, p)
-		for _, k := range Keys {
-			if v, _ := p.Get(k); v != "" {
-				res.Sources[k] = Project
-			}
-		}
-		if p.DefaultEnvironment != "" {
-			res.DefaultEnvironment = p.DefaultEnvironment
-		}
-		if p.ActiveEnvironment != "" {
-			res.ActiveEnvironment = p.ActiveEnvironment
-		}
-		if len(p.Environments) > 0 {
-			if res.Environments == nil {
-				res.Environments = make(map[string]Environment)
-			}
-			for k, v := range p.Environments {
-				res.Environments[k] = v
-			}
-		}
-		if len(p.Workspace.Members) > 0 {
-			res.Workspace = p.Workspace
-		}
+		s.overlay(&res, p)
 	}
 
 	// 4. Local (gitignored)
@@ -179,34 +140,40 @@ func (s Store) LoadMerged() (Resolved, error) {
 		if err != nil {
 			return Resolved{}, err
 		}
-		if !isEmptyConfig(localConfig) {
-			res.Config = MergeConfig(res.Config, localConfig)
-			for _, k := range Keys {
-				if v, _ := localConfig.Get(k); v != "" {
-					res.Sources[k] = Project // local is project-scoped
-				}
-			}
-			if localConfig.DefaultEnvironment != "" {
-				res.DefaultEnvironment = localConfig.DefaultEnvironment
-			}
-			if localConfig.ActiveEnvironment != "" {
-				res.ActiveEnvironment = localConfig.ActiveEnvironment
-			}
-			if len(localConfig.Environments) > 0 {
-				if res.Environments == nil {
-					res.Environments = make(map[string]Environment)
-				}
-				for k, v := range localConfig.Environments {
-					res.Environments[k] = v
-				}
-			}
-			if len(localConfig.Workspace.Members) > 0 {
-				res.Workspace = localConfig.Workspace
-			}
-		}
+		s.overlay(&res, localConfig)
 	}
 
 	return res, nil
+}
+
+// overlay applies one layer on top of res; an empty layer changes nothing.
+func (Store) overlay(res *Resolved, c Config) {
+	if isEmptyConfig(c) {
+		return
+	}
+	res.Config = MergeConfig(res.Config, c)
+	for _, k := range Keys {
+		if v, _ := c.Get(k); v != "" {
+			res.Sources[k] = Project // root, app and local layers all report as project-scoped
+		}
+	}
+	if c.DefaultEnvironment != "" {
+		res.DefaultEnvironment = c.DefaultEnvironment
+	}
+	if c.ActiveEnvironment != "" {
+		res.ActiveEnvironment = c.ActiveEnvironment
+	}
+	if len(c.Environments) > 0 {
+		if res.Environments == nil {
+			res.Environments = make(map[string]Environment)
+		}
+		for k, v := range c.Environments {
+			res.Environments[k] = v
+		}
+	}
+	if len(c.Workspace.Members) > 0 {
+		res.Workspace = c.Workspace
+	}
 }
 
 func (s Store) loadFromPath(path string) (Config, error) {

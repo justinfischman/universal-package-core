@@ -17,19 +17,28 @@ import (
 // list/outdated reports (berry has neither command). Output that is not a
 // version (a dry run prints nothing) means classic.
 func isBerry(ctx context.Context, dir string) (bool, error) {
+	n, err := yarnMajor(ctx, dir)
+	return n >= 2, err
+}
+
+// yarnMajor is the major version from `yarn --version`, or 0 when the output is
+// not a version (a dry run prints nothing).
+func yarnMajor(ctx context.Context, dir string) (int, error) {
 	r, ok := execx.FromContext(ctx)
 	if !ok {
-		return false, errors.New("internal error: no command runner in context")
+		return 0, errors.New("internal error: no command runner in context")
 	}
 	out, err := r.Run(ctx, execx.Cmd{Name: Binary, Args: []string{"--version"}, Dir: dir})
 	if err != nil {
-		return false, err
+		return 0, err
 	}
 	major, _, _ := strings.Cut(strings.TrimSpace(out.Stdout), ".")
 	n, convErr := strconv.Atoi(major)
-	berry := convErr == nil && n >= 2
-	slog.Debug("yarn flavor", "version", strings.TrimSpace(out.Stdout), "berry", berry)
-	return berry, nil
+	if convErr != nil {
+		n = 0
+	}
+	slog.Debug("yarn flavor", "version", strings.TrimSpace(out.Stdout), "major", n)
+	return n, nil
 }
 
 // berryUnsupported is the error for reports berry cannot produce through the
