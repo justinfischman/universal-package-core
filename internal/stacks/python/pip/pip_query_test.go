@@ -43,8 +43,8 @@ func TestDryRunWritesNothing(t *testing.T) {
 			t.Errorf("%s: %+v, %v", c, res, err)
 		}
 	}
-	if m.writes != 0 || m.files["/proj/requirements.txt"] != "rich==1\n" {
-		t.Errorf("dry run wrote: writes=%d file=%q", m.writes, m.files["/proj/requirements.txt"])
+	if m.writes != 0 || m.files[reqPath] != "rich==1\n" {
+		t.Errorf("dry run wrote: writes=%d file=%q", m.writes, m.files[reqPath])
 	}
 }
 

@@ -15,14 +15,14 @@ func TestInitCreatesEmptyRequirementsOnce(t *testing.T) {
 	if _, err := call(t, m, core.CapInit, core.Request{}, &execx.FakeRunner{}); err != nil {
 		t.Fatal(err)
 	}
-	if body, ok := m.files["/proj/requirements.txt"]; !ok || body != "" {
+	if body, ok := m.files[reqPath]; !ok || body != "" {
 		t.Fatalf("requirements.txt = %q, %v", body, ok)
 	}
-	m.files["/proj/requirements.txt"] = "rich==1\n"
+	m.files[reqPath] = "rich==1\n"
 	if _, err := call(t, m, core.CapInit, core.Request{}, &execx.FakeRunner{}); err != nil {
 		t.Fatal(err)
 	}
-	if m.files["/proj/requirements.txt"] != "rich==1\n" {
+	if m.files[reqPath] != "rich==1\n" {
 		t.Error("init must not overwrite an existing requirements.txt")
 	}
 }
@@ -33,7 +33,7 @@ func TestInitScript(t *testing.T) {
 	if _, err := call(t, m, core.CapInit, core.Request{ProjectType: "script", Script: "hello"}, fake); err != nil {
 		t.Fatal(err)
 	}
-	if body := m.files["/proj/hello.py"]; !strings.HasPrefix(body, "# /// script\n") || len(fake.Calls) != 0 {
+	if body := m.files[filepath.Join(proj, "hello.py")]; !strings.HasPrefix(body, "# /// script\n") || len(fake.Calls) != 0 {
 		t.Errorf("hello.py = %q, ran %q", body, argv(fake))
 	}
 	for name, req := range map[string]core.Request{
