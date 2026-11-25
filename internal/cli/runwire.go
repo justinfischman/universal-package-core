@@ -38,6 +38,9 @@ func (s *Session) dispatch(ctx context.Context, pm core.PackageManager, c core.C
 		if out, handled, uerr := s.upProvider(ctx, req); handled {
 			return out, uerr
 		}
+		if out, handled, oerr := s.offerUpCommand(ctx, req); handled {
+			return out, oerr
+		}
 	}
 	return res, err
 }

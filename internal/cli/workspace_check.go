@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -25,6 +26,8 @@ type contractEntry struct {
 type contractReport struct {
 	Apps    []contractEntry `json:"apps"`
 	Updated bool            `json:"updated"`
+	// Members compares the config's members with the manager's native list.
+	Members memberReport `json:"members"`
 }
 
 func newWorkspaceCheckCmd() *cobra.Command {
@@ -45,20 +48,24 @@ func newWorkspaceCheckCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return runWorkspaceCheck(s, ws, update)
+			return runWorkspaceCheck(cmd.Context(), s, ws, update)
 		},
 	}
 	cmd.Flags().BoolVar(&update, "update", false, "write the locks from the current contracts (accept the change)")
 	return cmd
 }
 
-func runWorkspaceCheck(s *Session, ws *workspace.Workspace, update bool) error {
+func runWorkspaceCheck(ctx context.Context, s *Session, ws *workspace.Workspace, update bool) error {
 	locks := workspace.NewContractLocks(ws)
 	results := locks.CheckAll()
+	members := compareMembers(ctx, s, ws)
 	if len(results) == 0 {
+		if members.failed() {
+			return fmt.Errorf("workspace members differ from the manager's: %s", members.Detail)
+		}
 		return fmt.Errorf("%w: no app declares a contract", core.ErrInvalidRequest)
 	}
-	rep := contractReport{Updated: update && !s.DryRun}
+	rep := contractReport{Updated: update && !s.DryRun, Members: members}
 	failed := 0
 	for _, r := range results {
 		e := entryOf(r)
@@ -81,6 +88,9 @@ func runWorkspaceCheck(s *Session, ws *workspace.Workspace, update bool) error {
 	}
 	if failed > 0 {
 		return fmt.Errorf("contract check failed for %d of %d apps", failed, len(rep.Apps))
+	}
+	if members.failed() {
+		return fmt.Errorf("workspace members differ from the manager's: %s", members.Detail)
 	}
 	return nil
 }
@@ -110,6 +120,7 @@ func (r contractReport) text(update bool) string {
 			b.WriteString("\n  " + strings.ReplaceAll(strings.TrimRight(e.Detail, "\n"), "\n", "\n  "))
 		}
 	}
+	b.WriteString("\n" + r.Members.text())
 	if !update {
 		b.WriteString("\n(locks are never written automatically; pass --update to accept the current contracts)")
 	}

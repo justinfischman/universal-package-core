@@ -28,6 +28,27 @@ func TestResolveSimpleAndNested(t *testing.T) {
 	}
 }
 
+func TestResolveEscapeWritesLiteralReferenceAndStillResolvesOthers(t *testing.T) {
+	r := EnvResolver{Lookup: mapLookup{"apps.api.port": "8000"}}
+	got, err := r.Resolve("keep=$${apps.ghost.port} use=${apps.api.port} $${a}${apps.api.port}")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := "keep=${apps.ghost.port} use=8000 ${a}8000"; got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+func TestChildEscapeIsNotAnUnresolvedVariable(t *testing.T) {
+	got, err := EnvResolver{}.Child(map[string]string{"TPL": "$${HOME}/x"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := []string{"TPL=${HOME}/x"}; !reflect.DeepEqual(got, want) {
+		t.Errorf("got %v, want %v", got, want)
+	}
+}
+
 func TestResolveTextWithoutVariablesIsUnchanged(t *testing.T) {
 	got, err := EnvResolver{}.Resolve("plain $value")
 	if err != nil || got != "plain $value" {
