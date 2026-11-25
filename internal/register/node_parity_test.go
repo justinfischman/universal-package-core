@@ -64,27 +64,47 @@ func TestNodeManagersHaveOptionalInterfaceParity(t *testing.T) {
 	}
 }
 
-// TestNodeManagersHaveCapabilityParity requires every Node manager to declare
-// each capability at the same level as npm (native, filled or unsupported),
-// unless nodeParityExceptions documents why not.
+// nodeExpectedLevels is the fixed level every Node manager, npm included,
+// must declare for each capability. It is a literal table, not derived from
+// npm, so changing npm's level (or any other manager's) fails (D7.6).
+var nodeExpectedLevels = map[core.Capability]core.Level{
+	core.CapInit:     core.LevelNative,
+	core.CapInstall:  core.LevelNative,
+	core.CapAdd:      core.LevelNative,
+	core.CapRemove:   core.LevelNative,
+	core.CapList:     core.LevelNative,
+	core.CapUpdate:   core.LevelNative,
+	core.CapOutdated: core.LevelNative,
+	core.CapAudit:    core.LevelNative,
+	core.CapRun:      core.LevelNative,
+	core.CapBuild:    core.LevelFilled,
+	core.CapTest:     core.LevelNative,
+	core.CapLint:     core.LevelFilled,
+	core.CapUp:       core.LevelFilled,
+	core.CapDown:     core.LevelFilled,
+	core.CapPublish:  core.LevelNative,
+}
+
+// TestNodeManagersHaveCapabilityParity requires every Node manager, npm
+// included, to declare each capability at the level in nodeExpectedLevels
+// (native, filled or unsupported), unless nodeParityExceptions documents why not.
 func TestNodeManagersHaveCapabilityParity(t *testing.T) {
-	regs := defaults(t)
-	ref, ok := regs.PackageManagers.Get("npm")
-	if !ok {
-		t.Fatal("npm must be registered")
+	if len(nodeExpectedLevels) != len(core.AllCapabilities) {
+		t.Fatalf("nodeExpectedLevels has %d entries, want one per capability (%d)", len(nodeExpectedLevels), len(core.AllCapabilities))
 	}
-	for _, id := range []string{"yarn", "pnpm", "bun"} {
+	regs := defaults(t)
+	for _, id := range []string{"npm", "yarn", "pnpm", "bun"} {
 		pm, ok := regs.PackageManagers.Get(id)
 		if !ok {
 			t.Fatalf("%s must be registered", id)
 		}
 		for _, c := range core.AllCapabilities {
-			want, got := ref.Capabilities()[c].Level, pm.Capabilities()[c].Level
+			want, got := nodeExpectedLevels[c], pm.Capabilities()[c].Level
 			if want == got {
 				continue
 			}
 			if reason := nodeParityExceptions[id][c]; reason == "" {
-				t.Errorf("%s declares %s as %v, npm as %v, with no documented exception", id, c, got, want)
+				t.Errorf("%s declares %s as %v, expected %v, with no documented exception", id, c, got, want)
 			}
 		}
 	}
