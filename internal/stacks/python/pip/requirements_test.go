@@ -2,6 +2,7 @@ package pip
 
 import (
 	"errors"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
@@ -10,7 +11,7 @@ import (
 	"github.com/justinfischman/universal-package-core/internal/core"
 )
 
-const reqPath = "/proj/requirements.txt"
+var reqPath = filepath.Join(proj, "requirements.txt")
 
 func freezeOut(s string) *execx.FakeRunner {
 	return respond(map[string]string{py + " -m pip freeze": s})
@@ -47,7 +48,7 @@ func TestAddWritesExactPins(t *testing.T) {
 			}
 			path := reqPath
 			if c.req.Group == "dev" {
-				path = "/proj/requirements-dev.txt"
+				path = filepath.Join(proj, "requirements-dev.txt")
 			}
 			if got := m.files[path]; got != c.want {
 				t.Errorf("%s = %q, want %q", path, got, c.want)

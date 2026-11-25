@@ -59,7 +59,9 @@ func TestDirFSAndStat(t *testing.T) {
 	if _, err := f.Stat(filepath.Join(dir, "m")); err != nil {
 		t.Error(err)
 	}
-	if _, err := f.DirFS(dir).Open("m"); err != nil {
+	if h, err := f.DirFS(dir).Open("m"); err != nil {
+		t.Error(err)
+	} else if err := h.Close(); err != nil { // Windows cannot remove an open file during TempDir cleanup.
 		t.Error(err)
 	}
 }
