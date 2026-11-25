@@ -195,14 +195,14 @@ Follow `docs/RELEASING.md`. **The owner confirms before tagging and publishing.*
 | 7.1b Adapter/register interface map | cache-explorer-agent | done | tc_b3a5543235, tc_f07ac9cbcc (register.go line numbers approximate) |
 | 7.1c Exit-code map and mismatch | cache-explorer-agent | done | tc_04ad099e09: code exits 2 (errors.go:71), only plan 03:40 says 1; docs fix only |
 | 7.2 Pilot `config show --origin` (locked steps here) | software-engineer, test-engineer, code-reviewer | pending | |
-| 7.3 LICENSE | documentation-maintainer | pending | |
-| 7.3 Root README.md | documentation-maintainer | pending | |
-| 7.3 SECURITY.md | documentation-maintainer | pending | |
-| 7.3 CONTRIBUTING.md | documentation-maintainer | pending | |
-| 7.3 Upgrade/uninstall docs | documentation-maintainer | pending | |
-| 7.3 Verify and document `go install` | documentation-maintainer | pending | |
-| 7.3 Fix stale `docs/README.md:5,:141` | documentation-maintainer | pending | |
-| 7.3 Reconcile exit-code mismatch note | documentation-maintainer | pending | |
+| 7.3 LICENSE | documentation-maintainer | done | 43712db |
+| 7.3 Root README.md | documentation-maintainer | done | 44fb526 |
+| 7.3 SECURITY.md | documentation-maintainer | done | 44fb526 |
+| 7.3 CONTRIBUTING.md | documentation-maintainer | done | 44fb526 |
+| 7.3 Upgrade/uninstall docs | documentation-maintainer | done | cea5903 |
+| 7.3 Verify and document `go install` | documentation-maintainer | done | cea5903 (ran go install, v0.1.0) |
+| 7.3 Fix stale `docs/README.md:5,:141` | documentation-maintainer | done | 136e650 (also fixed :7) |
+| 7.3 Reconcile exit-code mismatch note | documentation-maintainer | done | 136e650 (CHANGELOG Known gaps) |
 | 7.4 B1 config/doctor | software-engineer, test-engineer, code-reviewer | pending | |
 | 7.4 B2 workflow commands | software-engineer, test-engineer, code-reviewer | pending | |
 | 7.4 B3 Windows enablement | software-engineer, test-engineer, code-reviewer | pending | |
