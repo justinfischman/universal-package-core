@@ -49,8 +49,11 @@ func (r *Registry[T]) List() []T {
 	return out
 }
 
-// IDs returns all ids sorted.
+// IDs returns all ids sorted; a nil registry holds none.
 func (r *Registry[T]) IDs() []string {
+	if r == nil {
+		return nil
+	}
 	ids := make([]string, 0, len(r.items))
 	for id := range r.items {
 		ids = append(ids, id)

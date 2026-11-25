@@ -219,56 +219,23 @@ func (s Store) LoadScope(scope Scope) (Config, error) {
 	return c, nil
 }
 
-// Load merges global then project; project wins field by field.
+// Load resolves every layer origin reporting knows about (global, workspace
+// root, app, and the gitignored local files), later layers winning field by
+// field, and rejects any non-global value the key's own validation refuses.
 func (s Store) Load() (Resolved, error) {
-	g, err := s.LoadScope(Global)
-	if err != nil {
-		return Resolved{}, err
-	}
-	res := Resolved{Config: g, Sources: map[string]Scope{}}
-	for _, k := range Keys {
-		if v, _ := g.Get(k); v != "" {
-			res.Sources[k] = Global
-		}
-	}
-	if s.ProjectRoot == "" {
-		return res, nil
-	}
-	p, err := s.LoadScope(Project)
+	res, err := s.LoadMerged()
 	if err != nil {
 		return Resolved{}, err
 	}
 	for _, k := range Keys {
-		if v, _ := p.Get(k); v != "" {
-			next, err := res.Set(k, v)
-			if err != nil {
-				return Resolved{}, fmt.Errorf("%w: project config key %q: %v", core.ErrInvalidRequest, k, err)
-			}
-			res.Config = next
-			res.Sources[k] = Project
+		v, _ := res.Get(k)
+		if v == "" || res.Sources[k] == Global {
+			continue
+		}
+		if _, err := res.Set(k, v); err != nil {
+			return Resolved{}, fmt.Errorf("%w: project config key %q: %v", core.ErrInvalidRequest, k, err)
 		}
 	}
-	if p.DefaultEnvironment != "" {
-		res.DefaultEnvironment = p.DefaultEnvironment
-	}
-	if p.ActiveEnvironment != "" {
-		res.ActiveEnvironment = p.ActiveEnvironment
-	}
-	if len(p.Environments) > 0 {
-		merged := map[string]Environment{}
-		for k, v := range g.Environments {
-			merged[k] = v
-		}
-		for k, v := range p.Environments {
-			merged[k] = v
-		}
-		res.Environments = merged
-	}
-	if len(p.Workspace.Members) > 0 {
-		res.Workspace = p.Workspace
-	}
-	res.Apps = mergeApps(res.Apps, p.Apps)
-	res.Scripts, res.Up = mergeCommands(res.Config, p)
 	return res, nil
 }
 
