@@ -19,6 +19,9 @@ type GroupDecls struct {
 	// Poetry is [tool.poetry.group.<name>], plus "dev" when the legacy
 	// [tool.poetry.dev-dependencies] table exists.
 	Poetry map[string]bool
+	// UvLegacyDev is true when the legacy [tool.uv] dev-dependencies array is
+	// non-empty; uv treats it as the "dev" group.
+	UvLegacyDev bool
 }
 
 type groupDeclDoc struct {
@@ -31,6 +34,9 @@ type groupDeclDoc struct {
 			Group   map[string]any `toml:"group"`
 			DevDeps map[string]any `toml:"dev-dependencies"`
 		} `toml:"poetry"`
+		Uv struct {
+			DevDeps []any `toml:"dev-dependencies"`
+		} `toml:"uv"`
 	} `toml:"tool"`
 }
 
@@ -49,6 +55,7 @@ func ReadGroupDecls(fsys fs.FS) (GroupDecls, error) {
 		DependencyGroups: keySet(doc.Groups),
 		Optional:         keySet(doc.Project.Optional),
 		Poetry:           keySet(doc.Tool.Poetry.Group),
+		UvLegacyDev:      len(doc.Tool.Uv.DevDeps) > 0,
 	}
 	if len(doc.Tool.Poetry.DevDeps) > 0 {
 		d.Poetry["dev"] = true

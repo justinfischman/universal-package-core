@@ -26,7 +26,7 @@ func (u *UV) DiagnoseGroups(fsys fs.FS, groups []string) []core.Finding {
 	for _, g := range groups {
 		name := python.NormalizeName(g)
 		switch {
-		case decls.DependencyGroups[name]:
+		case decls.DependencyGroups[name], name == "dev" && decls.UvLegacyDev:
 		case decls.Optional[name]:
 			out = append(out, core.Finding{Severity: core.SeverityWarn, Message: fmt.Sprintf(
 				"dependency group %q exists only in [project.optional-dependencies], which `uv sync --group` does not read; run `upc add <package> --group %s` to create it in [dependency-groups]", g, g)})

@@ -19,6 +19,16 @@ func TestDiagnoseGroupsDeclaredGroupsAreClean(t *testing.T) {
 	}
 }
 
+func TestDiagnoseGroupsLegacyUvDevDependenciesSatisfyDev(t *testing.T) {
+	fsys := groupFS("[project]\nname = \"x\"\n[tool.uv]\ndev-dependencies = [\"pytest\"]\n")
+	if got := (&UV{}).DiagnoseGroups(fsys, []string{"dev"}); len(got) != 0 {
+		t.Errorf("findings = %v, want none", got)
+	}
+	if got := (&UV{}).DiagnoseGroups(fsys, []string{"docs"}); len(got) != 1 {
+		t.Errorf("legacy dev table must not satisfy other groups: %v", got)
+	}
+}
+
 func TestDiagnoseGroupsMissingGroupWarns(t *testing.T) {
 	got := (&UV{}).DiagnoseGroups(groupFS("[project]\nname = \"x\"\n"), []string{"docs"})
 	if len(got) != 1 || got[0].Severity != core.SeverityWarn ||
