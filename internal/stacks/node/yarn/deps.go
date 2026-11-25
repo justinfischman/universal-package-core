@@ -33,7 +33,7 @@ func (y *Yarn) install(ctx context.Context, req core.Request) (core.Result, erro
 		return core.Result{}, err
 	}
 	if len(custom) == 0 {
-		return y.stream(ctx, req, invoke.Concat([]string{"install"}, req.Args), "dependencies installed", "install dependencies")
+		return y.stream(ctx, req, invoke.Concat([]string{"install"}, req.Args), shared.FullInstallSummary(req.AllGroups()), "install dependencies")
 	}
 	if err := requireManifest(req); err != nil {
 		return core.Result{}, err
@@ -41,15 +41,18 @@ func (y *Yarn) install(ctx context.Context, req core.Request) (core.Result, erro
 	if err := shared.RequireMembers(invoke.DirFS(req.Dir), custom); err != nil {
 		return core.Result{}, err
 	}
-	berry, err := isBerry(ctx, req.Dir)
+	major, err := yarnMajor(ctx, req.Dir)
 	if err != nil {
 		return core.Result{}, err
 	}
 	list := strings.Join(custom, ", ")
-	if !berry {
-		// ADR-0015 option A: yarn classic has no subset install, so it is full.
+	if major < 4 {
+		// ADR-0015: classic (1.x) has no subset install, and `workspaces focus`
+		// is built in only from yarn 4 (2.x/3.x need the workspace-tools
+		// plugin), so the install is full.
 		return y.stream(ctx, req, invoke.Concat([]string{"install"}, req.Args),
-			"dependencies installed (yarn classic installs every group, "+list+" included)", "install dependencies, groups "+list)
+			fmt.Sprintf("dependencies installed (yarn %d installs every group, %s included; subset install needs yarn 4)", max(major, 1), list),
+			"install dependencies, groups "+list)
 	}
 	args := invoke.Concat([]string{"workspaces", "focus"}, shared.MemberNames(custom), req.Args)
 	return y.stream(ctx, req, args, "dependency groups installed: "+list, "install dependency groups "+list)

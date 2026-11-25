@@ -31,7 +31,10 @@ func GroupFindings(root fs.FS, groups []string, classic bool) []core.Finding {
 		}
 	}
 	globs, err := WorkspacesOf(root)
-	if err == nil && !slices.Contains(globs, GroupsGlob) {
+	if err != nil {
+		out = append(out, core.Finding{Severity: core.SeverityWarn, Message: fmt.Sprintf(
+			"cannot check the workspaces of package.json for the dependency groups: %v", err)})
+	} else if !slices.Contains(globs, GroupsGlob) {
 		out = append(out, core.Finding{Severity: core.SeverityWarn, Message: fmt.Sprintf(
 			"package.json workspaces does not list %q, so the manager does not see the dependency groups", GroupsGlob)})
 	}

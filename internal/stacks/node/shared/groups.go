@@ -7,6 +7,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/justinfischman/universal-package-core/internal/components/fsx"
 	"github.com/justinfischman/universal-package-core/internal/core"
@@ -81,6 +82,17 @@ func GroupDirs(groups []string) []string {
 		out[i] = GroupDir(g)
 	}
 	return out
+}
+
+// FullInstallSummary is the summary of an install that selects no custom group.
+// Built-in groups (dev, optional, peer) live in the root manifest, so a plain
+// install already covers them; the summary says so instead of dropping them
+// silently.
+func FullInstallSummary(groups []string) string {
+	if len(groups) == 0 {
+		return "dependencies installed"
+	}
+	return "dependencies installed (built-in groups " + strings.Join(groups, ", ") + " are part of every install)"
 }
 
 // HasMember reports whether the group's member manifest exists under root.

@@ -115,30 +115,7 @@ func (s Store) LoadMerged() (Resolved, error) {
 		if err != nil {
 			return Resolved{}, err
 		}
-		res.Config = MergeConfig(res.Config, rootConfig)
-		// Track sources for root
-		for _, k := range Keys {
-			if v, _ := rootConfig.Get(k); v != "" {
-				res.Sources[k] = Project // root treated as project-level
-			}
-		}
-		if rootConfig.DefaultEnvironment != "" {
-			res.DefaultEnvironment = rootConfig.DefaultEnvironment
-		}
-		if rootConfig.ActiveEnvironment != "" {
-			res.ActiveEnvironment = rootConfig.ActiveEnvironment
-		}
-		if len(rootConfig.Environments) > 0 {
-			if res.Environments == nil {
-				res.Environments = make(map[string]Environment)
-			}
-			for k, v := range rootConfig.Environments {
-				res.Environments[k] = v
-			}
-		}
-		if len(rootConfig.Workspace.Members) > 0 {
-			res.Workspace = rootConfig.Workspace
-		}
+		s.overlay(&res, rootConfig)
 		// 2b. Root local (gitignored), above root config, below the project.
 		rootLocal, err := s.loadFromPath(filepath.Join(rootDir, DirName, LocalName))
 		if err != nil {
@@ -153,29 +130,7 @@ func (s Store) LoadMerged() (Resolved, error) {
 		if err != nil {
 			return Resolved{}, err
 		}
-		res.Config = MergeConfig(res.Config, p)
-		for _, k := range Keys {
-			if v, _ := p.Get(k); v != "" {
-				res.Sources[k] = Project
-			}
-		}
-		if p.DefaultEnvironment != "" {
-			res.DefaultEnvironment = p.DefaultEnvironment
-		}
-		if p.ActiveEnvironment != "" {
-			res.ActiveEnvironment = p.ActiveEnvironment
-		}
-		if len(p.Environments) > 0 {
-			if res.Environments == nil {
-				res.Environments = make(map[string]Environment)
-			}
-			for k, v := range p.Environments {
-				res.Environments[k] = v
-			}
-		}
-		if len(p.Workspace.Members) > 0 {
-			res.Workspace = p.Workspace
-		}
+		s.overlay(&res, p)
 	}
 
 	// 4. Local (gitignored)
@@ -191,7 +146,7 @@ func (s Store) LoadMerged() (Resolved, error) {
 	return res, nil
 }
 
-// overlay applies one local layer on top of res; an empty layer changes nothing.
+// overlay applies one layer on top of res; an empty layer changes nothing.
 func (Store) overlay(res *Resolved, c Config) {
 	if isEmptyConfig(c) {
 		return
@@ -199,7 +154,7 @@ func (Store) overlay(res *Resolved, c Config) {
 	res.Config = MergeConfig(res.Config, c)
 	for _, k := range Keys {
 		if v, _ := c.Get(k); v != "" {
-			res.Sources[k] = Project // local is project-scoped
+			res.Sources[k] = Project // root, app and local layers all report as project-scoped
 		}
 	}
 	if c.DefaultEnvironment != "" {

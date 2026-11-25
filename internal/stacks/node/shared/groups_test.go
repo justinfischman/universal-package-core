@@ -115,4 +115,11 @@ func TestGroupFindings(t *testing.T) {
 	if got := GroupFindings(project, []string{"Bad Name"}, false); len(got) != 1 {
 		t.Errorf("invalid name: %+v", got)
 	}
+	broken := fstest.MapFS{
+		"package.json":                     {Data: []byte(`{"name":`)},
+		GroupDir("docs") + "/package.json": {Data: []byte(`{}`)},
+	}
+	if got := GroupFindings(broken, []string{"docs"}, false); len(got) != 1 || !strings.Contains(got[0].Message, "cannot check the workspaces") {
+		t.Errorf("malformed root manifest: %+v", got)
+	}
 }

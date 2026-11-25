@@ -33,7 +33,7 @@ func (n *NPM) install(ctx context.Context, req core.Request) (core.Result, error
 		return core.Result{}, err
 	}
 	if len(custom) == 0 {
-		return n.stream(ctx, req, invoke.Concat([]string{"install"}, req.Args), "dependencies installed", "install dependencies")
+		return n.stream(ctx, req, invoke.Concat([]string{"install"}, req.Args), shared.FullInstallSummary(req.AllGroups()), "install dependencies")
 	}
 	if err := requireManifest(req); err != nil {
 		return core.Result{}, err

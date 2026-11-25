@@ -67,6 +67,10 @@ func TestInstallBuiltinGroupsOnlyIsFullInstall(t *testing.T) {
 	if got := argv(fake); !reflect.DeepEqual(got, []string{"npm install"}) {
 		t.Errorf("argv = %q", got)
 	}
+	res, _ := call(t, core.CapInstall, core.Request{Dir: fixture(t, projectFiles), Group: "dev"}, &execx.FakeRunner{})
+	if !strings.Contains(res.Summary, "built-in groups dev are part of every install") {
+		t.Errorf("summary = %q", res.Summary)
+	}
 }
 
 func TestRemoveFromCustomGroup(t *testing.T) {

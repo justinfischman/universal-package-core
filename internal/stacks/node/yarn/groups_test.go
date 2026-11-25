@@ -72,8 +72,38 @@ func TestInstallCustomGroupClassicIsFullInstall(t *testing.T) {
 	if got := argv(fake); !reflect.DeepEqual(got, []string{"yarn install"}) {
 		t.Errorf("argv = %q", got)
 	}
-	if !strings.Contains(res.Summary, "yarn classic installs every group") {
+	if !strings.Contains(res.Summary, "yarn 1 installs every group") {
 		t.Errorf("summary hides the classic limit: %q", res.Summary)
+	}
+}
+
+// workspaces focus is built in only from yarn 4; 2.x and 3.x fall back to a full
+// install with a note.
+func TestInstallCustomGroupBerryBeforeFourIsFullInstall(t *testing.T) {
+	for _, version := range []string{"2.4.3", "3.6.4"} {
+		fake := groupRunner(version)
+		req := core.Request{Dir: fixture(t, groupFiles()), Groups: []string{"docs"}}
+		res, err := call(t, core.CapInstall, req, fake)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := argv(fake); !reflect.DeepEqual(got, []string{"yarn install"}) {
+			t.Errorf("yarn %s argv = %q", version, got)
+		}
+		if !strings.Contains(res.Summary, "subset install needs yarn 4") {
+			t.Errorf("yarn %s summary = %q", version, res.Summary)
+		}
+	}
+}
+
+func TestInstallBuiltinGroupIsFullInstallWithNote(t *testing.T) {
+	fake := groupRunner("4.1.0")
+	res, err := call(t, core.CapInstall, core.Request{Dir: fixture(t, projectFiles), Group: "dev"}, fake)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := argv(fake); !reflect.DeepEqual(got, []string{"yarn install"}) || !strings.Contains(res.Summary, "built-in groups dev") {
+		t.Errorf("argv = %q, summary = %q", got, res.Summary)
 	}
 }
 
