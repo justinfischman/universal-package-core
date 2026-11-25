@@ -55,6 +55,11 @@ func TestPythonManagersHaveNativeCheckParity(t *testing.T) {
 	if !ok {
 		t.Fatal("uv must be registered")
 	}
+	for _, oi := range pythonNativeInterfaces {
+		if !oi.has(ref) {
+			t.Errorf("uv is the reference and must implement %s", oi.name)
+		}
+	}
 	for _, id := range []string{"pip", "poetry"} {
 		pm, ok := regs.PackageManagers.Get(id)
 		if !ok {
