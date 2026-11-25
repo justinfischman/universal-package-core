@@ -1,0 +1,9 @@
+# {{.Name}}
+
+Created by `upc new app --kind library`: reusable code inside an application.
+
+- `src/lib.ts` holds the library code; `src/main.ts` is a small entry that uses it.
+- `upc install` installs the dependencies (TypeScript and the Node types).
+- `upc run dev` runs `src/main.ts` directly with Node's type stripping.
+- `upc build` compiles to `dist/`; `upc run start` runs the compiled entry.
+- There is no server, Dockerfile or compose file: it is code to import, not a service.

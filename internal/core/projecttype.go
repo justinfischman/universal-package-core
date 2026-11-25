@@ -11,6 +11,9 @@ type ScaffoldRequest struct {
 	Name           string
 	Language       string
 	PackageManager string
+	// Kind is the project type's sub-type ("cli", "library"); empty is the
+	// type's default. Only a type that declares sub-types accepts one.
+	Kind string
 	// Manager is the chosen package manager; the project type asks it to
 	// initialise the project natively instead of naming any concrete one.
 	Manager PackageManager

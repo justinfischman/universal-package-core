@@ -15,7 +15,7 @@ import (
 const ID = "node"
 
 // markers whose presence in a directory means a Node project.
-var markers = []string{"package.json", "tsconfig.json", "package-lock.json", "yarn.lock"}
+var markers = []string{"package.json", "tsconfig.json", "package-lock.json", "yarn.lock", "pnpm-lock.yaml", "bun.lock", "bun.lockb"}
 
 // TSConfigFilename is the TypeScript compiler configuration file name.
 const TSConfigFilename = "tsconfig.json"
@@ -41,7 +41,7 @@ func (Language) ID() string { return ID }
 func (Language) Kind() core.Kind { return core.KindLanguage }
 
 // PackageManagers implements core.Language.
-func (Language) PackageManagers() []string { return []string{"npm", "yarn"} }
+func (Language) PackageManagers() []string { return []string{"npm", "yarn", "pnpm", "bun"} }
 
 // DefaultPackageManager implements core.Language.
 func (Language) DefaultPackageManager() string { return "npm" }

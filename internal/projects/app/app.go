@@ -11,6 +11,7 @@ import (
 	"io/fs"
 	"path/filepath"
 	"regexp"
+	"slices"
 
 	"github.com/justinfischman/universal-package-core/internal/components/fsx"
 	"github.com/justinfischman/universal-package-core/internal/components/render"
@@ -80,6 +81,11 @@ func (t *Type) Scaffold(ctx context.Context, req core.ScaffoldRequest) (core.Res
 	if err := t.validate(req); err != nil {
 		return core.Result{}, err
 	}
+	templates, err := t.kindTemplates(req)
+	if err != nil {
+		return core.Result{}, err
+	}
+	req.Templates = templates
 	dest := filepath.Join(req.Dir, req.Name)
 	if _, err := t.fsys.Stat(dest); err == nil {
 		return core.Result{}, fmt.Errorf("%w: %s already exists", core.ErrInvalidRequest, dest)
@@ -125,6 +131,29 @@ func (t *Type) Scaffold(ctx context.Context, req core.ScaffoldRequest) (core.Res
 		Data:     map[string]string{"path": dest, "name": req.Name},
 		Commands: res.Commands,
 	}, nil
+}
+
+// Kinds are the app sub-types besides the default (a service); the language
+// provides templates for each under templates/app-<kind>.
+var Kinds = []string{"cli", "library"}
+
+// kindTemplates returns the templates to render: the request's, or, for a
+// sub-type, the language's own set for it (a sub-type replaces the service
+// files such as the Dockerfile rather than adding to them).
+func (t *Type) kindTemplates(req core.ScaffoldRequest) (fs.FS, error) {
+	if req.Kind == "" {
+		return req.Templates, nil
+	}
+	if !slices.Contains(Kinds, req.Kind) {
+		return nil, fmt.Errorf("%w: unknown app kind %q (known: %v)", core.ErrInvalidRequest, req.Kind, Kinds)
+	}
+	lang, _ := t.regs.Languages.Get(req.Language)
+	if templater, ok := lang.(core.Templater); ok {
+		if files, ok := templater.Templates(ID + "-" + req.Kind); ok {
+			return files, nil
+		}
+	}
+	return nil, fmt.Errorf("%w: %s has no %s app templates", core.ErrIncompatible, req.Language, req.Kind)
 }
 
 func (t *Type) validate(req core.ScaffoldRequest) error {

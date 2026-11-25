@@ -52,7 +52,7 @@ jobs:
           node-version: "22"
       - uses: astral-sh/setup-uv@v6
       - run: pipx install poetry
-      - run: npm install --global yarn
+      - run: npm install --global yarn pnpm bun
       - run: go test ./test/...
 
   release-snapshot:

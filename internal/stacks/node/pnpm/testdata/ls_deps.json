@@ -1,0 +1,24 @@
+[
+  {
+    "name": "demo",
+    "version": "1.0.0",
+    "path": "/work/demo",
+    "private": false,
+    "dependencies": {
+      "is-even": {
+        "from": "is-even",
+        "version": "0.1.0",
+        "resolved": "https://registry.npmjs.org/is-even/-/is-even-0.1.0.tgz",
+        "path": "/work/demo/node_modules/.pnpm/is-even@0.1.0/node_modules/is-even"
+      }
+    },
+    "devDependencies": {
+      "is-odd": {
+        "from": "is-odd",
+        "version": "2.0.0",
+        "resolved": "https://registry.npmjs.org/is-odd/-/is-odd-2.0.0.tgz",
+        "path": "/work/demo/node_modules/.pnpm/is-odd@2.0.0/node_modules/is-odd"
+      }
+    }
+  }
+]

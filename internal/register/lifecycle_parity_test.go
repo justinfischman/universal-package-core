@@ -7,7 +7,7 @@ import (
 )
 
 // Phase 6.3: every registered manager declares up, down and publish, and none
-// of them is left missing or Unsupported (the five managers all fill them).
+// of them is left missing or Unsupported (the seven managers all fill them).
 func TestEveryManagerDeclaresLifecycleCapabilities(t *testing.T) {
 	managers := defaults(t).PackageManagers.List()
 	if len(managers) == 0 {

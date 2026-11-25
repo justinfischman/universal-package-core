@@ -13,7 +13,9 @@ import (
 	"github.com/justinfischman/universal-package-core/internal/stacks/compose"
 	"github.com/justinfischman/universal-package-core/internal/stacks/just"
 	"github.com/justinfischman/universal-package-core/internal/stacks/node"
+	"github.com/justinfischman/universal-package-core/internal/stacks/node/bun"
 	"github.com/justinfischman/universal-package-core/internal/stacks/node/npm"
+	"github.com/justinfischman/universal-package-core/internal/stacks/node/pnpm"
 	"github.com/justinfischman/universal-package-core/internal/stacks/node/yarn"
 	"github.com/justinfischman/universal-package-core/internal/stacks/python"
 	"github.com/justinfischman/universal-package-core/internal/stacks/python/pip"
@@ -44,6 +46,14 @@ func Default() (core.Registries, error) {
 	if err != nil {
 		return regs, err
 	}
+	pnpmManager, err := pnpm.New(fsx.OS{})
+	if err != nil {
+		return regs, err
+	}
+	bunManager, err := bun.New(fsx.OS{})
+	if err != nil {
+		return regs, err
+	}
 	if err := regs.Languages.Register(python.New()); err != nil {
 		return regs, err
 	}
@@ -63,6 +73,12 @@ func Default() (core.Registries, error) {
 		return regs, err
 	}
 	if err := regs.PackageManagers.Register(yarnManager); err != nil {
+		return regs, err
+	}
+	if err := regs.PackageManagers.Register(pnpmManager); err != nil {
+		return regs, err
+	}
+	if err := regs.PackageManagers.Register(bunManager); err != nil {
 		return regs, err
 	}
 	if err := regs.ProjectTypes.Register(app.New(regs, fsx.OS{})); err != nil {

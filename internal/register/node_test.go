@@ -56,6 +56,13 @@ func TestNodeDetectionPriority(t *testing.T) {
 		{"yarn lock ties package-lock.json", fstest.MapFS{"package.json": {Data: []byte(`{}`)}, "yarn.lock": {}, "package-lock.json": {}}, []string{"npm", "yarn"}},
 		{"packageManager yarn beats manifest", fstest.MapFS{"package.json": {Data: []byte(`{"packageManager":"yarn@1.22.22"}`)}}, []string{"yarn"}},
 		{"package-lock.json beats packageManager yarn", fstest.MapFS{"package.json": {Data: []byte(`{"packageManager":"yarn@1.22.22"}`)}, "package-lock.json": {}}, []string{"npm"}},
+		{"pnpm lock alone", fstest.MapFS{"pnpm-lock.yaml": {}}, []string{"pnpm"}},
+		{"pnpm lock beats manifest", fstest.MapFS{"package.json": {Data: []byte(`{}`)}, "pnpm-lock.yaml": {}}, []string{"pnpm"}},
+		{"packageManager pnpm beats manifest", fstest.MapFS{"package.json": {Data: []byte(`{"packageManager":"pnpm@10.0.0"}`)}}, []string{"pnpm"}},
+		{"bun lock alone", fstest.MapFS{"bun.lock": {}}, []string{"bun"}},
+		{"legacy bun lockb beats manifest", fstest.MapFS{"package.json": {Data: []byte(`{}`)}, "bun.lockb": {}}, []string{"bun"}},
+		{"packageManager bun beats manifest", fstest.MapFS{"package.json": {Data: []byte(`{"packageManager":"bun@1.2.0"}`)}}, []string{"bun"}},
+		{"pnpm lock ties yarn lock", fstest.MapFS{"package.json": {Data: []byte(`{}`)}, "pnpm-lock.yaml": {}, "yarn.lock": {}}, []string{"pnpm", "yarn"}},
 		{"python project is not node", fstest.MapFS{"pyproject.toml": {Data: []byte("[tool.uv]\n")}}, []string{"uv"}},
 		{"two languages in one directory tie on languages, not on rank", fstest.MapFS{"uv.lock": {}, "package-lock.json": {}}, []string{"npm", "uv"}},
 	}
