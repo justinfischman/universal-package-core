@@ -30,6 +30,9 @@ func TestDetect(t *testing.T) {
 		{"tsconfig only", map[string]string{"tsconfig.json": "{}"}, true},
 		{"npm lock file", map[string]string{"package-lock.json": "{}"}, true},
 		{"classic yarn lock file", map[string]string{"yarn.lock": ""}, true},
+		{"pnpm lock file", map[string]string{"pnpm-lock.yaml": ""}, true},
+		{"bun lock file", map[string]string{"bun.lock": ""}, true},
+		{"legacy bun lock file", map[string]string{"bun.lockb": ""}, true},
 		{"plain source file", map[string]string{"index.ts": "export {}"}, false},
 		{"other language", map[string]string{"pyproject.toml": "[project]\n"}, false},
 		{"empty directory", nil, false},
@@ -54,7 +57,7 @@ func TestIsTypeScript(t *testing.T) {
 
 func TestLanguageContract(t *testing.T) {
 	regs := core.NewRegistries()
-	for _, id := range []string{"npm", "yarn"} {
+	for _, id := range []string{"npm", "yarn", "pnpm", "bun"} {
 		pm, err := coretest.NewPackageManager(id, ID)
 		if err != nil {
 			t.Fatal(err)
@@ -68,9 +71,11 @@ func TestLanguageContract(t *testing.T) {
 
 func TestTemplatesPerProjectType(t *testing.T) {
 	want := map[string][]string{
-		"script":  {".gitignore", "tsconfig.json"},
-		"package": {".gitignore", "src/index.ts", "test/index.test.ts.tmpl", "tsconfig.json"},
-		"app":     {".gitignore", "APP.md.tmpl", "Dockerfile", "compose.yaml", "src/main.ts", "tsconfig.json"},
+		"script":      {".gitignore", "tsconfig.json"},
+		"package":     {".gitignore", "src/index.ts", "test/index.test.ts.tmpl", "tsconfig.json"},
+		"app":         {".gitignore", "APP.md.tmpl", "Dockerfile", "compose.yaml", "src/main.ts", "tsconfig.json"},
+		"app-cli":     {".gitignore", "APP.md.tmpl", "src/main.ts", "tsconfig.json"},
+		"app-library": {".gitignore", "APP.md.tmpl", "src/lib.ts", "src/main.ts", "tsconfig.json"},
 	}
 	for projectType, files := range want {
 		sub, ok := New().Templates(projectType)

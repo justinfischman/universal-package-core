@@ -1,0 +1,16 @@
+{
+  "is-even": {
+    "current": "0.1.0",
+    "latest": "1.0.0",
+    "wanted": "0.1.2",
+    "isDeprecated": false,
+    "dependencyType": "dependencies"
+  },
+  "is-odd": {
+    "current": "2.0.0",
+    "latest": "3.0.1",
+    "wanted": "2.0.0",
+    "isDeprecated": false,
+    "dependencyType": "devDependencies"
+  }
+}

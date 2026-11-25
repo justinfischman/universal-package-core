@@ -1,0 +1,3 @@
+/work/demo node_modules (4 installed)
+├── is-even@0.1.0
+└── is-odd@2.0.0
