@@ -26,6 +26,29 @@ brew uninstall upc
 brew untap justinfischman/upc     # optional: remove the tap
 ```
 
+## Install script (curl)
+
+`scripts/install.sh` installs a release archive for macOS or Linux. It downloads the archive and `checksums.txt`, verifies the archive's sha256, and installs only on a match; any failure aborts with nothing installed. It does not use sudo: the default target is `$HOME/.local/bin`.
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/justinfischman/universal-package-core/main/scripts/install.sh | sh
+```
+
+Set `UPC_VERSION` (for example `v0.2.0`; default is the latest release) and `UPC_INSTALL_DIR` to change the version or directory. To read the script before running it, download it first and run `sh install.sh`. Releases are not signed yet (signing is deferred until the repository is public); the checksum protects against corruption, not against a compromised release.
+
+## Verify a download manually
+
+Each release publishes `checksums.txt` (sha256) and one SPDX SBOM per archive (`*.sbom.json`). With the archive and `checksums.txt` in one directory:
+
+```sh
+# Linux
+sha256sum --ignore-missing -c checksums.txt
+# macOS
+shasum -a 256 --ignore-missing -c checksums.txt
+```
+
+The line for your archive must print `OK`.
+
 ## go install
 
 Needs a Go toolchain that satisfies the `go` line in `go.mod`.
