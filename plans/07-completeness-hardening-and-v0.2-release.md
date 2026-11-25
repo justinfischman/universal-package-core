@@ -203,11 +203,12 @@ Follow `docs/RELEASING.md`. **The owner confirms before tagging and publishing.*
 | 7.3 Verify and document `go install` | documentation-maintainer | done | cea5903 (ran go install, v0.1.0) |
 | 7.3 Fix stale `docs/README.md:5,:141` | documentation-maintainer | done | 136e650 (also fixed :7) |
 | 7.3 Reconcile exit-code mismatch note | documentation-maintainer | done | 136e650 (CHANGELOG Known gaps) |
-| 7.4 B1 config/doctor | software-engineer, test-engineer, code-reviewer | pending | |
-| 7.4 B2 workflow commands | software-engineer, test-engineer, code-reviewer | pending | |
+| 7.4 B1 config/doctor | software-engineer, test-engineer, code-reviewer | done (merged) | 31ab4e6, 73c701b; review fixes applied; main verified in clean worktree (build, vet, test). Open: doctor group checks cover npm/yarn only (uv, poetry, pip not done); real npm/yarn runs deferred to 7.6; `config get` masking check goes to 7.6 security review |
+| 7.4 B2 workflow commands | software-engineer, test-engineer, code-reviewer | done (merged, partial) | 9fb5a31; review no blockers. GAP -> B2b: no real stack implements core.NativeDryRunner or core.MemberLister, so `publish --native-dry-run` and workspace member check are inert in production; also glob expansion in members compare, up-offer swallows prompt error (upoffer.go:43) |
+| 7.4 B2b stack implementations of NativeDryRunner/MemberLister | software-engineer, code-reviewer | pending | after B4 merge |
 | 7.4 B3 Windows enablement | software-engineer, test-engineer, code-reviewer | pending | |
 | 7.4 B4 pnpm, bun, sub-types, justfile export | software-engineer, test-engineer, code-reviewer | pending | |
-| 7.4 B5 languages ADR and spike | software-engineer, code-reviewer | pending | |
+| 7.4 B5 languages ADR and spike | software-engineer, code-reviewer | done (merged) | 2cf71f1, dc201e3; review no blockers; ADR 0019 (0017 reserved for Windows decision, 0018 dropped with D7.3); golang.go has no own test file |
 | 7.4 B6 supply chain | software-engineer, code-reviewer, security-auditor | pending | |
 | 7.4 Merge B1, B2, B4, B3, B6 and batch changelog | change-coordinator | pending | |
 | 7.5 Docs and testing sweep | documentation-maintainer, test-engineer | pending | |
