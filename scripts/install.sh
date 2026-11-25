@@ -63,7 +63,7 @@ esac
 
 tag="${UPC_VERSION:-}"
 if [ -z "$tag" ]; then
-	final="$(curl --proto '=https' --proto-redir '=https' --tlsv1.2-fsSL -o /dev/null -w '%{url_effective}' "${base}/latest")" ||
+	final="$(curl --proto '=https' --proto-redir '=https' --tlsv1.2 -fsSL -o /dev/null -w '%{url_effective}' "${base}/latest")" ||
 		die "could not resolve the latest release"
 	tag="${final##*/}"
 fi

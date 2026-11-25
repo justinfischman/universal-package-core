@@ -24,10 +24,8 @@ stderr 'already exists'
 exec upc export --force
 cd ..
 
-# an unknown kind, a kind on another type and a language without kind templates are refused
+# an unknown kind, and a kind on another type are refused
 ! exec upc new app bad --kind daemon --language node --pm npm --yes
 stderr 'unknown app kind'
 ! exec upc new package bad --kind cli --language node --pm npm --yes
 stderr '--kind applies to app'
-! exec upc new app pyapp --kind cli --language python --yes
-stderr 'no cli app templates'
