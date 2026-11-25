@@ -190,10 +190,10 @@ Follow `docs/RELEASING.md`. **The owner confirms before tagging and publishing.*
 
 | Task | Agent | Status | Evidence/commit |
 |---|---|---|---|
-| 7.0 Owner decisions (D7.1 to D7.5) | change-coordinator | pending | |
-| 7.1a Windows failure triage | cache-explorer-agent | pending | |
-| 7.1b Adapter/register interface map | cache-explorer-agent | pending | |
-| 7.1c Exit-code map and mismatch | cache-explorer-agent | pending | |
+| 7.0 Owner decisions (D7.1 to D7.5) | change-coordinator | done | D7.1 MIT; D7.2 Windows if simple + gopsutil; D7.3 cosign deferred until public; D7.4 ADR+spike; D7.5 v0.2.0. Commit 94aaf85 |
+| 7.1a Windows failure triage | cache-explorer-agent | done (partial) | tc_a0cf24f475: 6 groups G1-G6, small stdlib fixes, gopsutil fixes none of G1-G5; unverified (no Windows run), B3 starts by re-enabling CI Windows job |
+| 7.1b Adapter/register interface map | cache-explorer-agent | done | tc_b3a5543235, tc_f07ac9cbcc (register.go line numbers approximate) |
+| 7.1c Exit-code map and mismatch | cache-explorer-agent | done | tc_04ad099e09: code exits 2 (errors.go:71), only plan 03:40 says 1; docs fix only |
 | 7.2 Pilot `config show --origin` (locked steps here) | software-engineer, test-engineer, code-reviewer | pending | |
 | 7.3 LICENSE | documentation-maintainer | pending | |
 | 7.3 Root README.md | documentation-maintainer | pending | |
