@@ -29,7 +29,11 @@ Tagged `v0.1.0`; installable with `brew install justinfischman/upc/upc` (`docs/R
 
 ## [Unreleased]
 
+### Known gaps
+- Exit-code mismatch with plan 03: `plans/03-python-stacks-and-package-type.md` (line 40) says a cross-language `config set pm` exits 1. The code exits 2: `core.ExitCode` maps `ErrIncompatible` and `ErrInvalidRequest` to `ExitUsage` (`internal/core/errors.go:71`). Code is authoritative and ADR-0009 records 2; `plans/README.md` and the plan are unchanged.
+
 ### Added
+- Root `README.md`, `LICENSE` (MIT), `SECURITY.md`, `CONTRIBUTING.md` and `docs/INSTALL.md` (upgrade, uninstall, `go install`).
 - Pre-development documentation: `docs/README.md`, `docs/ARCHITECTURE.md`, ADRs 0001-0005.
 - Phase plans in `plans/` (01 foundation through 05 environments/workspace/release).
 - Project spec (`project.devlang`), launch task, Go module and `cmd/upc` placeholder committed as the baseline.
