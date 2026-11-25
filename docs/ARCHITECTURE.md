@@ -1,6 +1,6 @@
 # Architecture
 
-Status: **Phases 1 to 4 and 6.0 to 6.7 built** (config layering, environments and groups, `up`/`down`/`publish`, workspaces, `app`, drift, hardening; the `v0.1.0` release awaits owner authorization and 6.8 is the final audit) (core, components, config, CLI, and the MVP stack: Python + uv + `script`). This document describes the design from `project.devlang`. Sections marked *(planned)* are not built yet; see `plans/` for the phase that builds each one. Update this file with every change.
+Status: **Phases 1 to 4, 6.0 to 6.7 and Plan 07 built** (config layering, environments and groups, `up`/`down`/`publish`, workspaces, `app`, drift, hardening; `v0.1.0` was released 2026-11-17; Plan 07 adds pnpm, bun, Windows, `export`, `config show --origin`, `publish --native-dry-run` and `workspace check` member comparison, unreleased as 0.2.0, see section 17) (core, components, config, CLI, and the MVP stack: Python + uv + `script`). This document describes the design from `project.devlang`. Sections marked *(planned)* are not built yet; see `plans/` for the phase that builds each one. Update this file with every change.
 
 ## 1. Purpose and boundaries
 
@@ -91,8 +91,8 @@ See `project.devlang` `cli-commands`. Phase mapping:
 | 1 (**built**) | `version`, `completion`, global flags, `config get/set/validate` |
 | 2 (**built, MVP**) | `new script`, `init`, `add`, `remove`, `list`, `install`, `run`, `update`, `outdated`, `doctor` (uv) |
 | 3 (**built**) | `build`, `test`, `lint`, `audit`, `new package`, `config set pm` switch, pip/poetry. `publish` CLI added in Phase 6.3 |
-| 4 | Node (`npm`, `yarn`) for all of the above |
-| 5 (**built via Phase 6**) | `env list|use|show|add|remove` and `--env` (**built**, ADR-0006; `internal/components/envs`, active name passed as `UPC_ENV` through the runner modules receive); `workspace check`, `new app` (**built**, Phase 6.4/6.5); the Homebrew release is configured but unpublished (`docs/RELEASING.md`); `up`/`down`/`publish` are built (Phase 6.3, ADR-0016) |
+| 4 | Node (`npm`, `yarn`) for all of the above; pnpm and bun added in Plan 07 |
+| 5 (**built via Phase 6**) | `env list|use|show|add|remove` and `--env` (**built**, ADR-0006; `internal/components/envs`, active name passed as `UPC_ENV` through the runner modules receive); `workspace check`, `new app` (**built**, Phase 6.4/6.5); the Homebrew release was published with `v0.1.0` (`docs/RELEASING.md`); `up`/`down`/`publish` are built (Phase 6.3, ADR-0016) |
 
 ## 8. Testing strategy
 
@@ -257,7 +257,7 @@ Decision record: ADR-0016 (Accepted).
 
 **Tests.** `internal/register/lifecycle_parity_test.go` fails if any manager lacks `up`, `down` or `publish`.
 
-**Known gaps (ADR-0016 follow-ups).** Native `publish --dry-run` per manager; no offer to create an up script when none exists; run state under `-w` keys off the request directory, not the member. Closed in 6.7: config `scripts`/`up` argv lists (`internal/cli/configwire.go`), Windows process-tree kill and a pid-reuse guard (start time in `up.pid`), `down` keeping `up.log`.
+**Known gaps (ADR-0016 follow-ups).** Run state under `-w` keys off the request directory, not the member. Closed later (status 2026-11-25): native `publish --dry-run` is `publish --native-dry-run` (Plan 07, section 17) and `up` offers to create an up command (`internal/cli/upoffer.go`). Closed in 6.7: config `scripts`/`up` argv lists (`internal/cli/configwire.go`), Windows process-tree kill (now gopsutil, not `taskkill`) and a pid-reuse guard (start time in `up.pid`), `down` keeping `up.log`.
 
 ## 15. Phase 6.4: workspace, apps and contracts *(built)*
 
@@ -279,5 +279,25 @@ Decision record: ADR-0014 (Accepted). Config only: no package graph between apps
 
 `doctor` reports drift for every manager. It is file-based: each manager's `Diagnose` reads the lockfile or requirements file and the install directory (`.venv`, `node_modules`) and runs no tool.
 - Python (`internal/stacks/python/shared/envdrift.go`): uv and poetry compare every package the lock requires with `.venv` (`uv/drift.go`, `poetry/drift.go`, so transitive packages included; poetry skips optional, non-main-group and marker-guarded ones); pip compares exact pins in the requirements file (`pip/pip.go`).
-- Node (`internal/stacks/node/shared/envdrift.go`): npm and yarn compare the lockfile version of each dependency declared in `package.json` with `node_modules`; transitive packages are not checked. A project with no `node_modules` (not installed, or Plug'n'Play) reports nothing. pnpm is not supported.
+- Node (`internal/stacks/node/shared/envdrift.go`): npm and yarn compare the lockfile version of each dependency declared in `package.json` with `node_modules`; transitive packages are not checked. A project with no `node_modules` (not installed, or Plug'n'Play) reports nothing. pnpm and bun have their own checks against `pnpm-lock.yaml` and the bun lockfile (`internal/stacks/node/pnpm/drift.go`, `internal/stacks/node/bun/drift.go`).
 - Manager-selection drift (several managers' files present, or config naming another manager) is separate and lives in `internal/cli/drift.go`.
+
+## 17. Plan 07: pnpm, bun, Windows, workflow commands *(built, unreleased as 0.2.0)*
+
+Decisions: ADR-0017 (Windows), ADR-0019 (additional languages, design only), ADR-0015 (groups for every manager).
+
+- **Managers.** Python: uv, pip, poetry. Node: npm, yarn, pnpm, bun (`internal/stacks/node/{npm,yarn,pnpm,bun}`, shared helpers in `node/shared`). All seven are registered in `internal/register/register.go`.
+- **Commands added.** `config show --origin` (`internal/cli/config_show.go`), `export` (`internal/cli/export.go`, `internal/stacks/just/export.go`), `publish --native-dry-run` (`core.NativeDryRunner`), `workspace check` also compares config `members` with the manager's native list (`core.MemberLister`), `new app --kind cli|library`. The CLI reference is in `docs/README.md` (Commands).
+- **Windows.** Process control is gopsutil-based (`internal/components/execx/proctree.go`), CI runs on ubuntu, macos and windows, release archives for Windows are `.zip` (`.goreleaser.yaml`).
+
+**Capability parity.** Tests fail when a manager drops a capability or optional interface without a documented exception: `internal/register/node_parity_test.go` (npm, yarn, pnpm, bun: fixed expected level per capability, no exceptions), `internal/register/python_parity_test.go` (pip and poetry against uv, with reasons) and `internal/register/lifecycle_parity_test.go` (`up`, `down`, `publish` for every manager).
+
+| Manager | 15 core capabilities | `publish --native-dry-run` | Workspace member lister | `doctor` group check |
+|---|---|---|---|---|
+| uv | yes | yes | yes | yes |
+| pip | yes | no (twine has no dry-run flag) | no (no workspaces) | yes |
+| poetry | yes | yes | no (no workspace feature) | yes |
+| npm | yes | yes | yes | yes |
+| yarn | yes | Berry only; classic refuses `publish --dry-run` (`internal/stacks/node/yarn/nativedryrun.go`) | yes | yes |
+| pnpm | yes | yes | yes | yes |
+| bun | yes | yes | yes | yes |

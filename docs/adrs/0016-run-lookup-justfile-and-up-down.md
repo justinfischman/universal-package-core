@@ -19,12 +19,13 @@ ADR-0008 (accepted, not edited) fixes the `run` lookup order. Phase 6 adds an op
 
 ## Follow-ups
 Not blocking acceptance; carry to 6.7 or later (plans/06, Phase 6.3 step 6).
-- a. Native `publish --dry-run` per manager (today the global `--dry-run` prints the plan only).
+- a. DONE (Plan 07, 2026-11-25): `upc publish --native-dry-run` builds, then runs the manager's own publish check (`core.NativeDryRunner`) for every manager except pip (twine has no dry-run flag) and yarn classic (refuses; Berry works). The global `--dry-run` still prints the plan only. Status note; the original text above is kept.
 - b. Offer to create an up script when none exists.
 - c. Run state under `-w` keys off the request directory, not the member.
 - d. DONE (6.7): see the amendment below.
-- e. DONE (6.7): Windows `Stop` kills the process tree (`taskkill /T /F`); the pid file records the process start time (`Controller.StartedAt`; originally `ps -o lstart` / `GetProcessTimes`, now gopsutil `CreateTime`) and a pid whose start time differs is neither reported running nor signalled.
+- e. DONE (6.7): Windows `Stop` kills the process tree (`taskkill /T /F`; status note 2026-11-25: process control now uses gopsutil, commit c72ce0a, so `taskkill`, `ps` and process-group signals are no longer used); the pid file records the process start time (`Controller.StartedAt`; originally `ps -o lstart` / `GetProcessTimes`, now gopsutil `CreateTime`) and a pid whose start time differs is neither reported running nor signalled.
 - f. DONE (6.7): `down` removes only the pid file; `up.log` stays for diagnosis until the next `up` replaces it.
+- b. Status note 2026-11-25: Plan 07 added an interactive offer (`internal/cli/upoffer.go`) that saves `up = ["upc", "run", <recipe>]` to the project's `config.toml` (no manifest edit), which supersedes the deferral below for that case; the reasoning below is kept as history.
 - b stays deferred: no manager capability can create a script without editing the manifest (`add --script` records dependencies, `init`/`new` do not add scripts), and this ADR forbids editing manifests directly.
 
 ## Amendment (Phase 6.7)

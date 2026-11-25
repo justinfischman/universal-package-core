@@ -1,7 +1,7 @@
 # Releasing upc
 
 Releases are built by GoReleaser (`.goreleaser.yaml`) from a `v*` tag via
-`.github/workflows/release.yml`. Artifacts: darwin and linux (amd64, arm64),
+`.github/workflows/release.yml`. Artifacts: darwin, linux and windows (amd64, arm64; `.tar.gz`, and `.zip` for Windows),
 `checksums.txt`, one SPDX SBOM per archive (`*.sbom.json`, from syft), and a Homebrew formula. Binaries are built
 with `CGO_ENABLED=0`, `-trimpath`, and `-s -w`; `version`, `commit` and `date`
 are injected into `main.version`, `main.commit` and `main.date`
@@ -45,8 +45,8 @@ the release assets, so `brew install` works only while the repository is public.
 2. OWNER ACTION: tag and push, which triggers the publish workflow:
 
    ```sh
-   git tag -a v0.1.0 -m "v0.1.0"
-   git push origin v0.1.0
+   git tag -a vX.Y.Z -m "vX.Y.Z"    # next planned: v0.2.0
+   git push origin vX.Y.Z
    ```
 
 3. Confirm the GitHub release has all archives and `checksums.txt`, and that
@@ -57,7 +57,7 @@ the release assets, so `brew install` works only while the repository is public.
 ```sh
 brew tap justinfischman/upc https://github.com/justinfischman/universal-package-core
 brew install justinfischman/upc/upc
-upc version        # upc 0.1.0, with commit and date
+upc version        # upc <version>, with commit and date
 brew test upc
 ```
 
@@ -83,4 +83,4 @@ lists `*.sbom.json` assets.
 - While the repository is private, `brew install` of the formula needs a
   GitHub token (`HOMEBREW_GITHUB_API_TOKEN`) and the release assets are not
   publicly downloadable; make the repository public before announcing the tap.
-- Pin updates: action versions are pinned to major tags in the workflows.
+- Pin updates: actions and the syft and goreleaser versions are pinned (actions by commit SHA with a version comment) in `release.yml` and `ci.yml`; bump them together, dependabot proposes the action updates.

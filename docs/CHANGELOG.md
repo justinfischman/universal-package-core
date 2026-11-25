@@ -2,6 +2,30 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Update with every change.
 
+## [Unreleased] - 0.2.0 (Plan 07)
+
+### Added
+- `upc config show --origin`: shows the layer each value came from.
+- Workflow commands: `publish --native-dry-run` (build, then the manager's own publish check; sends nothing), `up` offers to create an up script, `workspace check` compares config `members` with the manager's native member list, `up|down --app`.
+- Native dry-run and member listing for every manager except the exceptions below.
+- `upc export`: writes the project's commands as a justfile of `upc` recipes (kept unless `--force`).
+- pnpm and bun package managers, with dependency groups, drift and capability parity tests.
+- `upc new app --kind cli|library` for Node and Python (default: a service).
+- Dependency groups for npm and yarn, root-level `local.toml`, and `doctor` group checks for uv, poetry, pip, npm, yarn, pnpm and bun.
+- Windows support: the CI matrix runs ubuntu, macos and windows; goreleaser builds Windows archives (amd64, arm64) as `.zip`; process handling already uses gopsutil (since 0.1.0, ADR-0017).
+- Supply chain: an SPDX SBOM per archive (syft), `scripts/install.sh` that verifies the archive's sha256 against `checksums.txt` before installing, all GitHub Actions pinned by commit SHA, dependabot for Actions.
+- ADR-0019 (additional language stacks) and an unregistered Go stack spike.
+- Documentation sweep (7.5): command reference for every verb and flag, a capability-parity table, `docs/RELEASING.md` aligned with `.goreleaser.yaml` and `release.yml`, status notes on ADR-0016.
+
+### Known limits
+- yarn 2/3 and classic: installing a custom dependency group is a full install (`workspaces focus` is built in only from yarn 4; ADR-0015).
+- yarn classic refuses `publish --dry-run` (no such flag).
+- pip has no native publish dry-run (twine has none) and no member lister (pip has no workspaces); poetry has no member lister (no workspaces).
+- Scoop and winget manifests are not included.
+- cosign signing is deferred until the repository is public.
+- Windows support is unverified until the first CI run on `windows-latest`.
+- Not verified here: the SBOM step end to end (no syft), `install.sh` against real GitHub URLs, shellcheck, and pnpm parsers beyond fixtures.
+
 ## [0.1.0] - 2026-11-17
 Tagged `v0.1.0`; installable with `brew install justinfischman/upc/upc` (`docs/RELEASING.md`). The Homebrew tap is this repository (`Formula/`).
 
@@ -26,29 +50,6 @@ Tagged `v0.1.0`; installable with `brew install justinfischman/upc/upc` (`docs/R
 - From 6.2: all done in 0.2.0 (npm/yarn groups, `doctor` group checks for every manager, root-level `local.toml`, `config show --origin`); see Unreleased.
 - From 6.7: native `publish --dry-run`, offer to create an up script, workspace-member comparison and app sub-types (CLI, library) are done in 0.2.0 (see Unreleased). Still deferred: `--app X` with dependencies, `${...}` escape syntax.
 - Release: none; `v0.1.0` was tagged and the `brew install` check passed once the repository was public.
-
-## [Unreleased] - 0.2.0 (Plan 07)
-
-### Added
-- `upc config show --origin`: shows the layer each value came from.
-- Workflow commands: `publish --native-dry-run` (build, then the manager's own publish check; sends nothing), `up` offers to create an up script, `workspace check` compares config `members` with the manager's native member list, `up|down --app`.
-- Native dry-run and member listing for every manager except the exceptions below.
-- `upc export`: writes the project's commands as a justfile of `upc` recipes (kept unless `--force`).
-- pnpm and bun package managers, with dependency groups, drift and capability parity tests.
-- `upc new app --kind cli|library` for Node and Python (default: a service).
-- Dependency groups for npm and yarn, root-level `local.toml`, and `doctor` group checks for uv, poetry, pip, npm, yarn, pnpm and bun.
-- Windows support: the CI matrix runs ubuntu, macos and windows; goreleaser builds Windows archives (amd64, arm64) as `.zip`; process handling uses gopsutil (ADR-0017).
-- Supply chain: an SPDX SBOM per archive (syft), `scripts/install.sh` that verifies the archive's sha256 against `checksums.txt` before installing, all GitHub Actions pinned by commit SHA, dependabot for Actions.
-- ADR-0019 (additional language stacks) and an unregistered Go stack spike.
-
-### Known limits
-- yarn 2/3 and classic: installing a custom dependency group is a full install (`workspaces focus` is built in only from yarn 4; ADR-0015).
-- yarn classic refuses `publish --dry-run` (no such flag).
-- pip has no native publish dry-run (twine has none) and no member lister (pip has no workspaces); poetry has no member lister (no workspaces).
-- Scoop and winget manifests are not included.
-- cosign signing is deferred until the repository is public.
-- Windows support is unverified until the first CI run on `windows-latest`.
-- Not verified here: the SBOM step end to end (no syft), `install.sh` against real GitHub URLs, shellcheck, and pnpm parsers beyond fixtures.
 
 ### Known gaps
 - Exit-code mismatch with plan 03: `plans/03-python-stacks-and-package-type.md` (line 40) says a cross-language `config set pm` exits 1. The code exits 2: `core.ExitCode` maps `ErrIncompatible` and `ErrInvalidRequest` to `ExitUsage` (`internal/core/errors.go:71`). Code is authoritative and ADR-0009 records 2; `plans/README.md` and the plan are unchanged.

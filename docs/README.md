@@ -1,10 +1,10 @@
 # universal-package-core (`upc`)
 
-One place to create, install and manage packages and apps across languages. `upc` routes to the native package managers (uv, poetry, pip, npm, yarn, ...). It never replaces them.
+One place to create, install and manage packages and apps across languages. `upc` routes to the native package managers (Python: uv, pip, poetry; Node: npm, yarn, pnpm, bun). It never replaces them.
 
-**Status: `v0.1.0` released (2026-11-17) and installable with Homebrew (see Install).** Working today: Node (TypeScript) with `npm` or `yarn` (classic 1.x is tested; berry is supported only for the commands that differ and is not E2E tested, see ADR-0010), and Python with `uv`, `pip` (keeps `requirements.txt` and a `.venv` for you) and `poetry`; the `script`, `package` and `app` project types: `new`, `init`, `add`, `remove`, `list`, `install`, `update`, `outdated`, `run`, `build`, `test`, `lint`, `audit`, `up`, `down`, `publish`, `doctor` (including environment drift), `config` (including `config set pm`), `env list|use|show|add|remove` with `--env`, `workspace check`, `version`, `completion` and the global flags. Deferred: npm/yarn dependency groups, `doctor` group checks, root-level `local.toml`, `config show --origin`, pnpm and bun. See `plans/06-agnostic-core-environments-multiapp-release.md`.
+**Status: `v0.1.0` released (2026-11-17) and installable with Homebrew (see Install); `0.2.0` is unreleased (Plan 07, see `docs/CHANGELOG.md`).** Working today: Python with `uv`, `pip` (keeps `requirements.txt` and a `.venv` for you) and `poetry`; Node (TypeScript) with `npm`, `yarn` (classic 1.x is tested; berry is supported only for the commands that differ and is not E2E tested, see ADR-0010), `pnpm` and `bun`; the `script`, `package` and `app` project types (`new app --kind cli|library` for a CLI or library app; default is a service); every command in the reference under Commands, including `config show --origin`, `export` (a justfile of `upc` recipes), `publish --native-dry-run`, `workspace check` and `env add|remove|list|use|show` with `--env`. Dependency groups work for all seven managers. Deferred: other languages (ADR-0019 is a design plus an unregistered Go spike), Scoop and winget manifests, release signing. See `plans/06-agnostic-core-environments-multiapp-release.md` and `plans/07-*.md`.
 
-**Supported platforms:** macOS and Linux (built, linted and tested in CI, plus an E2E job against real uv, poetry, npm and yarn). Windows is not supported yet (backlog); Homebrew is the supported distribution channel (`go install` also works, see `docs/INSTALL.md`).
+**Supported platforms:** macOS, Linux and Windows (amd64 and arm64). CI runs the `check` job on ubuntu, macos and windows; the Windows job and archive are unverified until the first run on `windows-latest` (ADR-0017). Homebrew is the channel for macOS and Linux; `scripts/install.sh` installs a checksum-verified release archive on macOS and Linux; Windows uses the `.zip` release archive (`go install` also works everywhere, see `docs/INSTALL.md`).
 
 ## Goals
 - Create easily installable apps and packages (installable by `upc`).
@@ -19,12 +19,16 @@ One place to create, install and manage packages and apps across languages. `upc
 ```sh
 upc new script hello --yes        # python + uv by default; creates ./hello/hello.py
 upc new app web --language python --pm uv --yes   # server, Dockerfile, compose.yaml, dev/start scripts
+upc new app tool --kind cli --language node --pm pnpm --yes   # --kind cli|library for a CLI or library app
 cd web && upc up 8080             # start the dev/start script in the background with a port argument
 upc down                          # stop it
 upc new package mylib --pm poetry --yes   # src layout, tests, README, license placeholder
 upc new package mylib --language node --pm npm --yes   # TypeScript library: tsc build, node:test tests
 upc build && upc test                 # generic commands, routed to the project manager
 upc config set pm uv                  # switch managers within a language
+upc config show --origin              # every setting and the layer each value came from (local.toml values masked)
+upc export                            # write a justfile whose recipes call upc (--force to overwrite)
+upc workspace check                   # compare each app's contract with its lock (--update accepts changes)
 cd hello
 upc add rich                      # uv add --script hello.py rich
 upc add rich --dry-run            # print the routed command, change nothing
@@ -37,7 +41,7 @@ upc doctor                        # tool, config drift, capability matrix; --yes
 cd existing-uv-project && upc init   # records the choice, runs install, edits no manifest
 upc add rich -v                   # --verbose logs every routed command
 ```
-If `uv` is missing, `upc` offers to install it and then continues; with `--yes` it installs without asking, and non-interactively without `--yes` it fails with instructions (exit code 4). Unsupported capabilities (for example `up` and `down`) fail with exit code 3. `test` and `lint` need pytest / ruff to be declared by the project (or a `test`/`lint` script); otherwise they fail with exit code 3 and say how to enable them. A new `pip` package has no `.venv` and a new `poetry` package has no installed dependencies until `upc install`; run it before `upc test`. A cross-language `config set pm` is refused with exit code 2.
+If `uv` is missing, `upc` offers to install it and then continues; with `--yes` it installs without asking, and non-interactively without `--yes` it fails with instructions (exit code 4). A capability a manager declares unsupported fails with exit code 3. `test` and `lint` need pytest / ruff to be declared by the project (or a `test`/`lint` script); otherwise they fail with exit code 3 and say how to enable them. A new `pip` package has no `.venv` and a new `poetry` package has no installed dependencies until `upc install`; run it before `upc test`. A cross-language `config set pm` is refused with exit code 2.
 
 ### Run, up, down and publish
 ```sh
@@ -47,13 +51,14 @@ upc up --dry-run                  # print the command, start nothing
 upc down                          # stops what `upc up` started; a crashed process just has its record cleaned
 upc up -w api                     # -w/--member works on up, down, publish and the other capability commands
 upc publish --dry-run             # print the build and publish commands, run nothing
+upc publish --native-dry-run      # build, then the manager's own publish check (e.g. npm publish --dry-run); sends nothing
 upc publish                       # build, ask for confirmation, then publish with the manager's own login
 upc publish --yes                 # skip the question (required when not interactive)
 ```
 - `up` records `up.pid` and `up.log` under `.universal-package-core/run/` in the app directory (`upc init` adds it to `.gitignore`). `down` removes `up.pid` and keeps `up.log`. `scripts.<name>` and `up` in `config.toml` (argv lists) take precedence over manifest scripts.
 - A `justfile` is optional. If one exists and `just` is installed, its recipes are the last source `upc run` tries, after the project's own scripts; without `just` nothing changes.
 - With no `up`/`dev`/`start` script, `upc up` falls back to `docker-compose.yml` or `compose.yaml` (`docker compose up`); `upc down` then runs `docker compose down`.
-- `publish --dry-run` currently only prints the plan; it does not call the manager's native dry run. Credentials are never stored.
+- `publish --dry-run` (the global flag) only prints the plan. `publish --native-dry-run` builds, then runs the manager's own publish check and sends nothing (not for pip, which has none, and not for yarn classic, which refuses it; see Capability parity). Credentials are never stored.
 
 ### Node (TypeScript) with npm
 ```sh
@@ -80,7 +85,7 @@ upc env use dev                   # validates it exists, then records it as acti
 upc env show                      # active environment: name and file path
 upc env add qa --file config/qa.env --groups test,docs   # declare an environment (groups are dependency groups)
 upc env remove qa                 # drop the declaration; the env file is never touched
-upc install --env qa              # install that environment's groups (uv, poetry, pip; npm/yarn reject groups)
+upc install --env qa              # install that environment's groups (all seven managers support groups)
 upc up --env qa 8123              # --env also works on run, test and up, for one command; flags go before the script/args
 ```
 `upc` never reads or prints env values. While an environment is active, every command it runs for you gets `UPC_ENV=<name>`. `doctor` warns when the active environment or its file is gone. Config: `[environments.dev] file = "config/dev.env"` and `default_environment = "dev"` (ADR-0006).
@@ -120,11 +125,48 @@ upc workspace check --update      # accept the current contracts and write the l
 - YAML contracts are parsed by `go.yaml.in/yaml/v3`: anchors, aliases and merge keys are resolved; numbers take their canonical form; multi-document files, empty files, duplicate keys and non-string keys are errors (see ADR-0014).
 
 ## Commands
-`init`, `new {script|package|app}`, `add|remove|list|install`, `update|outdated|audit`, `run`, `build|test|lint`, `up|down`, `env`, `config`, `workspace`, `doctor`, `publish`, `completion`, `version`.
+Global flags on every command: `--dry-run`, `--global`, `--json`, `--project <dir>`, `-v/--verbose`, `-y/--yes`. Non-interactive mode for CI. `-w/--member` selects a workspace member. Source of truth: `upc --help` and `upc <command> --help`.
 
-Global flags: `--dry-run`, `--json`, `--yes`, `--verbose`, `--project {path}`, `--global`. Non-interactive mode for CI.
+| Command | Flags |
+|---|---|
+| `new <type> [name]` (`script`, `package`, `app`) | `--language`, `--pm`, `--name`, `--kind cli\|library` (app only; default: a service) |
+| `init` | none |
+| `add <package>...` | `--version`, `--constraint`, `-D/--dev`, `--group`, `-w`, `--script` |
+| `remove <package>...` | `-D/--dev`, `--group`, `-w`, `--script` |
+| `list`, `outdated` | `-w`, `--script` |
+| `install` | `-D/--dev`, `--group`, `--env`, `-w`, `--script` |
+| `update [package]...` | `-w`, `--script` |
+| `run <script> [args...]` | `--env`, `-w` |
+| `build`, `lint`, `audit` | `-w` |
+| `test` | `--env`, `-w` |
+| `up [args...]` | `--all`, `--app`, `--env`, `-w` |
+| `down` | `--all`, `--app`, `-w` |
+| `publish [args...]` | `-w`, `--native-dry-run` |
+| `doctor` | none |
+| `config get [key]`, `config set <key> <value>`, `config validate` | none |
+| `config show` | `--origin` |
+| `env`, `env list`, `env show`, `env use <name>`, `env remove <name>` | none |
+| `env add <name>` | `--file`, `--groups` |
+| `export` | `--force` |
+| `workspace list` | none |
+| `workspace check` | `--update` |
+| `completion <shell>` | `--no-descriptions` |
+| `version` | none |
 
-Supported stacks: Python with `uv`, `pip` and `poetry`; Node with `npm` and `yarn` (classic 1.x; berry only for update, audit and publish). Next: other PMs. Project types: `script`, `package` and `app` are built.
+Supported stacks: Python with `uv`, `pip` and `poetry`; Node with `npm`, `yarn` (classic 1.x tested; berry only for update, audit and publish), `pnpm` and `bun`. Project types: `script`, `package` and `app`.
+
+### Capability parity
+Every manager declares all 15 core capabilities (`internal/stacks/python/*/*_test.go`, `internal/register/node_parity_test.go`, `internal/register/lifecycle_parity_test.go`). The optional native checks and the group check are held to parity by `internal/register/python_parity_test.go` and `internal/register/node_parity_test.go`; the exceptions are documented there with their reasons.
+
+| Manager | 15 core capabilities | `publish --native-dry-run` | Workspace member lister | `doctor` group check |
+|---|---|---|---|---|
+| uv | yes | yes | yes | yes |
+| pip | yes | no (twine has no dry-run flag) | no (no workspaces) | yes |
+| poetry | yes | yes | no (no workspace feature) | yes |
+| npm | yes | yes | yes | yes |
+| yarn | yes | Berry only; classic refuses `publish --dry-run` | yes | yes |
+| pnpm | yes | yes | yes | yes |
+| bun | yes | yes | yes | yes |
 
 ## Storage
 Global `~/.universal-package-core/`, per-project `.universal-package-core/` (project wins). Filesystem only.
