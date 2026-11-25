@@ -4,10 +4,19 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/rogpeppe/go-internal/testscript"
 )
+
+// exeSuffix is the executable extension of the host platform.
+func exeSuffix() string {
+	if runtime.GOOS == "windows" {
+		return ".exe"
+	}
+	return ""
+}
 
 // upcBin is built once by TestMain and exposed to scripts as `upc`.
 var upcBin string
@@ -17,7 +26,7 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		panic(err)
 	}
-	upcBin = filepath.Join(dir, "upc")
+	upcBin = filepath.Join(dir, "upc"+exeSuffix())
 	build := exec.Command("go", "build", "-o", upcBin, "../cmd/upc")
 	build.Stderr = os.Stderr
 	if err := build.Run(); err != nil {
