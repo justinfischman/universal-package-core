@@ -209,8 +209,8 @@ Follow `docs/RELEASING.md`. **The owner confirms before tagging and publishing.*
 | 7.4 B1b doctor group checks for uv, poetry, pip (parity with npm/yarn, D7.6) | software-engineer, code-reviewer | pending | after B4 merge |
 | 7.4 B2b NativeDryRunner/MemberLister for ALL managers (D7.6) | software-engineer, code-reviewer | pending | after B4 merge |
 | 7.4 Parity audit: capability matrix per manager, every gap justified or fixed (D7.6) | code-reviewer | pending | before 7.6 |
-| 7.4 B3 Windows enablement | software-engineer, test-engineer, code-reviewer | pending | |
-| 7.4 B4 pnpm, bun, sub-types, justfile export | software-engineer, test-engineer, code-reviewer | pending | |
+| 7.4 B3 Windows enablement | software-engineer, test-engineer, code-reviewer | done | merged after B4 (`feature/windows-support`); CI matrix ubuntu/macos/windows, goreleaser windows zip incl. arm64; unverified until a Windows CI run; scoop/winget not done; docs/CHANGELOG.md:9,24 contradict, fix in batched edit |
+| 7.4 B4 pnpm, bun, sub-types, justfile export | software-engineer, test-engineer, code-reviewer | done | merged `1f14922`; review FIX-FIRST then fix pass `6a4f359` (pnpm/bun custom groups, interface parity test, export quoting, bun drift) then MERGE; pnpm parsers checked vs fixtures only (no pnpm here); sub-types Node only: Python cli/library gap goes to parity audit; pilot-first not followed; CI e2e needs `just` for the export guard test |
 | 7.4 B5 languages ADR and spike | software-engineer, code-reviewer | done (merged) | 2cf71f1, dc201e3; review no blockers; ADR 0019 (0017 reserved for Windows decision, 0018 dropped with D7.3); golang.go has no own test file |
 | 7.4 B6 supply chain | software-engineer, code-reviewer, security-auditor | pending | |
 | 7.4 Merge B1, B2, B4, B3, B6 and batch changelog | change-coordinator | pending | |
