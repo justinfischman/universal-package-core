@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/justinfischman/universal-package-core/internal/components/prompt"
 	"github.com/justinfischman/universal-package-core/internal/config"
 	"github.com/justinfischman/universal-package-core/internal/core"
 )
@@ -17,7 +18,7 @@ const skipUpOffer = "none: do not create an up command"
 // command and, when one is chosen, saves `up = ["upc", "run", <recipe>]` to the
 // project config and starts it. It reports handled=false (so the original
 // "nothing to start" error stands) when the session cannot ask, there is no
-// project config to write, no recipe exists, or the user declines. Nothing is
+// project config to write, no recipe exists, or the user declines; a prompt failure is returned. Nothing is
 // written in a dry run.
 func (s *Session) offerUpCommand(ctx context.Context, req core.Request) (core.Result, bool, error) {
 	if req.DryRun || s.Store.ProjectRoot == "" {
@@ -38,9 +39,16 @@ func (s *Session) offerUpCommand(ctx context.Context, req core.Request) (core.Re
 	if len(recipes) == 0 {
 		return core.Result{}, false, nil
 	}
-	// A non-interactive prompter cannot choose: keep the original error.
+	// A non-interactive prompter cannot choose: keep the original error. Any
+	// other prompt failure (bad answer, closed input) is the user's to see.
 	choice, err := s.Prompter.Choose("No up command found. Save one of these recipes as the project's up command?", append(recipes, skipUpOffer))
-	if err != nil || choice == skipUpOffer || !slices.Contains(recipes, choice) {
+	if err != nil {
+		if _, silent := s.Prompter.(prompt.NonInteractive); silent {
+			return core.Result{}, false, nil
+		}
+		return core.Result{}, true, err
+	}
+	if choice == skipUpOffer || !slices.Contains(recipes, choice) {
 		return core.Result{}, false, nil
 	}
 	argv := []string{"upc", "run", choice}

@@ -154,6 +154,9 @@ func (y *Yarn) publish(ctx context.Context, req core.Request) (core.Result, erro
 	if err != nil {
 		return core.Result{}, err
 	}
+	if err := rejectClassicDryRun(verb, req.Args); err != nil {
+		return core.Result{}, err
+	}
 	return y.stream(ctx, req, invoke.Concat(verb, req.Args), "done: publish the project", "publish the project")
 }
 

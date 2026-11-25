@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/justinfischman/universal-package-core/internal/core"
 	"github.com/justinfischman/universal-package-core/internal/workspace"
@@ -38,7 +39,16 @@ func compareMembers(ctx context.Context, s *Session, ws *workspace.Workspace) me
 	if err != nil {
 		return memberReport{State: "error", Detail: err.Error()}
 	}
-	diff := workspace.CompareMembers(ws.Members, native)
+	root := os.DirFS(ws.Root)
+	configured, err := workspace.ExpandMembers(root, ws.Members)
+	if err != nil {
+		return memberReport{State: "error", Detail: fmt.Sprintf("expand configured members: %v", err)}
+	}
+	expanded, err := workspace.ExpandMembers(root, native)
+	if err != nil {
+		return memberReport{State: "error", Detail: fmt.Sprintf("expand the manager's members: %v", err)}
+	}
+	diff := workspace.CompareMembers(configured, expanded)
 	if diff.Empty() {
 		return memberReport{State: "ok"}
 	}
