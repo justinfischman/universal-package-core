@@ -145,7 +145,7 @@ func TestAppendAppScriptsWritesTheUpcTableThroughTheGivenFS(t *testing.T) {
 	if err := os.WriteFile(path, []byte("[project]\nname = \"demo\""), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := AppendAppScripts(fsx.OS{}, dir); err != nil {
+	if err := AppendAppScripts(fsx.OS{}, dir, ""); err != nil {
 		t.Fatal(err)
 	}
 	raw, _ := os.ReadFile(path)
@@ -153,7 +153,28 @@ func TestAppendAppScriptsWritesTheUpcTableThroughTheGivenFS(t *testing.T) {
 	if string(raw) != want {
 		t.Errorf("pyproject = %q, want %q", raw, want)
 	}
-	if err := AppendAppScripts(fsx.OS{}, dir); err == nil {
+	if err := AppendAppScripts(fsx.OS{}, dir, ""); err == nil {
 		t.Error("a second call must refuse an existing [tool.upc] table")
+	}
+}
+
+func TestAppendAppScriptsUsesTheKindsCommand(t *testing.T) {
+	for kind, command := range map[string]string{"cli": "python cli.py", "library": "python demo.py"} {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "pyproject.toml")
+		if err := os.WriteFile(path, []byte("[project]\nname = \"demo\"\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if err := AppendAppScripts(fsx.OS{}, dir, kind); err != nil {
+			t.Fatal(err)
+		}
+		raw, _ := os.ReadFile(path)
+		want := "dev = \"" + command + "\"\nstart = \"" + command + "\"\n"
+		if !strings.Contains(string(raw), want) {
+			t.Errorf("%s pyproject = %q, want it to contain %q", kind, raw, want)
+		}
+	}
+	if err := AppendAppScripts(fsx.OS{}, t.TempDir(), "daemon"); err == nil {
+		t.Error("an unknown kind must be refused")
 	}
 }

@@ -19,6 +19,15 @@ func TestDiagnoseGroupsDeclaredGroupsAreClean(t *testing.T) {
 	}
 }
 
+// Group names compare in normalized form: "Main" is the implicit group and
+// "Docs_Extra" matches [tool.poetry.group.docs-extra].
+func TestDiagnoseGroupsNormalizesNames(t *testing.T) {
+	fsys := groupFS("[tool.poetry]\nname = \"x\"\n[tool.poetry.group.docs-extra]\noptional = true\n")
+	if got := (&Poetry{}).DiagnoseGroups(fsys, []string{"Main", "Docs_Extra"}); len(got) != 0 {
+		t.Errorf("findings = %v, want none", got)
+	}
+}
+
 func TestDiagnoseGroupsLegacyDevDependenciesSatisfyDev(t *testing.T) {
 	fsys := groupFS("[tool.poetry]\nname = \"x\"\n[tool.poetry.dev-dependencies]\npytest = \"*\"\n")
 	if got := (&Poetry{}).DiagnoseGroups(fsys, []string{"dev"}); len(got) != 0 {

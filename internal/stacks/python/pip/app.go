@@ -41,7 +41,7 @@ func (p *PIP) initApp(ctx context.Context, req core.Request) (core.Result, error
 		if err := p.writeAll(root, files); err != nil {
 			return core.Result{}, err
 		}
-		if err := shared.AppendAppScripts(p.fsys, root); err != nil {
+		if err := shared.AppendAppScripts(p.fsys, root, req.Kind); err != nil {
 			_ = p.fsys.RemoveAll(root)
 			return core.Result{}, err
 		}

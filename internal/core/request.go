@@ -19,6 +19,9 @@ type Request struct {
 	Script string
 	// ProjectType is the project type being scaffolded (init), e.g. "script".
 	ProjectType string
+	// Kind is the app sub-type ("cli" or "library") when init scaffolds an app;
+	// empty is the default service.
+	Kind string
 	// Name is the project to create when init scaffolds a project directory
 	// (for example "package"): the manager creates Dir/Name.
 	Name string

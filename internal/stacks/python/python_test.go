@@ -217,6 +217,33 @@ black = "*"
 	}
 }
 
+// TestAppKindTemplatesMatchTheScriptCommands requires each app kind's templates
+// to contain the file its dev and start scripts run, and no service files.
+func TestAppKindTemplatesMatchTheScriptCommands(t *testing.T) {
+	for kind, want := range map[string][]string{
+		"app-cli":     {".gitignore", "APP.md.tmpl", "cli.py"},
+		"app-library": {".gitignore", "APP.md.tmpl", "demo.py", "lib.py"},
+	} {
+		files, ok := New().Templates(kind)
+		if !ok {
+			t.Fatalf("python must provide %s templates", kind)
+		}
+		var got []string
+		err := fs.WalkDir(files, ".", func(p string, d fs.DirEntry, err error) error {
+			if err == nil && !d.IsDir() {
+				got = append(got, p)
+			}
+			return err
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("%s templates = %v, want %v", kind, got, want)
+		}
+	}
+}
+
 func TestAppTemplatesGolden(t *testing.T) {
 	files, ok := New().Templates("app")
 	if !ok {
