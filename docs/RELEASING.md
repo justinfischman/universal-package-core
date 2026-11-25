@@ -2,7 +2,7 @@
 
 Releases are built by GoReleaser (`.goreleaser.yaml`) from a `v*` tag via
 `.github/workflows/release.yml`. Artifacts: darwin and linux (amd64, arm64),
-`checksums.txt`, and a Homebrew formula. Binaries are built
+`checksums.txt`, one SPDX SBOM per archive (`*.sbom.json`, from syft), and a Homebrew formula. Binaries are built
 with `CGO_ENABLED=0`, `-trimpath`, and `-s -w`; `version`, `commit` and `date`
 are injected into `main.version`, `main.commit` and `main.date`
 (`cmd/upc/main.go`), which `upc version` prints.
@@ -19,6 +19,11 @@ dist/upc_<os>_<arch>*/upc version     # prints upc 0.0.0-SNAPSHOT-<commit>
 exits non-zero for the accepted `brews` deprecation warning (see Notes); the
 snapshot command still succeeds. CI runs the same snapshot in the
 `release-snapshot` job of `ci.yml`.
+
+Snapshot builds need `syft` on `PATH` for the `sboms:` step (CI installs it with
+`anchore/sbom-action/download-syft`; locally `brew install syft`). Check that
+`dist/*.sbom.json` exists next to each archive. Artifacts are not signed: cosign
+signing is deferred until the repository is public (plan 07, D7.3).
 
 ## 2. Homebrew tap (no setup needed)
 
@@ -55,6 +60,19 @@ brew install justinfischman/upc/upc
 upc version        # upc 0.1.0, with commit and date
 brew test upc
 ```
+
+## 5. Verify checksums of a release
+
+```sh
+gh release download v0.2.0 --repo justinfischman/universal-package-core \
+  --pattern checksums.txt --pattern 'upc_*_linux_amd64.tar.gz' --dir upc-verify
+cd upc-verify
+sha256sum --ignore-missing -c checksums.txt    # macOS: shasum -a 256 --ignore-missing -c checksums.txt
+```
+
+Expect `OK` for each archive. `scripts/install.sh` performs the same check and
+refuses to install on a mismatch or a missing entry. Confirm the release also
+lists `*.sbom.json` assets.
 
 ## Notes
 
