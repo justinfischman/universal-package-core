@@ -73,6 +73,7 @@ Go has no abstract classes. Shared behavior lives in **embedded base structs** i
 - Config holds only `upc`'s own choices (language, PM, project type, env mapping, workspace members). It never mirrors dependency lists or versions.
 - An environment is a name, an optional env file and dependency `groups` (ADR-0015); there is no venv per environment. Group install is built for uv, poetry and pip; npm and yarn accept only dev and optional (arbitrary groups, ADR-0015 option B, are deferred; `internal/stacks/node/npm/deps.go`).
 - `config set` validates against registry compatibility: PM switching is allowed within a language and refused across languages.
+- `config show --origin` prints each key's effective value and its layer (global, root config, root local, app config, app local, flag; ADR-0011 order). Values from a `local.toml` layer are masked as `****`. No CLI flag sets a config key yet, so the flag layer is never populated by the command (it is tested at the config level). An empty value counts as unset, matching the merge path. Without `--origin` it is a usage error (use `config get`). `--json` data is a list of `{key, value, layer, masked}`.
 
 ## 6. Cross-cutting behavior
 
