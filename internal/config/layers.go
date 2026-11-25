@@ -139,6 +139,12 @@ func (s Store) LoadMerged() (Resolved, error) {
 		if len(rootConfig.Workspace.Members) > 0 {
 			res.Workspace = rootConfig.Workspace
 		}
+		// 2b. Root local (gitignored), above root config, below the project.
+		rootLocal, err := s.loadFromPath(filepath.Join(rootDir, DirName, LocalName))
+		if err != nil {
+			return Resolved{}, err
+		}
+		s.overlay(&res, rootLocal)
 	}
 
 	// 3. Project/App (current directory)
@@ -179,34 +185,40 @@ func (s Store) LoadMerged() (Resolved, error) {
 		if err != nil {
 			return Resolved{}, err
 		}
-		if !isEmptyConfig(localConfig) {
-			res.Config = MergeConfig(res.Config, localConfig)
-			for _, k := range Keys {
-				if v, _ := localConfig.Get(k); v != "" {
-					res.Sources[k] = Project // local is project-scoped
-				}
-			}
-			if localConfig.DefaultEnvironment != "" {
-				res.DefaultEnvironment = localConfig.DefaultEnvironment
-			}
-			if localConfig.ActiveEnvironment != "" {
-				res.ActiveEnvironment = localConfig.ActiveEnvironment
-			}
-			if len(localConfig.Environments) > 0 {
-				if res.Environments == nil {
-					res.Environments = make(map[string]Environment)
-				}
-				for k, v := range localConfig.Environments {
-					res.Environments[k] = v
-				}
-			}
-			if len(localConfig.Workspace.Members) > 0 {
-				res.Workspace = localConfig.Workspace
-			}
-		}
+		s.overlay(&res, localConfig)
 	}
 
 	return res, nil
+}
+
+// overlay applies one local layer on top of res; an empty layer changes nothing.
+func (Store) overlay(res *Resolved, c Config) {
+	if isEmptyConfig(c) {
+		return
+	}
+	res.Config = MergeConfig(res.Config, c)
+	for _, k := range Keys {
+		if v, _ := c.Get(k); v != "" {
+			res.Sources[k] = Project // local is project-scoped
+		}
+	}
+	if c.DefaultEnvironment != "" {
+		res.DefaultEnvironment = c.DefaultEnvironment
+	}
+	if c.ActiveEnvironment != "" {
+		res.ActiveEnvironment = c.ActiveEnvironment
+	}
+	if len(c.Environments) > 0 {
+		if res.Environments == nil {
+			res.Environments = make(map[string]Environment)
+		}
+		for k, v := range c.Environments {
+			res.Environments[k] = v
+		}
+	}
+	if len(c.Workspace.Members) > 0 {
+		res.Workspace = c.Workspace
+	}
 }
 
 func (s Store) loadFromPath(path string) (Config, error) {

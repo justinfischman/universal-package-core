@@ -122,6 +122,9 @@ func runDoctor(cmd *cobra.Command, s *Session) error {
 	for _, f := range envFindings(s, dirFS, res) {
 		add(f, nil, "")
 	}
+	for _, f := range groupFindings(st.PM, dirFS, res) {
+		add(f, nil, "")
+	}
 	for _, f := range workspaceFindings(s, dir) {
 		add(f, nil, "")
 	}
