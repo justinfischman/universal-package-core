@@ -5,20 +5,20 @@
 class Upc < Formula
   desc "Create, install and manage packages and apps across languages"
   homepage "https://github.com/justinfischman/universal-package-core"
-  version "0.1.0"
+  version "0.2.0"
 
   on_macos do
     if Hardware::CPU.intel?
-      url "https://github.com/justinfischman/universal-package-core/releases/download/v0.1.0/upc_0.1.0_darwin_amd64.tar.gz"
-      sha256 "05967e6fd3a3c06b23c1cdfe68550407c76bd054c4c8f285982d65ad83b191db"
+      url "https://github.com/justinfischman/universal-package-core/releases/download/v0.2.0/upc_0.2.0_darwin_amd64.tar.gz"
+      sha256 "1015b338aa23cb3983a159aaae19e18896ca0fd898794dd6c03d63fce199e64d"
 
       define_method(:install) do
         bin.install "upc"
       end
     end
     if Hardware::CPU.arm?
-      url "https://github.com/justinfischman/universal-package-core/releases/download/v0.1.0/upc_0.1.0_darwin_arm64.tar.gz"
-      sha256 "5a4d672ba1263cb999f83d6aa57f243101b924b8469cfad348741a099676d75a"
+      url "https://github.com/justinfischman/universal-package-core/releases/download/v0.2.0/upc_0.2.0_darwin_arm64.tar.gz"
+      sha256 "6fc6c8e3e7723a555bf7b18775e59c42164d5ba65e4b7f7d16f3f340a56495d2"
 
       define_method(:install) do
         bin.install "upc"
@@ -28,15 +28,15 @@ class Upc < Formula
 
   on_linux do
     if Hardware::CPU.intel? && Hardware::CPU.is_64_bit?
-      url "https://github.com/justinfischman/universal-package-core/releases/download/v0.1.0/upc_0.1.0_linux_amd64.tar.gz"
-      sha256 "8f37d4fc93a90a7e461e6347662276080456e184c5af6bfc8e8e3b55d4519b88"
+      url "https://github.com/justinfischman/universal-package-core/releases/download/v0.2.0/upc_0.2.0_linux_amd64.tar.gz"
+      sha256 "7ddacc5e6af3c95eafe7c46b8bc073ef887dff9b3b2d4702c69d61fcee7a2cfb"
       define_method(:install) do
         bin.install "upc"
       end
     end
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/justinfischman/universal-package-core/releases/download/v0.1.0/upc_0.1.0_linux_arm64.tar.gz"
-      sha256 "d33100655576907cf9a28142e1a4bd860bb4abd7f1783b804eda82884b2f629d"
+      url "https://github.com/justinfischman/universal-package-core/releases/download/v0.2.0/upc_0.2.0_linux_arm64.tar.gz"
+      sha256 "46d6be159085e6cd8563b4ee7d6e2ef32a421d7099731d3261e9f4120207eb37"
       define_method(:install) do
         bin.install "upc"
       end
