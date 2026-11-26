@@ -14,7 +14,7 @@ Plans are **read-only during execution** (track progress elsewhere). Finish a ph
 | 4 (done) | `04-node-stack.md` | Node with `npm` then `yarn`, same capability set, cross-language switch refused | 3 |
 | 5 (partial: only `env list\|use\|show` built; the rest moved to 06) | `05-environments-workspace-app-release.md` | `env`, `up/down`, `workspace`, `app` type, `publish`, Homebrew release | 4 |
 | 6 (6.0-6.5, 6.7 done; 6.6 done: v0.1.0 tagged and installable via Homebrew; 6.8 done) | `06-agnostic-core-environments-multiapp-release.md` | Data-driven commands, constraint mapper, environments and groups, config layering, `up/down`, `publish`, workspace/multi-app, `app` type, release, hardening. Absorbs the unbuilt parts of 05 | 5 (slice 1) |
-| 7 (in progress) | `07-completeness-hardening-and-v0.2-release.md` | Release hygiene (LICENSE, README, SECURITY), deferred 6.2/6.7 items, Windows, pnpm/bun, signing, v0.2.0; tracks progress in its own ledger | 6 |
+| 7 (done) | `07-completeness-hardening-and-v0.2-release.md` | Release hygiene (LICENSE, README, SECURITY), deferred 6.2/6.7 items, Windows, pnpm/bun, signing, v0.2.0; tracks progress in its own ledger | 6 |
 
 Plan 03 says a cross-language switch exits 1; the code exits 2. Plans stay read-only, so this is recorded in `docs/CHANGELOG.md` (Known gaps).
 
