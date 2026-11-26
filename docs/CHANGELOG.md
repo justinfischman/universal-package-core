@@ -23,8 +23,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Update with ev
 - pip has no native publish dry-run (twine has none) and no member lister (pip has no workspaces); poetry has no member lister (no workspaces).
 - Scoop and winget manifests are not included.
 - cosign signing is deferred until the repository is public.
-- Windows support is unverified until the first CI run on `windows-latest`.
-- Not verified here: the SBOM step end to end (no syft), `install.sh` against real GitHub URLs, shellcheck, and pnpm parsers beyond fixtures.
+- Windows: the Go test suite, build and archives pass in CI on `windows-latest` (verified for 0.2.0); the built `upc.exe` has not been exercised on a real Windows machine.
+- Verified after release: all archive and SBOM checksums, `scripts/install.sh` against the real release (including the tamper refusal), shellcheck on `install.sh`, and the pnpm lifecycle against real pnpm 12.23.0. `brew audit` could not be run (disabled in current Homebrew).
+
+### Deferred (backlog)
+- `upc version` prints only `upc 0.2.0`; commit and build date appear only with `upc version --json`. Consider showing them in the plain output.
 
 ## [0.1.0] - 2026-11-17
 Tagged `v0.1.0`; installable with `brew install justinfischman/upc/upc` (`docs/RELEASING.md`). The Homebrew tap is this repository (`Formula/`).
