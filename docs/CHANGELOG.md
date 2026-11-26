@@ -2,7 +2,7 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Update with every change.
 
-## [Unreleased] - 0.2.0 (Plan 07)
+## [0.2.0] - 2026-11-25
 
 ### Added
 - `upc config show --origin`: shows the layer each value came from.
@@ -30,7 +30,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Update with ev
 Tagged `v0.1.0`; installable with `brew install justinfischman/upc/upc` (`docs/RELEASING.md`). The Homebrew tap is this repository (`Formula/`).
 
 ### Changed
-- Process control for `up`/`down` uses gopsutil (liveness, start time, whole-tree terminate then kill) instead of `ps`, process-group signals and `taskkill`; only `detach` stays per OS. The CI `check` job runs on Linux only (the macOS runner queue was too slow); Windows and the e2e job were unchanged in 0.1.0 (the Windows job was enabled in 0.2.0, see Unreleased).
+- Process control for `up`/`down` uses gopsutil (liveness, start time, whole-tree terminate then kill) instead of `ps`, process-group signals and `taskkill`; only `detach` stays per OS. The CI `check` job runs on Linux only (the macOS runner queue was too slow); Windows and the e2e job were unchanged in 0.1.0 (the Windows job was enabled in 0.2.0, see 0.2.0).
 
 ### Added
 - 6.7 hardening: `upc init` adds `.universal-package-core/run/` to `.gitignore` (created if missing, never duplicated); `scripts.<name>` and `up` argv lists in config (`internal/config`) outrank manager sources for `run` and `up` (ADR-0016 amendment); the run state pid file records the process start time (`execx.Controller.StartedAt`) so a reused pid is never treated as the app or signalled; Windows `Stop` kills the process tree (`taskkill /T /F`); `down` removes only the pid file and keeps `up.log` until the next `up`; `cmd/upc` smoke test (version, help, unknown command exit codes).
@@ -45,10 +45,10 @@ Tagged `v0.1.0`; installable with `brew install justinfischman/upc/upc` (`docs/R
 - Exit-code discrepancy with plan 03: `plans/03-python-stacks-and-package-type.md` says `config set pm` to a manager of another language exits 1; the implementation exits 2 (`core.ErrIncompatible` maps to `ExitUsage`, ADR-0009). Code is authoritative; the read-only plan was not changed (verified by `TestConfigSetRefusesCrossLanguageSwitch`).
 
 ### Deferred
-- Windows support (backlog in 0.1.0; resolved in 0.2.0, see Unreleased and ADR-0017): the CI job and release build are disabled. The Windows test suite has about 30 failing tests (fake-fs paths, `0755` mode expectations, `upc.exe` lookup in testscript, temp-dir cleanup locks, doctor golden paths); `execx` already has `detach_windows.go`.
-- pnpm, bun and generated-justfile export (done in 0.2.0, see Unreleased); other languages (ADR-0019 design and an unregistered Go spike only).
-- From 6.2: all done in 0.2.0 (npm/yarn groups, `doctor` group checks for every manager, root-level `local.toml`, `config show --origin`); see Unreleased.
-- From 6.7: native `publish --dry-run`, offer to create an up script, workspace-member comparison and app sub-types (CLI, library) are done in 0.2.0 (see Unreleased). Still deferred: `--app X` with dependencies, `${...}` escape syntax.
+- Windows support (backlog in 0.1.0; resolved in 0.2.0, see 0.2.0 and ADR-0017): the CI job and release build are disabled. The Windows test suite has about 30 failing tests (fake-fs paths, `0755` mode expectations, `upc.exe` lookup in testscript, temp-dir cleanup locks, doctor golden paths); `execx` already has `detach_windows.go`.
+- pnpm, bun and generated-justfile export (done in 0.2.0, see 0.2.0); other languages (ADR-0019 design and an unregistered Go spike only).
+- From 6.2: all done in 0.2.0 (npm/yarn groups, `doctor` group checks for every manager, root-level `local.toml`, `config show --origin`); see 0.2.0.
+- From 6.7: native `publish --dry-run`, offer to create an up script, workspace-member comparison and app sub-types (CLI, library) are done in 0.2.0 (see 0.2.0). Still deferred: `--app X` with dependencies, `${...}` escape syntax.
 - Release: none; `v0.1.0` was tagged and the `brew install` check passed once the repository was public.
 
 ### Known gaps
